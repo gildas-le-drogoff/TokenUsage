@@ -22,8 +22,8 @@ android {
         applicationId = "fr.gildasledrogoff.tokenusage"
         minSdk = 29
         targetSdk = 37
-        versionCode = 10
-        versionName = "0.1.0"
+        versionCode = 11
+        versionName = "0.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -115,6 +115,12 @@ android {
     }
 
     packaging {
+        // Build reproductible : sans cela, AGP strippe les .so quand un NDK est
+        // installé et les laisse intacts sinon (cas du serveur F-Droid), ce qui
+        // donne deux APK différents.
+        jniLibs {
+            keepDebugSymbols += "**/*.so"
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += setOf("DebugProbesKt.bin", "META-INF/*.version")
