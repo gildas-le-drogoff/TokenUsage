@@ -1,0 +1,117 @@
+name: F-Droid
+
+# Checks that mirror what the F-Droid build server and reviewers verify:
+# recipe lint, store metadata limits, non-free code scan and build determinism.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  APP_ID: fr.gildasledrogoff.tokenusage
+  FDROIDSERVER_VERSION: 2.4.5
+
+jobs:
+  metadata:
+    name: Recipe and store metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check version and fastlane metadata
+        run: .github/scripts/check-fdroid-metadata.sh
+
+      - name: Install fdroidserver
+        run: pipx install "fdroidserver==${FDROIDSERVER_VERSION}"
+
+      # Only config/ is needed: it defines the valid categories and
+      # anti-features the recipe is linted against.
+      - name: Fetch fdroiddata configuration
+        run: |
+          git clone --quiet --depth 1 --filter=blob:none --sparse \
+            https://gitlab.com/fdroid/fdroiddata.git "$RUNNER_TEMP/fdroiddata"
+          git -C "$RUNNER_TEMP/fdroiddata" sparse-checkout set config
+          chmod 600 "$RUNNER_TEMP/fdroiddata/config.yml"
+          mkdir -p "$RUNNER_TEMP/fdroiddata/metadata"
+          cp "metadata/${APP_ID}.yml" "$RUNNER_TEMP/fdroiddata/metadata/"
+
+      - name: Lint recipe
+        working-directory: ${{ runner.temp }}/fdroiddata
+        run: fdroid lint "$APP_ID"
+
+  reproducible:
+    name: Deterministic release build and scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # Two independent checkouts at different paths: the resulting APKs must
+      # be identical for F-Droid to reproduce the published binary.
+      - name: Checkout (first tree)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: first
+          persist-credentials: false
+
+      - name: Checkout (second tree)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: second/nested
+          persist-credentials: false
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
+
+      - name: Build release (first tree)
+        working-directory: first
+        run: ./gradlew --console=plain --no-build-cache assembleRelease
+
+      - name: Build release (second tree)
+        working-directory: second/nested
+        run: ./gradlew --console=plain --no-build-cache assembleRelease
+
+      - name: Compare APKs
+        run: |
+          apk=app/build/outputs/apk/release/app-release-unsigned.apk
+          sha256sum "first/$apk" "second/nested/$apk"
+          if ! cmp "first/$apk" "second/nested/$apk"; then
+            echo "::error::Release build is not deterministic."
+            exit 1
+          fi
+
+      - name: Upload APKs on mismatch
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: non-deterministic-apks
+          path: |
+            first/app/build/outputs/apk/release/*.apk
+            second/nested/app/build/outputs/apk/release/*.apk
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Install fdroidserver
+        run: pipx install "fdroidserver==${FDROIDSERVER_VERSION}"
+
+      - name: Scan APK for non-free code
+        run: fdroid scanner --exit-code first/app/build/outputs/apk/release/app-release-unsigned.apk

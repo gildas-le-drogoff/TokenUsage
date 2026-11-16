@@ -1,0 +1,71 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste API keys, tokens, cookies or backup files in an issue.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What you did, what you expected and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+    validations:
+      required: true
+  - type: dropdown
+    id: services
+    attributes:
+      label: Affected services
+      multiple: true
+      options:
+        - Claude
+        - Codex (ChatGPT)
+        - Gemini
+        - GitHub Copilot
+        - Z.ai
+        - DeepSeek
+        - OpenRouter
+        - OpenAI
+        - Not specific to a service
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Installed from
+      options:
+        - F-Droid
+        - GitHub release
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: Pixel 8, Android 16 (mention root or a custom ROM if relevant)
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove any credential or account identifier first.
+      render: text

@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a new service or an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: API details (for a new service)
+      description: Link to the documentation of the endpoint exposing quotas or balances, if any.
