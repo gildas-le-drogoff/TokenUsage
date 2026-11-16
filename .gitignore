@@ -1,46 +1,79 @@
-# Built application files
-*.apk
+*.aab
 *.aar
 *.ap_
-*.aab
-
-# Files for the ART/Dalvik VM
-*.dex
-
-# Java class files
+*.apk
 *.class
-
-# Generated files
-bin/
-gen/
-out/
-build/
-
-# Gradle files
-.gradle/
-gradle-app.setting
-!gradle-wrapper.jar
-
-# Local configuration
-local.properties
-
-# Android Studio
+*.ctxt
+*.dex
+*.ear
+*.hprof
 *.iml
-.idea/
-.DS_Store
-
-# Kotlin
-.kotlin/
-
-# Signing
+*.ipr
+*.iws
+*.jar
 *.jks
 *.keystore
-
-# Upstream reference (not part of this project)
-upstream-codexbar/
-
-# Claude workspace
+*.log
+*.nar
+*.rar
+*.swp
+*.tar.gz
+*.war
+*.zip
+*~
+./vulcan-launcher
+.DS_Store
+.classpath
 .claude/
-
-# REQUIREMENTS (dev only)
+.cproject
+.cxx/
+.externalNativeBuild
+.externalNativeBuild/
+.gradle
+.gradle/
+.idea/
+.idea_modules/
+.kotlin/
+.mtj.tmp/
+.navigation/
+.project
+.settings/
+.signing/
+/*/*/build
+/*/*/production
+/*/build/
+/*/local.properties
+/*/out
+/out/
+CodexBar/
 REQUIREMENTS.md
+atlassian-ide-plugin.xml
+bin/
+build/
+captures/
+com_crashlytics_export_strings.xml
+cookies.claude.json
+keystore.properties
+crashlytics-build.properties
+crashlytics.properties
+deploymentTargetDropDown.xml
+fabric.properties
+gen-external-apklibs
+gen/
+google-services.json
+gradle-app.setting
+hs_err_pid*
+local.properties
+misc.xml
+obj/
+out/
+output.json
+proguard/
+render.experimental.xml
+replay_pid*
+screenshots/
+upstream-codexbar/
+vibeusage/
+vulcan-launcher
+!/gradle/wrapper/gradle-wrapper.jar
+!gradle-wrapper.jar

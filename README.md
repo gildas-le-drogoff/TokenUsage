@@ -1,45 +1,51 @@
-> **⚠️ Known Issue:** Claude's refresh token is consistently failing to renew. Investigating workarounds.
+# TokenUsage
 
-# CodexBar for Android
+Track your AI subscription quotas and API balances from your Android device — Claude, Codex (ChatGPT), Gemini, GitHub Copilot, Z.ai, DeepSeek, OpenRouter and OpenAI in one dashboard.
 
-> Android port of [**CodexBar**](https://github.com/steipete/CodexBar) by [@steipete](https://github.com/steipete) — the macOS menu bar app for monitoring AI service quotas.
-
-Monitor your AI service quotas from your Android device. Track remaining usage for Claude, Codex (ChatGPT), and Gemini in one place.
+> Android port of [**CodexBar**](https://github.com/steipete/CodexBar) by [@steipete](https://github.com/steipete), the macOS menu bar app for monitoring AI service quotas, based on [codexbar-android](https://github.com/hyunnnchoi/codexbar-android) by hyunnnchoi.
 
 <p align="center">
-  <img src="docs/Screenshot_20260305_025201_CodexBar.jpg" width="320" alt="Dashboard" />
-  &nbsp;&nbsp;
-  <img src="docs/Screenshot_20260305_025207_CodexBar.jpg" width="320" alt="Settings" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_dashboard.png" width="24%" alt="Dashboard" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_consumption.png" width="24%" alt="DeepSeek consumption chart" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4_settings.png" width="24%" alt="Settings" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5_dashboard_dark.png" width="24%" alt="Dashboard, dark theme" />
 </p>
 
 ## Features
 
-- Real-time quota monitoring for Claude, Codex, and Gemini (more services coming soon)
-- Animated gauge bars showing remaining usage percentage
-- Quick Settings tile for at-a-glance status
-- Background refresh with configurable intervals
-- Persistent notification with per-service breakdown
-- Push alert when quota resets (fully replenished)
-- Encrypted credential storage
-- Material 3 with Dynamic Color
+- **Eight services in one place**: Claude, Codex, Gemini, GitHub Copilot and Z.ai quotas; DeepSeek and OpenRouter prepaid balances; OpenAI and OpenRouter spend
+- **Multiple accounts** per service for Claude, Z.ai and DeepSeek
+- **One colour code everywhere**: green above 40 % left, amber between 15 and 40 %, red at 15 % or below, with the reset time of every quota window
+- **"% left" or "% used"** reading, your choice
+- **Display currency**: keep the currency billed by each provider or convert every amount to USD, EUR or CNY (manual rate, Frankfurter or ECB)
+- **Consumption history** for DeepSeek: daily and monthly charts built from the balance recorded at each refresh
+- **Home screen widgets** (quotas, compact quota, next reset, balances) and a **Quick Settings tile**
+- **Notifications**: quota status and an alert when a quota resets
+- **Background refresh** at the interval you choose
+- **App lock** with biometrics or the device screen lock
+- **Encrypted storage**: credentials encrypted with a key held in the Android Keystore, history in an encrypted database
+- **Encrypted backup** protected by a PIN, as a ZIP file or a QR code
+- Material 3, light and dark themes, adaptive layout for phones and tablets
+- Available in English, French and Chinese
 
-## Download
+## Privacy
 
-Pre-built APKs are available on the [Releases](https://github.com/hyunnnchoi/codexbar-android/releases) page. 
+There is no backend server and no analytics. Credentials are stored encrypted on the device and are only sent to the provider they belong to. The only other network requests are exchange rates from Frankfurter or the ECB, if you select one of them as the rate source.
 
-I do **system software** for a living — I'm not smart enough to sneak viruses into an Android app. 
+## Requirements
 
-No backend server — all tokens are processed and stored strictly on-device. 
-
-
-## Setup
-
-1. Install [OpenJDK 17](https://formulae.brew.sh/formula/openjdk@17) (or any JDK 17+)
-2. Clone and open in Android Studio
-3. Build and install the debug APK
-4. Open the app and go to **Settings** to enter your API tokens
+Android 10 (API 29) or later.
 
 ## Getting Your Tokens
+
+Open **Settings** in the app and fill in the services you use.
+
+- **DeepSeek, OpenRouter, Z.ai**: paste an API key created in the provider's console.
+- **OpenAI**: paste an Admin API key (spend is read from the organization usage API).
+- **GitHub Copilot**: sign in from Settings with the GitHub device code shown by the app.
+- **Claude, Codex, Gemini**: see below.
+
+> **Claude: prefer "Sign in with Claude" or a Session Key.** Anthropic rotates OAuth refresh tokens on every use, so tokens copied from the Claude CLI stop working as soon as the CLI refreshes its own copy. In Settings → Claude, sign in with Claude or paste the claude.ai `sessionKey` cookie (`sk-ant-sid…`) instead; it does not rotate.
 
 ### Claude (Anthropic)
 
@@ -108,25 +114,39 @@ print('Client Secret:', sec.group(1) if sec else 'not found')
 
 Paste all four values into the Gemini fields in Settings.
 
+
 ## Build
 
+Requires JDK 25 and the Android SDK.
+
 ```bash
-./gradlew assembleDebug
+./gradlew assembleDebug     # debug build, ships sample data to review the UI
+./gradlew assembleRelease   # release build (needs keystore.properties to be signed)
 ```
 
-APK output: `app/build/outputs/apk/debug/app-debug.apk`
+One universal APK is produced per build type in `app/build/outputs/apk/`. Release builds are reproducible: an unsigned build of a tagged commit matches the published APK byte for byte, signature aside.
 
-## Tech Stack
+Store screenshots are generated from an emulator running the debug build:
 
-- Kotlin 2.1.0, Jetpack Compose, Material 3
-- Hilt (DI), Retrofit2 + OkHttp (networking)
-- WorkManager (background sync), EncryptedSharedPreferences (security)
-- KSP, kotlinx.serialization
+```bash
+./generate-screenshots.sh
+```
 
 ## Acknowledgments
 
-Based on [CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger.
+- [CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger, the original macOS app
+- [codexbar-android](https://github.com/hyunnnchoi/codexbar-android) by hyunnnchoi, the Android port this project is based on
 
 ## License
 
-[MIT](LICENSE)
+Copyright (C) 2026 Gildas Le Drogoff
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
+
+This project is a fork of [codexbar-android](https://github.com/hyunnnchoi/codexbar-android), copyright (c) 2026 hyunnnchoi, released under the MIT License. That notice is kept in [LICENSE-MIT](LICENSE-MIT) and still applies to the original code.
+
+### REUSE / SPDX
+
+Licensing and copyright metadata is maintained machine-readably in [`REUSE.toml`](REUSE.toml), following the [REUSE specification](https://reuse.software/spec/) (SPDX format). Verify compliance with `reuse lint`; license texts live in [`LICENSES/`](LICENSES/).
+
+Third-party components keep their own licenses: the Gradle wrapper ([Apache-2.0](LICENSES/Apache-2.0.txt)), and brand icons from [Simple Icons](https://simpleicons.org/) ([CC0-1.0](LICENSES/CC0-1.0.txt)).

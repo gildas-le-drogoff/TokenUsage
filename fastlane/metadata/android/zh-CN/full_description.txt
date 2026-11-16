@@ -1,0 +1,30 @@
+TokenUsage 在一个仪表盘上显示各项 AI 订阅配额和 API 余额的剩余情况：Claude、Codex（ChatGPT）、Gemini、GitHub Copilot、Z.ai、DeepSeek、OpenRouter 和 OpenAI。
+
+<b>功能</b>
+
+<ul>
+<li>Claude、Codex、Gemini、GitHub Copilot 和 Z.ai 的配额，以及每个周期的重置时间</li>
+<li>DeepSeek 和 OpenRouter 的预付余额，OpenAI 和 OpenRouter 的支出</li>
+<li>Claude、Z.ai 和 DeepSeek 支持多个账号</li>
+<li>统一的颜色标识：剩余超过 40% 为绿色，15% 至 40% 为琥珀色，15% 及以下为红色</li>
+<li>配额可按“剩余 %”或“已用 %”显示</li>
+<li>显示币种：保持各服务商的计费币种，或统一换算为 USD、EUR 或 CNY</li>
+<li>DeepSeek 的每日和每月消费图表</li>
+<li>桌面小组件（配额、紧凑配额、下次重置、余额）和快捷设置磁贴</li>
+<li>配额状态与重置通知</li>
+<li>按您设定的间隔在后台刷新</li>
+<li>应用锁：生物识别或设备屏幕锁</li>
+<li>由 PIN 保护的加密备份，可导出为 ZIP 文件或二维码</li>
+<li>Material 3，浅色和深色主题，适配手机和平板</li>
+<li>支持中文、英文和法文</li>
+</ul>
+
+<b>隐私</b>
+
+没有后端服务器，也没有任何统计分析。凭据加密保存在设备上，密钥存放于 Android Keystore，并且只会发送给对应的服务商。除此之外，仅当您选择 Frankfurter 或欧洲央行作为汇率来源时，才会请求汇率数据。
+
+<b>设置</b>
+
+打开“设置”，填写所用服务的 API 密钥或令牌。项目的 README 说明了如何获取它们。
+
+TokenUsage 是 Peter Steinberger 的 macOS 应用 CodexBar 的 Android 移植版，与 Anthropic、OpenAI、Google、GitHub、Z.ai、DeepSeek 和 OpenRouter 均无关联。

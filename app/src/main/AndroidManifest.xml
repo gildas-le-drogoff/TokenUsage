@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -11,37 +10,59 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <queries>
+        <package android:name="com.topjohnwu.magisk" />
+        <package android:name="io.github.huskydg.magisk" />
+        <package android:name="me.weishu.kernelsu" />
+        <package android:name="me.bmax.apatch" />
+        <package android:name="eu.chainfire.supersu" />
+        <package android:name="com.koushikdutta.superuser" />
+        <package android:name="com.noshufou.android.su" />
+        <package android:name="de.robv.android.xposed.installer" />
+        <package android:name="org.lsposed.manager" />
+    </queries>
+
     <application
-        android:name=".CodexBarApplication"
-        android:allowBackup="true"
+        android:name=".TokenUsageApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:hasFragileUserData="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CodexBar"
+        android:theme="@style/Theme.TokenUsage"
         tools:targetApi="35">
 
-        <!-- Main Activity -->
+        <profileable
+            android:enabled="false"
+            android:shell="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.CodexBar">
+            android:theme="@style/Theme.TokenUsage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Deep links -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="codexbar" android:host="dashboard" />
-                <data android:scheme="codexbar" android:host="settings" />
+                <data android:scheme="tokenusage" android:host="dashboard" />
+                <data android:scheme="tokenusage" android:host="settings" />
             </intent-filter>
         </activity>
 
-        <!-- Quick Settings Tile -->
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="fullSensor"
+            tools:replace="android:screenOrientation" />
+
         <service
             android:name=".core.tile.QuotaTileService"
             android:exported="true"
@@ -53,28 +74,26 @@
             </intent-filter>
         </service>
 
-        <!-- Notification Refresh Receiver -->
         <receiver
             android:name=".core.notification.RefreshReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.codexbar.android.ACTION_REFRESH" />
+                <action android:name="fr.gildasledrogoff.tokenusage.ACTION_REFRESH" />
             </intent-filter>
         </receiver>
 
-        <!-- Widget Configuration Activity -->
         <activity
             android:name=".core.widget.WidgetConfigurationActivity"
             android:exported="true"
-            android:theme="@style/Theme.CodexBar">
+            android:theme="@style/Theme.TokenUsage">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
 
-        <!-- Home Screen Widget -->
         <receiver
             android:name=".core.widget.QuotaWidgetReceiver"
+            android:label="@string/widget_label_quotas"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -84,7 +103,42 @@
                 android:resource="@xml/quota_widget_info" />
         </receiver>
 
-        <!-- Boot Receiver -->
+        <receiver
+            android:name=".core.widget.QuotaCompactWidgetReceiver"
+            android:label="@string/widget_label_compact"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quota_compact_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".core.widget.ResetWidgetReceiver"
+            android:label="@string/widget_label_reset"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/reset_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".core.widget.BalancesWidgetReceiver"
+            android:label="@string/widget_label_balances"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/balances_widget_info" />
+        </receiver>
+
         <receiver
             android:name=".core.workmanager.BootReceiver"
             android:exported="true">
@@ -93,15 +147,15 @@
             </intent-filter>
         </receiver>
 
-        <!-- WorkManager Initializer via App Startup -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="com.codexbar.android.core.workmanager.WorkManagerInitializer"
-                android:value="androidx.startup" />
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
         </provider>
 
     </application>

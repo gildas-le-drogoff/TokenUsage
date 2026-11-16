@@ -5,7 +5,6 @@
     android:orientation="vertical"
     android:padding="8dp">
 
-    <!-- Service 1 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,7 +38,6 @@
             android:textColor="@android:color/primary_text_light" />
     </LinearLayout>
 
-    <!-- Service 2 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -73,7 +71,6 @@
             android:textColor="@android:color/primary_text_light" />
     </LinearLayout>
 
-    <!-- Service 3 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -107,7 +104,6 @@
             android:textColor="@android:color/primary_text_light" />
     </LinearLayout>
 
-    <!-- Update time -->
     <TextView
         android:id="@+id/update_time"
         android:layout_width="match_parent"

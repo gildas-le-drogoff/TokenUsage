@@ -1,0 +1,30 @@
+TokenUsage shows what is left of your AI subscriptions and API credits on a single dashboard: Claude, Codex (ChatGPT), Gemini, GitHub Copilot, Z.ai, DeepSeek, OpenRouter and OpenAI.
+
+<b>Features</b>
+
+<ul>
+<li>Quotas for Claude, Codex, Gemini, GitHub Copilot and Z.ai, with the reset time of every window</li>
+<li>Prepaid balances for DeepSeek and OpenRouter, spend for OpenAI and OpenRouter</li>
+<li>Several accounts per service for Claude, Z.ai and DeepSeek</li>
+<li>One colour code everywhere: green above 40 % left, amber between 15 and 40 %, red at 15 % or below</li>
+<li>Quotas read as "% left" or "% used"</li>
+<li>Display currency: the one billed by each provider, or everything converted to USD, EUR or CNY</li>
+<li>Daily and monthly consumption charts for DeepSeek</li>
+<li>Home screen widgets (quotas, compact quota, next reset, balances) and a Quick Settings tile</li>
+<li>Notifications for quota status and quota resets</li>
+<li>Background refresh at the interval you choose</li>
+<li>App lock with biometrics or the device screen lock</li>
+<li>Encrypted backup protected by a PIN, as a ZIP file or a QR code</li>
+<li>Material 3, light and dark themes, phone and tablet layouts</li>
+<li>English, French and Chinese</li>
+</ul>
+
+<b>Privacy</b>
+
+There is no backend server and no analytics. Your credentials are stored encrypted on the device, with a key held in the Android Keystore, and are only sent to the provider they belong to. The only other network requests are exchange rates from Frankfurter or the ECB, if you select one of them as the rate source.
+
+<b>Setup</b>
+
+Open Settings and enter the API key or token of each service you use. The project README explains where to find each one.
+
+TokenUsage is an Android port of the macOS app CodexBar by Peter Steinberger. It is not affiliated with Anthropic, OpenAI, Google, GitHub, Z.ai, DeepSeek or OpenRouter.

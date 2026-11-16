@@ -1,0 +1,105 @@
+package fr.gildasledrogoff.tokenusage.feature.dashboard
+
+import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
+import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
+import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionPoint
+import fr.gildasledrogoff.tokenusage.core.domain.model.FxRate
+import fr.gildasledrogoff.tokenusage.core.domain.model.SpendPeriod
+import fr.gildasledrogoff.tokenusage.core.domain.model.UsageSeverity
+import java.time.Instant
+
+sealed class DashboardUiState {
+    data object Loading : DashboardUiState()
+
+    data class Success(
+        val cards: List<ServiceCardData>,
+        val lastUpdated: Instant
+    ) : DashboardUiState()
+
+    data class PartialSuccess(
+        val cards: List<ServiceCardData>,
+        val errors: Map<AiService, AppError>
+    ) : DashboardUiState()
+
+    data class Error(val error: AppError) : DashboardUiState()
+}
+
+data class ServiceCardData(
+    val service: AiService,
+    val windows: List<UsageWindowUi>,
+    val extraUsage: ExtraUsageUi?,
+    val tier: String?,
+    val accountBalances: List<AccountBalanceUi> = emptyList(),
+    
+    val weeklyBreakdown: List<UsageBreakdownRowUi> = emptyList(),
+    
+    val spending: List<SpendRowUi> = emptyList(),
+    
+    val accountLabel: String? = null,
+    
+    val accountNumber: Int? = null,
+    val isLoading: Boolean = false,
+    val error: AppError? = null
+)
+
+data class UsageWindowUi(
+    val label: String,
+    val utilization: Double,
+    val resetsAt: Instant? = null,
+    val severity: UsageSeverity = UsageSeverity.NORMAL
+)
+
+data class UsageBreakdownRowUi(
+    val label: String,
+    val percent: Double
+)
+
+
+data class SpendRowUi(
+    val period: SpendPeriod,
+    val amount: Double,
+    val currency: String,
+    val rate: FxRate? = null
+)
+
+data class ExtraUsageUi(
+    val monthlyLimit: Double,
+    val usedCredits: Double,
+    val utilization: Double,
+    val currency: String,
+    
+    val rate: FxRate? = null
+)
+
+
+sealed interface ConsumptionChartUiState {
+    data object Idle : ConsumptionChartUiState
+    data object Loading : ConsumptionChartUiState
+    data class Ready(
+        val accounts: List<AccountConsumptionUi>,
+        val selectedAccountId: String
+    ) : ConsumptionChartUiState {
+        val selected: AccountConsumptionUi? get() = accounts.find { it.accountId == selectedAccountId }
+    }
+}
+
+
+data class AccountConsumptionUi(
+    val accountId: String,
+    val label: String,
+    val points: List<ConsumptionPoint>,
+    val currency: String
+)
+
+data class AccountBalanceUi(
+    val label: String,
+    val currency: String,
+    val totalBalance: Double,
+    val grantedBalance: Double?,
+    val toppedUpBalance: Double?,
+    val isAvailable: Boolean,
+    
+    val rate: FxRate? = null,
+    
+    val error: AppError? = null
+)

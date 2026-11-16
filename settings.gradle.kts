@@ -21,5 +21,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CodexBar"
+rootProject.name = "TokenUsage"
 include(":app")

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="250dp"
+    android:minWidth="110dp"
     android:minHeight="100dp"
-    android:minResizeWidth="250dp"
+    android:minResizeWidth="110dp"
     android:minResizeHeight="60dp"
     android:maxResizeWidth="530dp"
     android:maxResizeHeight="500dp"
@@ -12,6 +12,7 @@
     android:widgetCategory="home_screen"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_loading"
-    android:configure="com.codexbar.android.core.widget.WidgetConfigurationActivity"
+    android:configure="fr.gildasledrogoff.tokenusage.core.widget.WidgetConfigurationActivity"
     android:description="@string/widget_description"
+    android:previewImage="@drawable/widget_preview_main"
     android:previewLayout="@layout/widget_preview" />
