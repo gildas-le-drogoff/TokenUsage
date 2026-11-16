@@ -28,10 +28,10 @@ Builds:
       - yes
     antifeatures:
       NonFreeNet:
-        en-US: Only queries the proprietary APIs of the AI providers whose
-          quotas it displays.
+        en-US: Only queries the proprietary APIs of the AI providers whose quotas it displays.
 
-AllowedAPKSigningKeys: c7c81274ce25b84528a61864cdf1e8aedf56b2e2916f0b27448a999b762bcdd2
+AllowedAPKSigningKeys:
+  c7c81274ce25b84528a61864cdf1e8aedf56b2e2916f0b27448a999b762bcdd2
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
