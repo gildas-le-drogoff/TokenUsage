@@ -1,0 +1,404 @@
+package fr.gildasledrogoff.tokenusage.core.data
+
+import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
+import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
+import fr.gildasledrogoff.tokenusage.core.domain.model.ClaudeAccount
+import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
+import fr.gildasledrogoff.tokenusage.core.domain.model.ExtraUsage
+import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
+import fr.gildasledrogoff.tokenusage.core.domain.model.Result
+import fr.gildasledrogoff.tokenusage.core.domain.model.UsageBreakdownRow
+import fr.gildasledrogoff.tokenusage.core.domain.model.UsageSeverity
+import fr.gildasledrogoff.tokenusage.core.domain.model.UsageWindow
+import fr.gildasledrogoff.tokenusage.core.domain.repository.ClaudeQuotaRepository
+import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeApiService
+import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeDto
+import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeTokenRefreshService
+import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeWebApiService
+import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import java.io.IOException
+import java.time.Instant
+import java.time.OffsetDateTime
+import javax.inject.Inject
+
+
+class ClaudeRepositoryImpl @Inject constructor(
+    private val apiService: ClaudeApiService,
+    private val webApiService: ClaudeWebApiService,
+    private val tokenRefreshService: ClaudeTokenRefreshService,
+    private val prefsManager: EncryptedPrefsManager
+) : ClaudeQuotaRepository {
+
+    
+    override suspend fun fetchQuota(): Result<QuotaInfo, AppError> {
+        val account = prefsManager.getClaudeAccounts().firstOrNull()
+            ?: return Result.Failure(AppError.CredentialNotFound(AiService.CLAUDE))
+        return fetchQuotaForAccount(account)
+    }
+
+    override suspend fun fetchQuotaForAccount(account: ClaudeAccount): Result<QuotaInfo, AppError> {
+        return when (val credential = account.credential) {
+            is Credential.ClaudeWebCredential -> fetchQuotaViaWebSession(account.id, credential)
+            is Credential.ClaudeCredential -> fetchQuotaViaOAuth(account.id, credential)
+            else -> Result.Failure(AppError.CredentialNotFound(AiService.CLAUDE))
+        }
+    }
+
+    override suspend fun validateAccount(accountId: String): Result<Unit, AppError> {
+        val account = prefsManager.getClaudeAccounts().find { it.id == accountId }
+            ?: return Result.Failure(AppError.CredentialNotFound(AiService.CLAUDE))
+        return when (val result = fetchQuotaForAccount(account)) {
+            is Result.Success -> Result.Success(Unit)
+            is Result.Failure -> Result.Failure(result.error)
+        }
+    }
+
+    
+    private suspend fun fetchQuotaViaWebSession(
+        accountId: String,
+        credential: Credential.ClaudeWebCredential
+    ): Result<QuotaInfo, AppError> {
+        if (!credential.isValidSessionKey) {
+            return Result.Failure(AppError.AuthError(AiService.CLAUDE, isTerminal = true))
+        }
+        val cookie = ClaudeWebApiService.sessionCookie(credential.accessToken)
+
+        return try {
+            val cachedOrgId = prefsManager.getClaudeOrgId(accountId)
+            if (cachedOrgId != null) {
+                fetchWebUsage(accountId, cookie, cachedOrgId, allowOrgRetry = true)
+            } else {
+                val discovery = discoverOrg(cookie)
+                val orgId = discovery.orgId ?: return Result.Failure(
+                    revokedError(discovery.rawResponse)
+                        ?: AppError.AuthError(AiService.CLAUDE, isTerminal = true)
+                )
+                prefsManager.saveClaudeOrgId(accountId, orgId)
+                fetchWebUsage(accountId, cookie, orgId, allowOrgRetry = false)
+            }
+        } catch (e: IOException) {
+            Result.Failure(AppError.NetworkError(e.message ?: "Network error", e))
+        } catch (e: Exception) {
+            Result.Failure(AppError.ParseError(e.message ?: "Parse error", e))
+        }
+    }
+
+    
+    private suspend fun discoverOrg(cookie: String): OrgDiscovery {
+        val response = webApiService.getOrganizations(cookie)
+        val orgId = if (response.isSuccessful) {
+            val orgs = response.body()
+            val chatOrg = orgs?.firstOrNull { it.hasCapability("chat") }?.orgId
+            (chatOrg ?: orgs?.firstOrNull()?.orgId)?.takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
+        return OrgDiscovery(orgId, response)
+    }
+
+    private data class OrgDiscovery(val orgId: String?, val rawResponse: retrofit2.Response<*>)
+
+    private suspend fun fetchWebUsage(
+        accountId: String,
+        cookie: String,
+        orgId: String,
+        allowOrgRetry: Boolean
+    ): Result<QuotaInfo, AppError> {
+        val response = webApiService.getUsage(orgId, cookie)
+        return when (response.code()) {
+            200 -> {
+                val body = response.body()
+                    ?: return Result.Failure(AppError.ParseError("Empty response body"))
+                quotaResult(body, tier = null)
+            }
+            401 -> Result.Failure(AppError.AuthError(AiService.CLAUDE, isTerminal = true))
+            403 -> Result.Failure(
+                revokedError(response)
+                    ?: AppError.NetworkError("HTTP 403: ${response.message()}")
+            )
+            429 -> Result.Failure(AppError.RateLimited)
+            400, 404 -> {
+                if (allowOrgRetry) {
+                    prefsManager.clearClaudeOrgId(accountId)
+                    val discovery = discoverOrg(cookie)
+                    val freshOrgId = discovery.orgId ?: return Result.Failure(
+                        revokedError(discovery.rawResponse)
+                            ?: AppError.AuthError(AiService.CLAUDE, isTerminal = true)
+                    )
+                    prefsManager.saveClaudeOrgId(accountId, freshOrgId)
+                    fetchWebUsage(accountId, cookie, freshOrgId, allowOrgRetry = false)
+                } else {
+                    Result.Failure(AppError.NetworkError("HTTP ${response.code()}: ${response.message()}"))
+                }
+            }
+            else -> Result.Failure(AppError.NetworkError("HTTP ${response.code()}: ${response.message()}"))
+        }
+    }
+
+    private suspend fun fetchQuotaViaOAuth(
+        accountId: String,
+        credential: Credential.ClaudeCredential
+    ): Result<QuotaInfo, AppError> {
+        val workingCredential = ensureValidToken(accountId, credential)
+            ?: return Result.Failure(AppError.AuthError(AiService.CLAUDE, isTerminal = true))
+
+        return try {
+            val response = apiService.getUsage("Bearer ${workingCredential.accessToken}")
+
+            when (response.code()) {
+                200 -> {
+                    val body = response.body()
+                        ?: return Result.Failure(AppError.ParseError("Empty response body"))
+                    val discoveredTier = extractTierFromHeaders(response)
+                        ?: extractTierFromJwt(workingCredential.accessToken)
+                    val effectiveTier = discoveredTier ?: workingCredential.rateLimitTier
+                    if (discoveredTier != null && discoveredTier != workingCredential.rateLimitTier) {
+                        prefsManager.updateClaudeAccountCredential(
+                            accountId,
+                            workingCredential.copy(rateLimitTier = discoveredTier)
+                        )
+                    }
+                    quotaResult(body, effectiveTier)
+                }
+                401 -> {
+                    val refreshed = refreshToken(accountId, workingCredential)
+                    if (refreshed != null) {
+                        val retryResponse = apiService.getUsage("Bearer ${refreshed.accessToken}")
+                        when {
+                            retryResponse.isSuccessful -> {
+                                val body = retryResponse.body()
+                                    ?: return Result.Failure(AppError.ParseError("Empty response body"))
+                                val discoveredTier = extractTierFromHeaders(retryResponse)
+                                    ?: extractTierFromJwt(refreshed.accessToken)
+                                val effectiveTier = discoveredTier ?: refreshed.rateLimitTier
+                                if (discoveredTier != null && discoveredTier != refreshed.rateLimitTier) {
+                                    prefsManager.updateClaudeAccountCredential(
+                                        accountId,
+                                        refreshed.copy(rateLimitTier = discoveredTier)
+                                    )
+                                }
+                                quotaResult(body, effectiveTier)
+                            }
+                            retryResponse.code() == 403 -> Result.Failure(
+                                revokedError(retryResponse)
+                                    ?: AppError.AuthError(AiService.CLAUDE, isTerminal = true)
+                            )
+                            else -> Result.Failure(AppError.AuthError(AiService.CLAUDE, isTerminal = true))
+                        }
+                    } else {
+                        Result.Failure(AppError.AuthError(AiService.CLAUDE, isTerminal = true))
+                    }
+                }
+                429 -> Result.Failure(AppError.RateLimited)
+                403 -> Result.Failure(
+                    revokedError(response)
+                        ?: AppError.NetworkError("HTTP 403: ${response.message()}")
+                )
+                else -> Result.Failure(
+                    AppError.NetworkError("HTTP ${response.code()}: ${response.message()}")
+                )
+            }
+        } catch (e: IOException) {
+            Result.Failure(AppError.NetworkError(e.message ?: "Network error", e))
+        } catch (e: Exception) {
+            Result.Failure(AppError.ParseError(e.message ?: "Parse error", e))
+        }
+    }
+
+    
+    private fun revokedError(response: retrofit2.Response<*>): AppError? {
+        if (response.code() != 403) return null
+        val body = runCatching { response.errorBody()?.string().orEmpty() }.getOrDefault("")
+        val blockedByMiddleman = body.contains("<html", ignoreCase = true) ||
+            body.contains("cloudflare", ignoreCase = true)
+        return if (blockedByMiddleman) {
+            null
+        } else {
+            AppError.TokenRevoked(AiService.CLAUDE)
+        }
+    }
+
+    override suspend fun validateCredential(): Result<Unit, AppError> {
+        return when (val result = fetchQuota()) {
+            is Result.Success -> Result.Success(Unit)
+            is Result.Failure -> Result.Failure(result.error)
+        }
+    }
+
+    private suspend fun ensureValidToken(
+        accountId: String,
+        credential: Credential.ClaudeCredential
+    ): Credential.ClaudeCredential? {
+        val expiresAt = credential.expiresAt ?: return credential
+        if (Instant.now().isBefore(expiresAt.minusSeconds(60))) {
+            return credential
+        }
+        return refreshToken(accountId, credential)
+    }
+
+    private suspend fun refreshToken(
+        accountId: String,
+        credential: Credential.ClaudeCredential
+    ): Credential.ClaudeCredential? {
+        val refreshToken = credential.refreshToken ?: return null
+
+        return try {
+            val response = tokenRefreshService.refreshToken(refreshToken = refreshToken)
+            if (response.isSuccessful) {
+                val body = response.body() ?: return null
+                val newCredential = Credential.ClaudeCredential(
+                    accessToken = body.accessToken,
+                    refreshToken = body.refreshToken ?: refreshToken,
+                    expiresAt = Instant.now().plusSeconds(body.expiresIn.toLong()),
+                    scopes = credential.scopes,
+                    rateLimitTier = credential.rateLimitTier
+                )
+                prefsManager.updateClaudeAccountCredential(accountId, newCredential)
+                newCredential
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun extractTierFromHeaders(response: retrofit2.Response<*>): String? {
+        val raw = response.headers()["anthropic-ratelimit-tier"]
+            ?: response.headers()["x-ratelimit-tier"]
+            ?: return null
+        return raw.trim().replaceFirstChar { it.uppercase() }
+    }
+
+    private fun extractTierFromJwt(accessToken: String): String? {
+        return try {
+            val parts = accessToken.split(".")
+            if (parts.size != 3) return null
+            val payload = String(java.util.Base64.getUrlDecoder().decode(parts[1]))
+            val json = Json { ignoreUnknownKeys = true }
+            val obj = json.parseToJsonElement(payload).jsonObject
+            val tier = obj["rate_limit_tier"]?.jsonPrimitive?.content
+                ?: obj["rateLimitTier"]?.jsonPrimitive?.content
+                ?: return null
+            tier.replaceFirstChar { it.uppercase() }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    
+    private fun quotaResult(
+        body: ClaudeDto.OAuthUsageResponse,
+        tier: String?
+    ): Result<QuotaInfo, AppError> {
+        val quotaInfo = mapToQuotaInfo(body, tier)
+        if (quotaInfo.windows.isEmpty()) {
+            return Result.Failure(
+                AppError.ParseError("Usage response matched no known fields — API schema may have changed")
+            )
+        }
+        return Result.Success(quotaInfo)
+    }
+
+    private fun mapToQuotaInfo(response: ClaudeDto.OAuthUsageResponse, tier: String? = null): QuotaInfo {
+        val windows = buildList {
+            response.fiveHour?.let { add(mapWindow("5-Hour", it)) }
+            response.sevenDay?.let { add(mapWindow("7-Day", it)) }
+            response.sevenDayOauthApps?.let { add(mapWindow("OAuth Apps", it)) }
+            response.sevenDaySonnet?.let { add(mapWindow("Sonnet", it)) }
+            response.sevenDayOpus?.let { add(mapWindow("Opus", it)) }
+            response.sevenDayCowork?.let { add(mapWindow("Cowork", it)) }
+            response.sevenDayOmelette?.let { add(mapWindow("Claude Design", it)) }
+            response.omelettePromotional?.let { add(mapWindow("Claude Design (Promo)", it)) }
+            response.iguanaNecktie?.let { add(mapWindow("Extended", it)) }
+            appendStructuredLimits(this, response.limits)
+        }
+
+        val extraUsage = response.extraUsage?.takeIf { it.isEnabled }?.let {
+            ExtraUsage(
+                isEnabled = it.isEnabled,
+                monthlyLimit = it.monthlyLimit,
+                usedCredits = it.usedCredits,
+                utilization = it.utilization,
+                currency = it.currency
+            )
+        }
+
+        val weeklyBreakdown = response.sevenDayBreakdown?.rows
+            ?.mapNotNull { row ->
+                row.displayName?.takeIf { it.isNotBlank() }?.let { UsageBreakdownRow(it, row.percent) }
+            }
+            .orEmpty()
+
+        return QuotaInfo(
+            service = AiService.CLAUDE,
+            windows = windows,
+            extraUsage = extraUsage,
+            tier = tier,
+            weeklyBreakdown = weeklyBreakdown,
+            fetchedAt = Instant.now()
+        )
+    }
+
+    
+    private fun appendStructuredLimits(
+        builder: MutableList<UsageWindow>,
+        limits: List<ClaudeDto.OAuthLimit>
+    ) {
+        for (limit in limits) {
+            val label = limitLabel(limit) ?: continue
+            if (builder.any { it.label == label }) continue
+            builder.add(
+                UsageWindow(
+                    label = label,
+                    utilization = (limit.percent / 100.0).coerceIn(0.0, 1.0),
+                    resetsAt = limit.resetsAt?.let { parseInstant(it) },
+                    severity = mapSeverity(limit.severity)
+                )
+            )
+        }
+    }
+
+    
+    private fun limitLabel(limit: ClaudeDto.OAuthLimit): String? {
+        limit.scope?.model?.displayName?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+        limit.scope?.surface?.displayName?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+        return when (limit.kind) {
+            "session" -> "5-Hour"
+            "weekly_all" -> "7-Day"
+            "weekly_scoped" -> "Weekly scoped"
+            null -> null
+            else -> humanizeUsageKey(limit.kind)
+        }
+    }
+
+    private fun humanizeUsageKey(key: String): String =
+        key.split("_").joinToString(" ") { part ->
+            part.replaceFirstChar { it.uppercase() }
+        }
+
+    private fun mapSeverity(severity: String?): UsageSeverity = when (severity) {
+        "warning" -> UsageSeverity.WARNING
+        "critical" -> UsageSeverity.CRITICAL
+        else -> UsageSeverity.NORMAL
+    }
+
+    private fun mapWindow(label: String, window: ClaudeDto.OAuthUsageWindow): UsageWindow {
+        return UsageWindow(
+            label = label,
+            utilization = ((window.utilization ?: 0.0) / 100.0).coerceIn(0.0, 1.0),
+            resetsAt = window.resetsAt?.let { parseInstant(it) },
+            severity = if (window.lockedReason != null) UsageSeverity.CRITICAL else UsageSeverity.NORMAL
+        )
+    }
+
+    
+    private fun parseInstant(isoString: String): Instant? {
+        val offsetParsed = runCatching { OffsetDateTime.parse(isoString).toInstant() }.getOrNull()
+        if (offsetParsed != null) return offsetParsed
+        return runCatching { Instant.parse(isoString) }.getOrNull()
+    }
+}

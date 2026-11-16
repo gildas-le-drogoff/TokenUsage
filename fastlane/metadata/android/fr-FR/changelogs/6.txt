@@ -1,0 +1,6 @@
+Première version préparée pour F-Droid.
+
+- Quotas et soldes pour Claude, Codex, Gemini, GitHub Copilot, Z.ai, DeepSeek, OpenRouter et OpenAI
+- Widgets d'écran d'accueil et tuile de Réglages rapides
+- Verrouillage de l'application et sauvegarde chiffrée
+- APK universel unique (arm64-v8a et armeabi-v7a) à build reproductible

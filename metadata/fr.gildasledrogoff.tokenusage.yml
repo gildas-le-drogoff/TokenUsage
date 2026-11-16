@@ -1,0 +1,39 @@
+Categories:
+  - AI Chat
+  - Internet
+License: GPL-3.0-or-later
+AuthorName: Gildas Le Drogoff
+AuthorWebSite: https://gildas.le-drogoff.fr/
+WebSite: https://github.com/gildas-le-drogoff/TokenUsage
+SourceCode: https://github.com/gildas-le-drogoff/TokenUsage
+IssueTracker: https://github.com/gildas-le-drogoff/TokenUsage/issues
+Changelog: https://github.com/gildas-le-drogoff/TokenUsage/releases
+
+AutoName: TokenUsage
+
+RepoType: git
+Repo: https://github.com/gildas-le-drogoff/TokenUsage.git
+Binaries: https://github.com/gildas-le-drogoff/TokenUsage/releases/download/v%v/TokenUsage-%v.apk
+
+Builds:
+  - versionName: 0.0.6-beta
+    versionCode: 6
+    commit: v0.0.6-beta
+    subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-25-jdk-headless
+      - update-java-alternatives -a
+    gradle:
+      - yes
+    antifeatures:
+      NonFreeNet:
+        en-US: Only queries the proprietary APIs of the AI providers whose
+          quotas it displays.
+
+AllowedAPKSigningKeys: 077769352e45ada735f2cad872b638d9f0832156506dbfb065ae6ee4bf202c8c
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]*)?$
+CurrentVersion: 0.0.6-beta
+CurrentVersionCode: 6

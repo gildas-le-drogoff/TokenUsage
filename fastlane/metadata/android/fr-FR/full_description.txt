@@ -1,0 +1,30 @@
+TokenUsage affiche ce qu'il reste de vos abonnements IA et de vos crédits d'API sur un seul tableau de bord : Claude, Codex (ChatGPT), Gemini, GitHub Copilot, Z.ai, DeepSeek, OpenRouter et OpenAI.
+
+<b>Fonctionnalités</b>
+
+<ul>
+<li>Quotas Claude, Codex, Gemini, GitHub Copilot et Z.ai, avec l'heure de réinitialisation de chaque fenêtre</li>
+<li>Soldes prépayés DeepSeek et OpenRouter, dépenses OpenAI et OpenRouter</li>
+<li>Plusieurs comptes par service pour Claude, Z.ai et DeepSeek</li>
+<li>Un seul code couleur partout : vert au-dessus de 40 % restants, ambre entre 15 et 40 %, rouge à 15 % ou moins</li>
+<li>Lecture des quotas en « % restant » ou « % utilisé »</li>
+<li>Devise d'affichage : celle facturée par chaque fournisseur, ou tout converti en USD, EUR ou CNY</li>
+<li>Graphiques de consommation journalière et mensuelle pour DeepSeek</li>
+<li>Widgets d'écran d'accueil (quotas, quota compact, prochaine réinitialisation, soldes) et tuile de réglages rapides</li>
+<li>Notifications d'état des quotas et de réinitialisation</li>
+<li>Actualisation en arrière-plan à l'intervalle de votre choix</li>
+<li>Verrouillage de l'app par biométrie ou par le verrouillage d'écran de l'appareil</li>
+<li>Sauvegarde chiffrée protégée par un code PIN, en fichier ZIP ou en QR code</li>
+<li>Material 3, thèmes clair et sombre, mises en page téléphone et tablette</li>
+<li>Français, anglais et chinois</li>
+</ul>
+
+<b>Vie privée</b>
+
+Aucun serveur intermédiaire, aucune statistique d'usage. Vos identifiants sont stockés chiffrés sur l'appareil, avec une clé conservée dans l'Android Keystore, et ne sont envoyés qu'au fournisseur auquel ils appartiennent. Les seules autres requêtes réseau sont les taux de change de Frankfurter ou de la BCE, si vous choisissez l'une de ces sources.
+
+<b>Configuration</b>
+
+Ouvrez les Paramètres et saisissez la clé d'API ou le jeton de chaque service utilisé. Le README du projet explique où trouver chacun d'eux.
+
+TokenUsage est un portage Android de l'application macOS CodexBar de Peter Steinberger. Il n'est affilié ni à Anthropic, ni à OpenAI, Google, GitHub, Z.ai, DeepSeek ou OpenRouter.
