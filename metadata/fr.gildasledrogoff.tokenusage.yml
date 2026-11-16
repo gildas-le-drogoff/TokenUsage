@@ -16,9 +16,9 @@ Repo: https://github.com/gildas-le-drogoff/TokenUsage.git
 Binaries: https://github.com/gildas-le-drogoff/TokenUsage/releases/download/v%v/TokenUsage-%v.apk
 
 Builds:
-  - versionName: 0.1.0
-    versionCode: 10
-    commit: 2a49d4c40aff46579eb87507d35857a52472fe08
+  - versionName: 0.1.1
+    versionCode: 11
+    commit: 5a24bb88d22dab944ca65f17e81e3ea55b35bf59
     subdir: app
     sudo:
       - apt-get update
@@ -35,5 +35,5 @@ AllowedAPKSigningKeys:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
-CurrentVersion: 0.1.0
-CurrentVersionCode: 10
+CurrentVersion: 0.1.1
+CurrentVersionCode: 11
