@@ -18,7 +18,7 @@ Binaries: https://github.com/gildas-le-drogoff/TokenUsage/releases/download/v%v/
 Builds:
   - versionName: 0.1.0
     versionCode: 10
-    commit: e2750f4d3164333f7dabbe7e2ccf631ed3dd271b
+    commit: 2a49d4c40aff46579eb87507d35857a52472fe08
     subdir: app
     sudo:
       - apt-get update
