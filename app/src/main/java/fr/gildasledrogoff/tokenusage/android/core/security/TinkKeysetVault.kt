@@ -40,11 +40,17 @@ internal class TinkKeysetVault(
             return TinkProtoKeysetFormat.parseEncryptedKeyset(
                 Base64.getDecoder().decode(stored),
                 masterKey,
-                associatedData
+                associatedData,
+                RegistryConfiguration.get()
             )
         }
-        val handle = KeysetHandle.generateNew(parameters)
-        val wrapped = TinkProtoKeysetFormat.serializeEncryptedKeyset(handle, masterKey, associatedData)
+        val handle = KeysetHandle.generateNew(parameters, RegistryConfiguration.get())
+        val wrapped = TinkProtoKeysetFormat.serializeEncryptedKeyset(
+            handle,
+            masterKey,
+            associatedData,
+            RegistryConfiguration.get()
+        )
         check(storage.edit().putString(name, Base64.getEncoder().encodeToString(wrapped)).commit()) {
             "Unable to persist keyset $name"
         }

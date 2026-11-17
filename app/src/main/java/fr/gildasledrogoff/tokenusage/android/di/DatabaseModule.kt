@@ -41,7 +41,7 @@ object DatabaseModule {
 
         return Room.databaseBuilder(context, TokenUsageDatabase::class.java, DATABASE_NAME)
             .openHelperFactory(SupportOpenHelperFactory(key.rawKey, MemorySecurityHook, false))
-            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
 

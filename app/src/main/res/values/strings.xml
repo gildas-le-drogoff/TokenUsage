@@ -130,7 +130,7 @@
     <string name="field_api_key_zai_hint">From z.ai/manage-apikey/apikey-list</string>
 
     <string name="claude_sign_in">Sign in with Claude</string>
-    <string name="claude_sign_in_hint">Opens claude.ai in an embedded view — log in once and the app captures the session key (sk-ant-sid02-…) automatically, no copy-pasting. Recommended over OAuth tokens: it never rotates, so it can\'t be invalidated by the desktop CLI\'s token refresh.</string>
+    <string name="claude_sign_in_hint">Opens claude.ai in an embedded view: log in once and the app captures the session key (sk-ant-sid02-…) automatically. Recommended over OAuth: it never rotates, so the desktop CLI can\'t invalidate it.</string>
     <string name="field_session_key">Session Key (manual paste)</string>
     <string name="field_session_key_hint">Or paste the cookie manually: claude.ai sessionKey (sk-ant-sid01-… or sk-ant-sid02-…).</string>
     <string name="claude_login_title">Sign in to Claude</string>
@@ -160,7 +160,7 @@
     <string name="qr_dialog_warning">Anyone who captures this image and knows the PIN can read your credentials.</string>
 
     <string name="import_title">Import</string>
-    <string name="import_description">Restore an encrypted backup made by TokenUsage: a ZIP file (everything, including the usage history) or the QR code shown on another device. Credentials in the backup replace this device\'s ones for the same services; DeepSeek / Z.ai accounts and the history are merged.</string>
+    <string name="import_description">Restore an encrypted backup: a ZIP file (history included) or the QR code from another device. Backup credentials replace this device\'s.</string>
     <string name="action_import_qr">Scan QR</string>
     <string name="import_scan_prompt">Point the camera at the TokenUsage configuration QR code</string>
     <string name="import_dialog_title">Import configuration</string>
@@ -210,12 +210,12 @@
 
     <string name="notif_permission_required">Notification permission required for background quota updates</string>
     <string name="battery_dialog_title">Background refresh</string>
-    <string name="battery_dialog_text">Exempting TokenUsage from battery optimization keeps the scheduled refresh of quotas and tokens reliable.\n\nIf you decline, Android may delay or skip background refreshes (Doze, standby, manufacturer power saving): the notification, widgets and tile may then show outdated quotas until you open the app. You can change this later in Settings.</string>
+    <string name="battery_dialog_text">Exempting TokenUsage from battery optimization keeps scheduled refreshes reliable.\n\nOtherwise Android may delay them, and the notification, widgets and tile may show outdated quotas.</string>
     <string name="battery_dialog_decline">No thanks</string>
     <string name="battery_section_title">Battery optimization</string>
     <string name="battery_status_exempt">TokenUsage is exempt from battery optimization.</string>
     <string name="battery_status_optimized">TokenUsage is subject to battery optimization.</string>
-    <string name="battery_warning_optimized">Background refreshes may be delayed by several hours or skipped (Doze, standby, manufacturer power saving). The notification, widgets and tile may show outdated quotas, and reset alerts may arrive late, until you open the app.</string>
+    <string name="battery_warning_optimized">Background refreshes may be delayed by hours or skipped (Doze, power saving). The notification, widgets and tile may show outdated quotas, and reset alerts may arrive late, until you open the app.</string>
     <string name="battery_hint_exempt">Scheduled refreshes run at the chosen interval. You can withdraw the exemption from the Android battery settings.</string>
     <string name="battery_hint_manual">Manual refresh: no background refresh is scheduled, the exemption is not needed.</string>
     <string name="battery_action_exempt">Exempt</string>
@@ -263,7 +263,7 @@
     <string name="error_invalid_api_key">Invalid API key</string>
 
     <string name="integrity_title">Untrusted device</string>
-    <string name="integrity_message">TokenUsage detected an environment that could expose your credentials. An app with root rights or an injection tool could read them. If you control this device (e.g. a custom ROM such as LineageOS), you can still use TokenUsage.</string>
+    <string name="integrity_message">TokenUsage detected an environment that could expose your credentials: a rooted app or an injection tool could read them. If you control this device (e.g. a custom ROM), you can still use TokenUsage.</string>
     <string name="integrity_threats_header">Detected:</string>
     <string name="integrity_threat_root">Root access</string>
     <string name="integrity_threat_hooking">Code injection framework (Frida, Xposed…)</string>
@@ -327,7 +327,7 @@
     <string name="spend_last_30_days">Last 30 days</string>
     <string name="copilot_hint">Monthly premium requests and chat quota of your GitHub Copilot plan</string>
     <string name="openrouter_hint">Key spending cap, credit balance and spend (openrouter.ai/settings/keys)</string>
-    <string name="openai_hint">API Platform spend (not ChatGPT/Codex limits). Requires an organization Admin key: platform.openai.com/settings/organization/admin-keys</string>
+    <string name="openai_hint">API Platform spend. Requires an organization Admin key: platform.openai.com/settings/organization/admin-keys</string>
     <string name="field_github_token">GitHub token</string>
     <string name="field_github_token_hint">Filled in by GitHub sign-in, or paste a token</string>
     <string name="field_openai_admin_key">Admin API key</string>
@@ -358,7 +358,7 @@
     <string name="display_quota">Quota reading</string>
     <string name="quota_mode_remaining">% left</string>
     <string name="quota_mode_used">% used</string>
-    <string name="display_quota_hint">Applies to every capped quota (Claude, Codex, Gemini, Z.ai, Copilot, OpenRouter key limit), widget and notification included. Prepaid balances (DeepSeek, OpenRouter credits) and spend (OpenAI) stay shown as amounts: without a known cap or starting balance, no percentage can be computed.</string>
+    <string name="display_quota_hint">Applies to every capped quota, widget and notification included. Prepaid balances and spend stay as amounts: no cap, no percentage.</string>
     <string name="gauge_used_suffix">used</string>
     <string name="gauge_cd_used">%1$s: %2$d%% used, %3$s</string>
     <string name="quota_legend_title_used">Used:</string>

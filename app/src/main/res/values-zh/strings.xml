@@ -128,7 +128,7 @@
     <string name="field_api_key_zai_hint">来自 z.ai/manage-apikey/apikey-list</string>
 
     <string name="claude_sign_in">使用 Claude 登录</string>
-    <string name="claude_sign_in_hint">在内嵌视图中打开 claude.ai — 只需登录一次，应用会自动捕获会话密钥（sk-ant-sid02-…），无需复制粘贴。推荐使用它而非 OAuth 令牌：会话密钥不会轮换，因此不会因桌面 CLI 刷新令牌而失效。</string>
+    <string name="claude_sign_in_hint">使用账号凭据登录。推荐使用它而非 OAuth：不会被登出。</string>
     <string name="field_session_key">会话密钥（手动粘贴）</string>
     <string name="field_session_key_hint">或手动粘贴 cookie：claude.ai 的 sessionKey（sk-ant-sid01-… 或 sk-ant-sid02-…）。</string>
     <string name="claude_login_title">登录 Claude</string>
@@ -158,7 +158,7 @@
     <string name="qr_dialog_warning">任何截取此图片并知道 PIN 码的人都能读取你的凭据。</string>
 
     <string name="import_title">导入</string>
-    <string name="import_description">恢复由 TokenUsage 创建的加密备份：ZIP 文件（全部内容，包括消费历史）或其他设备上显示的二维码。备份中的凭据会替换本设备上相同服务的凭据；DeepSeek / Z.ai 账号和历史记录会合并。</string>
+    <string name="import_description">恢复加密备份：ZIP 文件（含历史记录）或其他设备上的二维码。备份中的凭据将替换本设备的凭据。</string>
     <string name="action_import_qr">扫描二维码</string>
     <string name="import_scan_prompt">将相机对准 TokenUsage 配置二维码</string>
     <string name="import_dialog_title">导入配置</string>
@@ -178,7 +178,6 @@
         <item quantity="other">已导入配置：%1$d 个凭据</item>
     </plurals>
 
-    <!-- Debug sample data: fake account labels, localized like the rest -->
     <string name="demo_claude_personal">Claude 个人</string>
     <string name="demo_claude_work">Claude 工作</string>
     <string name="demo_account_main">个人</string>
@@ -198,20 +197,18 @@
     <string name="widget_config_compact_hint">此 2×2 小组件仅显示一个服务：请只选择一个。</string>
     <string name="widget_config_main_hint">窄布局（4×1）仅显示第一个服务；4×2 及更大尺寸会滚动显示所有已选服务。</string>
     <string name="widget_balance_error">%1$s：错误</string>
-    <!-- Static texts of the widget picker preview layout (layout/widget_preview.xml).
-         formatted="false": literal % signs, these strings are never formatted. -->
     <string name="widget_preview_left_42" formatted="false">剩余 42%</string>
     <string name="widget_preview_left_93" formatted="false">剩余 93%</string>
     <string name="widget_preview_left_100" formatted="false">剩余 100%</string>
 
     <string name="notif_permission_required">需要通知权限才能在后台更新配额</string>
     <string name="battery_dialog_title">后台刷新</string>
-    <string name="battery_dialog_text">将 TokenUsage 排除在电池优化之外，可确保配额和令牌的定时刷新稳定可靠。\n\n如果拒绝，Android 可能会延迟或跳过后台刷新（Doze、待机、厂商省电策略）：在您打开应用之前，通知、小组件和快捷设置图块可能显示过时的配额。您之后可以在设置中更改此选择。</string>
+    <string name="battery_dialog_text">将其排除在电池优化之外可确保刷新稳定可靠。\n\n否则 Android 可能会延迟刷新：通知、小组件和图块可能显示过时的配额。</string>
     <string name="battery_dialog_decline">不用了</string>
     <string name="battery_section_title">电池优化</string>
     <string name="battery_status_exempt">TokenUsage 已被排除在电池优化之外。</string>
     <string name="battery_status_optimized">TokenUsage 受电池优化限制。</string>
-    <string name="battery_warning_optimized">后台刷新可能被延迟数小时或被跳过（Doze、待机、厂商省电策略）。在您打开应用之前，通知、小组件和图块可能显示过时的配额，重置提醒也可能延迟。</string>
+    <string name="battery_warning_optimized">后台刷新可能被延迟数小时或被跳过（Doze、省电模式）。通知、小组件和图块可能显示过时的配额。</string>
     <string name="battery_hint_exempt">定时刷新按所选间隔运行。您可以在 Android 电池设置中撤销此豁免。</string>
     <string name="battery_hint_manual">手动刷新：不会安排后台刷新，无需豁免。</string>
     <string name="battery_action_exempt">豁免</string>
@@ -257,7 +254,7 @@
     <string name="error_invalid_api_key">API 密钥无效</string>
 
     <string name="integrity_title">不受信任的设备</string>
-    <string name="integrity_message">TokenUsage 检测到可能暴露你凭据的环境。拥有 Root 权限的应用或注入工具可能读取你的凭据。如果你完全掌控此设备（例如 LineageOS 等自定义 ROM），仍可继续使用 TokenUsage。</string>
+    <string name="integrity_message">TokenUsage 检测到可能暴露你凭据的环境：Root 应用或注入工具可能读取这些凭据。如果你掌控此设备，仍可使用。</string>
     <string name="integrity_threats_header">检测到：</string>
     <string name="integrity_threat_root">Root 权限</string>
     <string name="integrity_threat_hooking">代码注入框架（Frida、Xposed…）</string>
@@ -352,7 +349,7 @@
     <string name="display_quota">配额读数</string>
     <string name="quota_mode_remaining">剩余 %</string>
     <string name="quota_mode_used">已用 %</string>
-    <string name="display_quota_hint">适用于所有有上限的配额（Claude、Codex、Gemini、Z.ai、Copilot、OpenRouter 密钥上限），包括小组件和通知。预付余额（DeepSeek、OpenRouter 额度）和支出（OpenAI）仍以金额显示：在未知上限或起始余额时，无法计算百分比。</string>
+    <string name="display_quota_hint">适用于有上限的配额（Claude、Codex、Gemini、Z.ai、Copilot、OpenRouter 密钥），包括小组件和通知。预付余额和支出仍以金额显示：没有上限就无法计算百分比。</string>
     <string name="gauge_used_suffix">已用</string>
     <string name="gauge_cd_used">%1$s：已用 %2$d%%，%3$s</string>
     <string name="quota_legend_title_used">已用：</string>
@@ -364,7 +361,7 @@
     <string name="screen_credits_title">致谢与署名</string>
     <string name="credits_logo_cd">开发者徽标</string>
     <string name="credits_developer_role">Android 开发者 &amp; TokenUsage 作者</string>
-    <string name="credits_promo">TokenUsage 用心打造，并保持免费开源。如果它帮你节省了时间，在 GitHub 上点个星是最好的支持。有 Android 项目想法？欢迎联系！</string>
+    <string name="credits_promo">TokenUsage 用心打造，免费且开源。如果它帮你节省了时间，在 GitHub 上点个星是最好的支持。有 Android 项目想法？欢迎联系！</string>
     <string name="credits_visit_profile">访问我的 GitHub 主页</string>
     <string name="credits_star_project">在 GitHub 上为 TokenUsage 加星</string>
     <string name="credits_attributions_title">署名</string>

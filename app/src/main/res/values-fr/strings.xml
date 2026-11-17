@@ -129,7 +129,7 @@
     <string name="field_api_key_zai_hint">Depuis z.ai/manage-apikey/apikey-list</string>
 
     <string name="claude_sign_in">Se connecter avec Claude</string>
-    <string name="claude_sign_in_hint">Ouvre claude.ai dans une vue intégrée — connectez-vous une fois et l\'app capture la clé de session (sk-ant-sid02-…) automatiquement, sans copier-coller. Recommandé plutôt que les jetons OAuth : elle n\'est jamais renouvelée et ne peut donc pas être invalidée par le rafraîchissement de jetons du CLI desktop.</string>
+    <string name="claude_sign_in_hint">Se connecter avec ses identifiants. Recommandé plutôt qu\'OAuth : pas de déconnexion.</string>
     <string name="field_session_key">Clé de session (collage manuel)</string>
     <string name="field_session_key_hint">Ou collez le cookie manuellement : sessionKey de claude.ai (sk-ant-sid01-… ou sk-ant-sid02-…).</string>
     <string name="claude_login_title">Connexion à Claude</string>
@@ -159,7 +159,7 @@
     <string name="qr_dialog_warning">Quiconque capture cette image et connaît le PIN peut lire vos identifiants.</string>
 
     <string name="import_title">Import</string>
-    <string name="import_description">Restaure une sauvegarde chiffrée créée par TokenUsage : un fichier ZIP (tout, y compris l\'historique de consommation) ou le QR code affiché sur un autre appareil. Les identifiants de la sauvegarde remplacent ceux de cet appareil pour les mêmes services ; les comptes DeepSeek / Z.ai et l\'historique sont fusionnés.</string>
+    <string name="import_description">Restaure une sauvegarde chiffrée : fichier ZIP (historique inclus) ou QR code d\'un autre appareil. Ses identifiants remplacent ceux de l\'appareil.</string>
     <string name="action_import_qr">Scanner QR</string>
     <string name="import_scan_prompt">Visez le QR code de configuration TokenUsage</string>
     <string name="import_dialog_title">Importer la configuration</string>
@@ -181,7 +181,6 @@
         <item quantity="other">Configuration importée : %1$d identifiants</item>
     </plurals>
 
-    <!-- Données d'exemple (debug) : libellés fictifs, localisés comme le reste -->
     <string name="demo_claude_personal">Claude perso</string>
     <string name="demo_claude_work">Claude boulot</string>
     <string name="demo_account_main">Perso</string>
@@ -201,20 +200,18 @@
     <string name="widget_config_compact_hint">Ce widget 2×2 n\'affiche qu\'un seul service : n\'en choisissez qu\'un.</string>
     <string name="widget_config_main_hint">Les formats étroits (4×1) n\'affichent que le premier service ; à partir du 4×2, tous les services sélectionnés s\'affichent, avec défilement.</string>
     <string name="widget_balance_error">%1$s : erreur</string>
-    <!-- Textes statiques de l'aperçu du widget dans le sélecteur (layout/widget_preview.xml).
-         formatted="false" : % littéraux, ces chaînes ne sont jamais formatées. -->
     <string name="widget_preview_left_42" formatted="false">42% restants</string>
     <string name="widget_preview_left_93" formatted="false">93% restants</string>
     <string name="widget_preview_left_100" formatted="false">100% restants</string>
 
     <string name="notif_permission_required">L\'autorisation de notification est requise pour l\'actualisation des quotas en arrière-plan</string>
     <string name="battery_dialog_title">Actualisation en arrière-plan</string>
-    <string name="battery_dialog_text">Exempter TokenUsage de l\'optimisation de batterie rend fiable l\'actualisation programmée des quotas et des jetons.\n\nSi vous refusez, Android peut retarder ou sauter les actualisations en arrière-plan (Doze, mise en veille, économie d\'énergie du constructeur) : la notification, les widgets et la tuile peuvent alors afficher des quotas périmés jusqu\'à ce que vous ouvriez l\'app. Vous pourrez changer ce choix dans les Paramètres.</string>
+    <string name="battery_dialog_text">L\'exemption de l\'optimisation batterie fiabilise l\'actualisation.\n\nSinon, Android peut la retarder : notification, widgets et tuile risquent d\'afficher des quotas périmés.</string>
     <string name="battery_dialog_decline">Non merci</string>
     <string name="battery_section_title">Optimisation de batterie</string>
     <string name="battery_status_exempt">TokenUsage est exempté de l\'optimisation de batterie.</string>
     <string name="battery_status_optimized">TokenUsage est soumis à l\'optimisation de batterie.</string>
-    <string name="battery_warning_optimized">Les actualisations en arrière-plan peuvent être retardées de plusieurs heures ou sautées (Doze, mise en veille, économie d\'énergie du constructeur). La notification, les widgets et la tuile peuvent afficher des quotas périmés, et les alertes de réinitialisation arriver en retard, jusqu\'à ce que vous ouvriez l\'app.</string>
+    <string name="battery_warning_optimized">Les actualisations en arrière-plan peuvent être retardées de plusieurs heures ou sautées (Doze, économie d\'énergie). Notification, widgets et tuile peuvent afficher des quotas périmés.</string>
     <string name="battery_hint_exempt">Les actualisations programmées suivent l\'intervalle choisi. Vous pouvez retirer l\'exemption depuis les paramètres de batterie d\'Android.</string>
     <string name="battery_hint_manual">Actualisation manuelle : aucune actualisation n\'est programmée en arrière-plan, l\'exemption est inutile.</string>
     <string name="battery_action_exempt">Exempter</string>
@@ -262,7 +259,7 @@
     <string name="error_invalid_api_key">Clé API invalide</string>
 
     <string name="integrity_title">Appareil non fiable</string>
-    <string name="integrity_message">TokenUsage a détecté un environnement susceptible d\'exposer vos identifiants. Une application disposant des droits root ou un outil d\'injection pourrait les lire. Si vous maîtrisez cet appareil (ROM personnalisée comme LineageOS, par exemple), vous pouvez quand même utiliser TokenUsage.</string>
+    <string name="integrity_message">TokenUsage a détecté un environnement susceptible d\'exposer vos identifiants : une app root ou un outil d\'injection pourrait les lire. Si vous maîtrisez cet appareil, vous pouvez l\'utiliser.</string>
     <string name="integrity_threats_header">Détecté :</string>
     <string name="integrity_threat_root">Accès root</string>
     <string name="integrity_threat_hooking">Framework d\'injection de code (Frida, Xposed…)</string>
@@ -357,7 +354,7 @@
     <string name="display_quota">Lecture des quotas</string>
     <string name="quota_mode_remaining">% restant</string>
     <string name="quota_mode_used">% utilisé</string>
-    <string name="display_quota_hint">S\'applique à tous les quotas plafonnés (Claude, Codex, Gemini, Z.ai, Copilot, limite de clé OpenRouter), widget et notification compris. Les soldes prépayés (DeepSeek, crédits OpenRouter) et les dépenses (OpenAI) restent affichés en montant : sans plafond ni solde de départ connus, aucun pourcentage n\'est calculable.</string>
+    <string name="display_quota_hint">S\'applique aux quotas plafonnés (Claude, Codex, Gemini, Z.ai, Copilot, clé OpenRouter), widget et notification compris. Soldes prépayés et dépenses restent en montant : sans plafond, pas de pourcentage.</string>
     <string name="gauge_used_suffix">utilisé</string>
     <string name="gauge_cd_used">%1$s : %2$d\u00A0%% utilisé, %3$s</string>
     <string name="quota_legend_title_used">Utilisé :</string>
@@ -369,7 +366,7 @@
     <string name="screen_credits_title">Crédits et attributions</string>
     <string name="credits_logo_cd">Logo du développeur</string>
     <string name="credits_developer_role">Développeur Android &amp; créateur de TokenUsage</string>
-    <string name="credits_promo">TokenUsage est conçu avec soin et reste gratuit et open source. Si l\'application vous fait gagner du temps, une étoile sur GitHub est le meilleur moyen de la soutenir. Un projet Android en tête ? Parlons-en !</string>
+    <string name="credits_promo">TokenUsage est conçu avec soin, gratuit et open source. Si l\'application vous fait gagner du temps, une étoile sur GitHub est le meilleur moyen de la soutenir. Un projet Android en tête ? Parlons-en !</string>
     <string name="credits_visit_profile">Visiter mon profil GitHub</string>
     <string name="credits_star_project">Mettre une étoile à TokenUsage</string>
     <string name="credits_attributions_title">Attributions</string>

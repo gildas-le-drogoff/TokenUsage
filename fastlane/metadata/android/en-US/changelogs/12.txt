@@ -1,0 +1,3 @@
+- New credits and attributions screen
+- Settings and dashboard: selectors replaced by chips, layouts that wrap on narrow screens
+- Shorter English and French strings
