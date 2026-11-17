@@ -41,14 +41,13 @@ EOF
 	echo "⚠️  Les perdre, c'est perdre la clé d'upload Play.${NC}"
 fi
 
-./gradlew assembleDebug assembleRelease assembleStaging --console=plain
+./gradlew assembleDebug assembleRelease --console=plain
 
 RELEASE_APK="${APK_OUT}/release/app-release.apk"
 VERSION_NAME="$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' app/build.gradle.kts)"
 cp "$RELEASE_APK" "${NAME}.apk"
 cp "$RELEASE_APK" "TokenUsage-${VERSION_NAME}.apk"
 cp "${APK_OUT}/debug/app-debug.apk" "${NAME}_debug.apk"
-cp "${APK_OUT}/staging/app-staging.apk" "${NAME}_staging.apk"
 echo "${GREEN}✅ APK copiés : $(echo "${NAME}"*.apk)${NC}"
 
 DEST="${SYNC_DIR}"

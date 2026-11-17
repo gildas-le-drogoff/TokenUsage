@@ -13,14 +13,71 @@ class BackupCryptoTest {
     private val payload = """{"hello":"tokenusage","tokens":["sk-ant","ghp_x"],"n":42}""".toByteArray()
 
     @Test
-    fun `pin policy requires digits only and at least 3 characters`() {
-        assertFalse(BackupCrypto.isValidPin(""))
-        assertFalse(BackupCrypto.isValidPin("12"))
-        assertTrue(BackupCrypto.isValidPin("123"))
-        assertTrue(BackupCrypto.isValidPin("0004829"))
-        assertFalse(BackupCrypto.isValidPin("12a"))
-        assertFalse(BackupCrypto.isValidPin("12 3"))
-        assertFalse(BackupCrypto.isValidPin("1234-"))
+    fun `password policy accepts any character with at least 6 characters`() {
+        assertFalse(BackupCrypto.isValidPassword(""))
+        assertFalse(BackupCrypto.isValidPassword("12345"))
+        assertTrue(BackupCrypto.isValidPassword("123456"))
+        assertTrue(BackupCrypto.isValidPassword("ab cd!"))
+        assertTrue(BackupCrypto.isValidPassword("      "))
+        assertTrue(BackupCrypto.isValidPassword("é à ü ç"))
+    }
+
+    @Test
+    fun `emoji count as one character each`() {
+        assertFalse(BackupCrypto.isValidPassword("😀😀😀😀😀"))
+        assertTrue(BackupCrypto.isValidPassword("😀😀😀😀😀😀"))
+        assertTrue(BackupCrypto.isValidPassword("👨‍👩‍👧a"))
+    }
+
+    @Test
+    fun `import accepts legacy short pins`() {
+        assertTrue(BackupCrypto.isUsableForImport("123"))
+        assertFalse(BackupCrypto.isUsableForImport(""))
+    }
+
+    @Test
+    fun `password with emojis spaces and accents roundtrips`() {
+        val password = "  mot de passe 🔐 été 😀  "
+        val encrypted = BackupCrypto.encrypt(payload, password)
+
+        assertArrayEquals(payload, BackupCrypto.decrypt(encrypted, password))
+    }
+
+    @Test
+    fun `exact password with edge spaces is never trimmed at creation`() {
+        val encrypted = BackupCrypto.encrypt(payload, "  secret1  ")
+
+        assertThrows(BackupCryptoException::class.java) {
+            BackupCrypto.decrypt(encrypted, "secret2")
+        }
+        assertArrayEquals(payload, BackupCrypto.decrypt(encrypted, "  secret1  "))
+    }
+
+    @Test
+    fun `import falls back to trimmed password when stray spaces were typed`() {
+        val encrypted = BackupCrypto.encrypt(payload, "secret1")
+
+        assertArrayEquals(payload, BackupCrypto.decrypt(encrypted, " secret1"))
+        assertArrayEquals(payload, BackupCrypto.decrypt(encrypted, "secret1 \n"))
+    }
+
+    @Test
+    fun `blank import password never decrypts`() {
+        val encrypted = BackupCrypto.encrypt(payload, "      ")
+
+        assertArrayEquals(payload, BackupCrypto.decrypt(encrypted, "      "))
+        assertThrows(BackupCryptoException::class.java) {
+            BackupCrypto.decrypt(BackupCrypto.encrypt(payload, "secret1"), "      ")
+        }
+    }
+
+    @Test
+    fun `unicode normalization makes composed and decomposed forms equivalent`() {
+        val composed = "café secret"
+        val decomposed = "café secret"
+        val encrypted = BackupCrypto.encrypt(payload, composed)
+
+        assertArrayEquals(payload, BackupCrypto.decrypt(encrypted, decomposed))
     }
 
     @Test

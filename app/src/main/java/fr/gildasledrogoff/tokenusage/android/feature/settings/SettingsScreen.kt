@@ -48,6 +48,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,6 +93,8 @@ import fr.gildasledrogoff.tokenusage.core.util.BatteryOptimizationHelper
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.core.backup.BackupCrypto
+import fr.gildasledrogoff.tokenusage.core.backup.PasswordStrength
+import fr.gildasledrogoff.tokenusage.core.backup.PasswordStrengthEstimator
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.util.ServiceIcon
 import fr.gildasledrogoff.tokenusage.core.util.iconRes
@@ -594,13 +597,10 @@ private fun ServiceCredentialSection(
 
                         if (state.isStored) {
                             Spacer(modifier = Modifier.width(12.dp))
-                            IconButton(onClick = onRemove) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_delete_rounded),
-                                    contentDescription = stringResource(R.string.cd_remove_credential),
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
+                            ConfirmDeleteIconButton(
+    contentDescription = stringResource(R.string.cd_remove_credential),
+    onConfirmed = onRemove
+)
                         }
                     }
                 }
@@ -664,13 +664,10 @@ private fun DeepseekAccountsSection(
                                     style = MaterialTheme.typography.labelLarge
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
-                                IconButton(onClick = { onRemoveAccount(account.id) }) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_delete_rounded),
-                                        contentDescription = stringResource(R.string.cd_remove_account),
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
+                                ConfirmDeleteIconButton(
+    contentDescription = stringResource(R.string.cd_remove_account),
+    onConfirmed = { onRemoveAccount(account.id) }
+)
                             }
 
                             SettingsFields(
@@ -856,13 +853,10 @@ private fun ZaiAccountsSection(
                                     style = MaterialTheme.typography.labelLarge
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
-                                IconButton(onClick = { onRemoveAccount(account.id) }) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_delete_rounded),
-                                        contentDescription = stringResource(R.string.cd_remove_account),
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
+                                ConfirmDeleteIconButton(
+    contentDescription = stringResource(R.string.cd_remove_account),
+    onConfirmed = { onRemoveAccount(account.id) }
+)
                             }
 
                             SettingsFields(
@@ -975,8 +969,8 @@ private fun BackupSection(
     onScanQr: () -> Unit,
     onPickZip: () -> Unit
 ) {
-    val pinValid = BackupCrypto.isValidPin(export.pin)
-    val confirmMatches = export.confirmPin.isBlank() || export.pin == export.confirmPin
+    val pinValid = BackupCrypto.isValidPassword(export.pin)
+    val confirmMatches = export.confirmPin.isEmpty() || export.pin == export.confirmPin
     val canExport = pinValid && confirmMatches && !export.isBusy
 
     Card(
@@ -1002,11 +996,18 @@ private fun BackupSection(
                 { modifier ->
                     OutlinedTextField(
                         value = export.pin,
-                        onValueChange = { value -> onPinChange(value.filter(Char::isDigit)) },
-                        label = { Text(stringResource(R.string.field_pin, BackupCrypto.MIN_PIN_LENGTH)) },
-                        supportingText = { Text(stringResource(R.string.field_pin_hint)) },
+                        onValueChange = onPinChange,
+                        label = { Text(stringResource(R.string.field_pin, BackupCrypto.MIN_PASSWORD_LENGTH)) },
+                        supportingText = {
+                            Column {
+                                Text(stringResource(R.string.field_pin_hint))
+                                if (export.pin.isNotEmpty()) {
+                                    PasswordStrengthIndicator(export.pin)
+                                }
+                            }
+                        },
                         visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = modifier,
                         singleLine = true
                     )
@@ -1014,7 +1015,7 @@ private fun BackupSection(
                 { modifier ->
                     OutlinedTextField(
                         value = export.confirmPin,
-                        onValueChange = { value -> onConfirmPinChange(value.filter(Char::isDigit)) },
+                        onValueChange = onConfirmPinChange,
                         label = { Text(stringResource(R.string.field_confirm_pin)) },
                         supportingText = {
                             if (!confirmMatches) {
@@ -1025,7 +1026,7 @@ private fun BackupSection(
                         },
                         isError = !confirmMatches,
                         visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = modifier,
                         singleLine = true
                     )
@@ -1114,13 +1115,38 @@ private fun BackupSection(
 }
 
 @Composable
+private fun PasswordStrengthIndicator(password: String) {
+    val strength = PasswordStrengthEstimator.strength(password)
+    val (fraction, color, labelRes) = when (strength) {
+        PasswordStrength.VERY_WEAK -> Triple(0.15f, MaterialTheme.colorScheme.error, R.string.password_strength_very_weak)
+        PasswordStrength.WEAK -> Triple(0.35f, MaterialTheme.colorScheme.error, R.string.password_strength_weak)
+        PasswordStrength.FAIR -> Triple(0.6f, MaterialTheme.colorScheme.tertiary, R.string.password_strength_fair)
+        PasswordStrength.STRONG -> Triple(0.8f, MaterialTheme.colorScheme.primary, R.string.password_strength_strong)
+        PasswordStrength.VERY_STRONG -> Triple(1f, MaterialTheme.colorScheme.primary, R.string.password_strength_very_strong)
+    }
+    Column(modifier = Modifier.padding(top = 6.dp)) {
+        LinearProgressIndicator(
+            progress = { fraction },
+            color = color,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = stringResource(R.string.password_strength_label, stringResource(labelRes)),
+            style = MaterialTheme.typography.bodySmall,
+            color = color,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+    }
+}
+
+@Composable
 private fun ImportPinDialog(
     state: ImportUiState,
     onPinChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val canImport = BackupCrypto.isValidPin(state.pin) && !state.isBusy
+    val canImport = BackupCrypto.isUsableForImport(state.pin) && !state.isBusy
 
     AlertDialog(
         onDismissRequest = { if (!state.isBusy) onDismiss() },
@@ -1135,7 +1161,7 @@ private fun ImportPinDialog(
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedTextField(
                     value = state.pin,
-                    onValueChange = { value -> onPinChange(value.filter(Char::isDigit)) },
+                    onValueChange = onPinChange,
                     label = { Text(stringResource(R.string.field_import_pin)) },
                     isError = state.error != null,
                     supportingText = state.error?.let { error ->
@@ -1143,7 +1169,7 @@ private fun ImportPinDialog(
                     },
                     enabled = !state.isBusy,
                     visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -1715,13 +1741,10 @@ private fun ApiKeyServiceSection(
                         Spacer(modifier = Modifier.width(12.dp))
                         ValidationResultLabel(state.validationResult, modifier = Modifier.weight(1f))
                         if (state.isStored) {
-                            IconButton(onClick = onRemove) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_delete_rounded),
-                                    contentDescription = stringResource(R.string.cd_remove_credential),
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
+                            ConfirmDeleteIconButton(
+    contentDescription = stringResource(R.string.cd_remove_credential),
+    onConfirmed = onRemove
+)
                         }
                     }
                 }
@@ -1905,7 +1928,7 @@ internal fun accountStatus(count: Int): String = when (count) {
 @Composable
 private fun exportErrorMessage(error: ExportError): String = when (error) {
     ExportError.PinTooShort ->
-        stringResource(R.string.export_error_pin_short, BackupCrypto.MIN_PIN_LENGTH)
+        stringResource(R.string.export_error_pin_short, BackupCrypto.MIN_PASSWORD_LENGTH)
     ExportError.PinMismatch -> stringResource(R.string.pin_mismatch)
     ExportError.QrTooLarge -> stringResource(R.string.export_error_qr_too_large)
     ExportError.Failed -> stringResource(R.string.export_error_generic)

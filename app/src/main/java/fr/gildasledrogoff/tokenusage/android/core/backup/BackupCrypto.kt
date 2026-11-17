@@ -1,7 +1,9 @@
 package fr.gildasledrogoff.tokenusage.core.backup
 
 import java.io.ByteArrayOutputStream
+import java.security.GeneralSecurityException
 import java.security.SecureRandom
+import java.text.Normalizer
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 import javax.crypto.Cipher
@@ -17,8 +19,8 @@ class BackupCryptoException(message: String) : Exception(message)
 
 object BackupCrypto {
 
-    
-    const val MIN_PIN_LENGTH = 3
+
+    const val MIN_PASSWORD_LENGTH = 6
 
     private const val ITERATIONS = 210_000
     private const val KEY_BITS = 256
@@ -30,8 +32,12 @@ object BackupCrypto {
 
     private val random = SecureRandom()
 
-    fun isValidPin(pin: String): Boolean =
-        pin.length >= MIN_PIN_LENGTH && pin.all(Char::isDigit)
+    fun isValidPassword(password: String): Boolean =
+        normalize(password).let { it.codePointCount(0, it.length) >= MIN_PASSWORD_LENGTH }
+
+    fun isUsableForImport(password: String): Boolean = password.isNotEmpty()
+
+     private fun normalize(password: String): String = Normalizer.normalize(password, Normalizer.Form.NFC)
 
     fun encrypt(plain: ByteArray, pin: String): ByteArray {
         val salt = randomBytes(SALT_LENGTH)
@@ -49,7 +55,7 @@ object BackupCrypto {
         }
     }
 
-    
+
     fun decrypt(container: ByteArray, pin: String): ByteArray {
         if (container.size <= HEADER_LENGTH) {
             throw BackupCryptoException("Corrupted backup: too short")
@@ -62,12 +68,21 @@ object BackupCrypto {
         val iv = container.copyOfRange(MAGIC.size + SALT_LENGTH, HEADER_LENGTH)
         val ciphertext = container.copyOfRange(HEADER_LENGTH, container.size)
 
+        val candidates = listOf(pin, pin.trim()).distinct()
+        for (candidate in candidates) {
+            tryDecrypt(candidate, salt, iv, ciphertext)?.let { return it }
+        }
+        throw BackupCryptoException("Wrong password or corrupted backup")
+    }
+
+    private fun tryDecrypt(password: String, salt: ByteArray, iv: ByteArray, ciphertext: ByteArray): ByteArray? {
+        if (password.isEmpty()) return null
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, deriveKey(pin, salt), GCMParameterSpec(GCM_TAG_BITS, iv))
+        cipher.init(Cipher.DECRYPT_MODE, deriveKey(password, salt), GCMParameterSpec(GCM_TAG_BITS, iv))
         return try {
             cipher.doFinal(ciphertext)
-        } catch (_: Exception) {
-            throw BackupCryptoException("Wrong PIN or corrupted backup")
+        } catch (_: GeneralSecurityException) {
+            null
         }
     }
 
@@ -105,7 +120,7 @@ object BackupCrypto {
     }
 
     private fun deriveKey(pin: String, salt: ByteArray): SecretKey {
-        val spec = PBEKeySpec(pin.toCharArray(), salt, ITERATIONS, KEY_BITS)
+        val spec = PBEKeySpec(normalize(pin).toCharArray(), salt, ITERATIONS, KEY_BITS)
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
         return SecretKeySpec(factory.generateSecret(spec).encoded, "AES")
     }

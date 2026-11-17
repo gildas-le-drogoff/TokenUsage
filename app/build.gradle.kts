@@ -87,16 +87,16 @@ android {
     // Données d'exemple embarquées uniquement dans les build types debug et
     sourceSets {
         getByName("debug") {
-            java.srcDir("src/demoData/java")
-            kotlin.srcDir("src/demoData/java")
+            java.directories.add("src/demoData/java")
+            kotlin.directories.add("src/demoData/java")
         }
         getByName("staging") {
-            java.srcDir("src/demoData/java")
-            kotlin.srcDir("src/demoData/java")
+            java.directories.add("src/demoData/java")
+            kotlin.directories.add("src/demoData/java")
         }
         getByName("testStaging") {
-            java.srcDir("src/testDebug/java")
-            kotlin.srcDir("src/testDebug/java")
+            java.directories.add("src/testDebug/java")
+            kotlin.directories.add("src/testDebug/java")
         }
     }
 

@@ -144,32 +144,38 @@
     <string name="zai_empty">No account configured. Add a Z.ai API key to track its remaining quota.</string>
 
     <string name="backup_title">Backup &amp; Export</string>
-    <string name="backup_description">Encrypted with a PIN — without it the backup cannot be recovered. ZIP: everything, including the DeepSeek usage history. QR code: access tokens, session keys and API keys only.</string>
-    <string name="field_pin">PIN (min. %1$d digits)</string>
+    <string name="backup_description">Encrypted with a password — without it the backup cannot be recovered. ZIP: everything, including the DeepSeek usage history. QR code: access tokens, session keys and API keys only.</string>
+    <string name="field_pin">Password (min. %1$d characters)</string>
     <string name="field_pin_hint">Encrypts the backup — don\'t lose it</string>
-    <string name="field_confirm_pin">Confirm PIN</string>
-    <string name="pin_mismatch">PINs don\'t match</string>
-    <string name="field_confirm_pin_hint">Type the PIN again</string>
+    <string name="password_strength_label">Strength: %1$s</string>
+    <string name="password_strength_very_weak">very weak</string>
+    <string name="password_strength_weak">weak</string>
+    <string name="password_strength_fair">fair</string>
+    <string name="password_strength_strong">strong</string>
+    <string name="password_strength_very_strong">very strong</string>
+    <string name="field_confirm_pin">Confirm password</string>
+    <string name="pin_mismatch">Passwords don\'t match</string>
+    <string name="field_confirm_pin_hint">Type the password again</string>
     <string name="action_export_zip">ZIP</string>
     <string name="action_export_qr">QR code</string>
-    <string name="export_error_pin_short">PIN must be at least %1$d digits</string>
+    <string name="export_error_pin_short">Password must be at least %1$d characters</string>
     <string name="export_error_qr_too_large">Configuration too large for a QR code</string>
     <string name="export_error_generic">Export failed</string>
     <string name="qr_dialog_title">Encrypted Config QR</string>
-    <string name="qr_dialog_hint">Scan this code with TokenUsage on the destination device, then enter the PIN to decrypt.</string>
-    <string name="qr_dialog_warning">Anyone who captures this image and knows the PIN can read your credentials.</string>
+    <string name="qr_dialog_hint">Scan this code with TokenUsage on the destination device, then enter the password to decrypt.</string>
+    <string name="qr_dialog_warning">Anyone who captures this image and knows the password can read your credentials.</string>
 
     <string name="import_title">Import</string>
     <string name="import_description">Restore an encrypted backup: a ZIP file (history included) or the QR code from another device. Backup credentials replace this device\'s.</string>
     <string name="action_import_qr">Scan QR</string>
     <string name="import_scan_prompt">Point the camera at the TokenUsage configuration QR code</string>
     <string name="import_dialog_title">Import configuration</string>
-    <string name="import_dialog_hint">Enter the PIN chosen during the export on the source device.</string>
-    <string name="field_import_pin">Backup PIN</string>
+    <string name="import_dialog_hint">Enter the password chosen during the export on the source device.</string>
+    <string name="field_import_pin">Backup password</string>
     <string name="import_dialog_warning">Credentials of the services contained in the backup will overwrite the ones on this device.</string>
     <string name="action_import">Import</string>
     <string name="import_error_not_backup">This is not a TokenUsage backup</string>
-    <string name="import_error_wrong_pin">Wrong PIN or corrupted backup</string>
+    <string name="import_error_wrong_pin">Wrong password or corrupted backup</string>
     <string name="import_error_version">Backup made by a newer version of TokenUsage — update the app</string>
     <string name="import_error_generic">Import failed</string>
     <string name="action_import_zip">ZIP</string>
@@ -381,4 +387,5 @@
     <string name="credits_open_link">Open link</string>
     <string name="credits_license_title">License</string>
     <string name="credits_license_body">Copyright © 2026 Gildas Le Drogoff. TokenUsage is free software distributed under the GPL-3.0-or-later license. Third-party components keep their own licenses.</string>
+    <string name="delete_account_warning_title">Confirm deletion?</string>
 </resources>

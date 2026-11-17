@@ -83,7 +83,7 @@ internal fun ClaudeAccountsSection(
                 ) {
                     Text(
                         text = stringResource(R.string.claude_accounts_hint) + "\n\n" +
-                            stringResource(R.string.claude_sign_in_hint),
+                                stringResource(R.string.claude_sign_in_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -103,7 +103,13 @@ internal fun ClaudeAccountsSection(
                             account = account,
                             onRemove = { onRemoveAccount(account.id) },
                             onRename = { renameAccountId = account.id },
-                            onFieldChange = { field, value -> onFieldChange(account.id, field, value) },
+                            onFieldChange = { field, value ->
+                                onFieldChange(
+                                    account.id,
+                                    field,
+                                    value
+                                )
+                            },
                             onValidate = { onValidate(account.id) },
                             onSignIn = { signInAccountId = account.id }
                         )
@@ -213,13 +219,10 @@ private fun ClaudeAccountEditor(
                     contentDescription = stringResource(R.string.cd_rename_account)
                 )
             }
-            IconButton(onClick = onRemove) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_delete_rounded),
-                    contentDescription = stringResource(R.string.cd_remove_account),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+            ConfirmDeleteIconButton(
+                contentDescription = stringResource(R.string.cd_remove_account),
+                onConfirmed = onRemove
+            )
         }
 
         SettingsFields(

@@ -914,15 +914,15 @@ class SettingsViewModel @Inject constructor(
     
     fun isExportPinValid(): Boolean {
         val export = _uiState.value.export
-        if (!BackupCrypto.isValidPin(export.pin)) return false
-        return export.confirmPin.isBlank() || export.pin == export.confirmPin
+        if (!BackupCrypto.isValidPassword(export.pin)) return false
+        return export.confirmPin.isEmpty() || export.pin == export.confirmPin
     }
 
     private fun validateExportPin(): Boolean {
         val export = _uiState.value.export
         val error = when {
-            !BackupCrypto.isValidPin(export.pin) -> ExportError.PinTooShort
-            export.confirmPin.isNotBlank() && export.pin != export.confirmPin -> ExportError.PinMismatch
+            !BackupCrypto.isValidPassword(export.pin) -> ExportError.PinTooShort
+            export.confirmPin.isNotEmpty() && export.pin != export.confirmPin -> ExportError.PinMismatch
             else -> null
         }
         if (error != null) {
@@ -985,7 +985,7 @@ class SettingsViewModel @Inject constructor(
     fun confirmImport() {
         val container = pendingImportContainer ?: return
         val pin = _uiState.value.importState.pin
-        if (!BackupCrypto.isValidPin(pin) || _uiState.value.importState.isBusy) return
+        if (!BackupCrypto.isUsableForImport(pin) || _uiState.value.importState.isBusy) return
         flushPendingChanges()
         pendingChanges.value = null
         _uiState.update { it.copy(importState = it.importState.copy(isBusy = true, error = null)) }
