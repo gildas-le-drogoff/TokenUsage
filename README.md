@@ -40,28 +40,12 @@ Android 10 (API 29) or later.
 
 Open **Settings** in the app and fill in the services you use.
 
+- **Claude**: tap **Sign in with Claude** and log in with your claude.ai credentials.
+  - → **simple** ←
 - **DeepSeek, OpenRouter, Z.ai**: paste an API key created in the provider's console.
 - **OpenAI**: paste an Admin API key (spend is read from the organization usage API).
 - **GitHub Copilot**: sign in from Settings with the GitHub device code shown by the app.
-- **Claude, Codex, Gemini**: see below.
-
-> **Claude: prefer "Sign in with Claude" or a Session Key.** Anthropic rotates OAuth refresh tokens on every use, so tokens copied from the Claude CLI stop working as soon as the CLI refreshes its own copy. In Settings → Claude, sign in with Claude or paste the claude.ai `sessionKey` cookie (`sk-ant-sid…`) instead; it does not rotate.
-
-### Claude (Anthropic)
-
-Claude uses OAuth tokens from Claude Code CLI. Extract both tokens from macOS Keychain:
-
-```bash
-security find-generic-password -s "Claude Code-credentials" -w \
-  | python3 -c "
-import sys, json
-d = json.loads(sys.stdin.read())['claudeAiOauth']
-print('Access Token:', d['accessToken'])
-print('Refresh Token:', d['refreshToken'])
-"
-```
-
-Paste **both** tokens into the Claude fields in Settings. The refresh token is required — access tokens expire every 8 hours, and the app uses the refresh token to renew them automatically in the background.
+- **Codex, Gemini**: see below.
 
 ### Codex (OpenAI / ChatGPT)
 
