@@ -29,6 +29,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.navigation.compose.NavHost
+import fr.gildasledrogoff.tokenusage.feature.credits.CreditsScreen
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import fr.gildasledrogoff.tokenusage.R
@@ -217,6 +218,16 @@ class MainActivity : FragmentActivity() {
                         }
                         composable("settings") {
                             SettingsScreen(
+                                onNavigateBack = {
+                                    navController.popBackStack()
+                                },
+                                onNavigateToCredits = {
+                                    navController.navigate("credits")
+                                }
+                            )
+                        }
+                        composable("credits") {
+                            CreditsScreen(
                                 onNavigateBack = {
                                     navController.popBackStack()
                                 }

@@ -359,4 +359,20 @@
     <string name="quota_legend_ok_used">正常 &lt; %1$d%%</string>
     <string name="quota_legend_low_used">偏低 %1$d–%2$d%%</string>
     <string name="quota_legend_critical_used">严重 ≥ %1$d%%</string>
+    <string name="settings_credits_title">致谢与署名</string>
+    <string name="settings_credits_subtitle">关于开发者、开源许可证与鸣谢</string>
+    <string name="screen_credits_title">致谢与署名</string>
+    <string name="credits_logo_cd">开发者徽标</string>
+    <string name="credits_developer_role">Android 开发者 &amp; TokenUsage 作者</string>
+    <string name="credits_promo">TokenUsage 用心打造，并保持免费开源。如果它帮你节省了时间，在 GitHub 上点个星是最好的支持。有 Android 项目想法？欢迎联系！</string>
+    <string name="credits_visit_profile">访问我的 GitHub 主页</string>
+    <string name="credits_star_project">在 GitHub 上为 TokenUsage 加星</string>
+    <string name="credits_attributions_title">署名</string>
+    <string name="credits_codexbar">启发本项目的 macOS 菜单栏应用（MIT）。</string>
+    <string name="credits_codexbar_android">TokenUsage 所派生的 Android 移植版（MIT，声明保留于 LICENSE-MIT）。</string>
+    <string name="credits_simple_icons">品牌图标，采用 CC0-1.0 发布。</string>
+    <string name="credits_gradle">Gradle wrapper，Apache-2.0。</string>
+    <string name="credits_open_link">打开链接</string>
+    <string name="credits_license_title">许可证</string>
+    <string name="credits_license_body">版权所有 © 2026 Gildas Le Drogoff。TokenUsage 是以 GPL-3.0-or-later 许可证分发的自由软件。第三方组件保留各自的许可证。</string>
 </resources>

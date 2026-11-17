@@ -364,4 +364,20 @@
     <string name="quota_legend_ok_used">OK &lt; %1$d\u00A0%%</string>
     <string name="quota_legend_low_used">Bas %1$d–%2$d\u00A0%%</string>
     <string name="quota_legend_critical_used">Critique ≥ %1$d\u00A0%%</string>
+    <string name="settings_credits_title">Crédits et attributions</string>
+    <string name="settings_credits_subtitle">À propos du développeur, licences open source et remerciements</string>
+    <string name="screen_credits_title">Crédits et attributions</string>
+    <string name="credits_logo_cd">Logo du développeur</string>
+    <string name="credits_developer_role">Développeur Android &amp; créateur de TokenUsage</string>
+    <string name="credits_promo">TokenUsage est conçu avec soin et reste gratuit et open source. Si l\'application vous fait gagner du temps, une étoile sur GitHub est le meilleur moyen de la soutenir. Un projet Android en tête ? Parlons-en !</string>
+    <string name="credits_visit_profile">Visiter mon profil GitHub</string>
+    <string name="credits_star_project">Mettre une étoile à TokenUsage</string>
+    <string name="credits_attributions_title">Attributions</string>
+    <string name="credits_codexbar">L\'application macOS de barre de menus qui a inspiré ce projet (MIT).</string>
+    <string name="credits_codexbar_android">Portage Android dont TokenUsage est issu (MIT, mention conservée dans LICENSE-MIT).</string>
+    <string name="credits_simple_icons">Icônes de marques, publiées sous CC0-1.0.</string>
+    <string name="credits_gradle">Gradle wrapper, Apache-2.0.</string>
+    <string name="credits_open_link">Ouvrir le lien</string>
+    <string name="credits_license_title">Licence</string>
+    <string name="credits_license_body">Copyright © 2026 Gildas Le Drogoff. TokenUsage est un logiciel libre distribué sous licence GPL-3.0-or-later. Les composants tiers conservent leurs propres licences.</string>
 </resources>

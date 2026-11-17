@@ -112,6 +112,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToCredits: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -371,6 +372,8 @@ fun SettingsScreen(
                 onScanQr = launchQrScan,
                 onPickZip = launchZipPick
             )
+
+            CreditsEntry(onClick = onNavigateToCredits)
 
             DangerZoneSection(
                 onDeleteAll = { viewModel.showDeleteConfirmDialog() }
@@ -1513,6 +1516,41 @@ private fun ToggleSection(
                 checked = checked,
                 onCheckedChange = onToggle
             )
+        }
+    }
+}
+
+@Composable
+private fun CreditsEntry(onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_lama),
+                contentDescription = null,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.settings_credits_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = stringResource(R.string.settings_credits_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
