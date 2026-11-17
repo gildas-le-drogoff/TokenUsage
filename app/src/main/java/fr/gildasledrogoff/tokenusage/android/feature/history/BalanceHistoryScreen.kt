@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.gildasledrogoff.tokenusage.R
+import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionGranularity
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionPoint
 import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
@@ -166,19 +167,14 @@ private fun GranularitySelector(
         ConsumptionGranularity.DAILY to stringResource(R.string.granularity_daily),
         ConsumptionGranularity.MONTHLY to stringResource(R.string.granularity_monthly)
     )
-    val selectedIndex = options.indexOfFirst { it.first == granularity }
 
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, (value, label) ->
-            SegmentedButton(
-                selected = index == selectedIndex,
-                onClick = { onGranularitySelected(value) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size)
-            ) {
-                Text(label)
-            }
-        }
-    }
+    ChoiceChipRow(
+        options = options,
+        selected = options.first { it.first == granularity },
+        label = { it.second },
+        onSelect = { onGranularitySelected(it.first) },
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable

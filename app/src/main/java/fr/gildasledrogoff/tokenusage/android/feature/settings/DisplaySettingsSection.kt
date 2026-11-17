@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
+import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
 import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
@@ -98,17 +99,13 @@ private fun <T> ChoiceRow(
     labelRes: (T) -> Int,
     onSelect: (T) -> Unit
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = option == selected,
-                onClick = { onSelect(option) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size)
-            ) {
-                Text(stringResource(labelRes(option)), maxLines = 1)
-            }
-        }
-    }
+    ChoiceChipRow(
+        options = options,
+        selected = selected,
+        label = { stringResource(labelRes(it)) },
+        onSelect = onSelect,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @StringRes

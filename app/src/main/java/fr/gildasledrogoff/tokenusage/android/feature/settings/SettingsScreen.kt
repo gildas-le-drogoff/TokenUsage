@@ -90,6 +90,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.gildasledrogoff.tokenusage.core.domain.model.LockScreenVisibility
 import fr.gildasledrogoff.tokenusage.core.util.BatteryOptimizationHelper
 import fr.gildasledrogoff.tokenusage.R
+import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.core.backup.BackupCrypto
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.util.ServiceIcon
@@ -130,7 +131,7 @@ fun SettingsScreen(
                 title = biometricConfirmTitle,
                 subtitle = biometricConfirmSubtitle,
                 onSuccess = onConfirmed,
-                onError = { /* the system dialog already showed the error */ }
+                onError = {  }
             )
         }
     }
@@ -225,7 +226,7 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
-        val contentWidthModifier = if (MaterialTheme.dimens.widthClass == WidthClass.EXPANDED) {
+        val contentWidthModifier = if (MaterialTheme.dimens.widthClass != WidthClass.COMPACT) {
             Modifier.widthIn(max = SettingsContentMaxWidth)
         } else {
             Modifier.fillMaxWidth()
@@ -1122,7 +1123,7 @@ private fun ImportPinDialog(
         onDismissRequest = { if (!state.isBusy) onDismiss() },
         title = { Text(stringResource(R.string.import_dialog_title)) },
         text = {
-            Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(
                     text = stringResource(R.string.import_dialog_hint),
                     style = MaterialTheme.typography.bodySmall,
@@ -1179,7 +1180,10 @@ private fun ExportQrDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.qr_dialog_title)) },
         text = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
                     text = stringResource(R.string.qr_dialog_hint),
                     style = MaterialTheme.typography.bodySmall,
@@ -1254,7 +1258,7 @@ private fun generateQrBitmap(content: String, sizePx: Int): ImageBitmap {
 
 private const val QR_SIZE_PX = 900
 
-/** Cap of the settings pane on EXPANDED windows, so it reads as one column. */
+
 private val SettingsContentMaxWidth = 720.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1284,19 +1288,13 @@ private fun RefreshIntervalSection(
                 60L to stringResource(R.string.refresh_1h),
                 0L to stringResource(R.string.refresh_manual)
             )
-            val selectedIndex = options.indexOfFirst { it.first == currentMinutes }.takeIf { it >= 0 } ?: 1
-
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                options.forEachIndexed { index, (minutes, label) ->
-                    SegmentedButton(
-                        selected = index == selectedIndex,
-                        onClick = { onIntervalChange(minutes) },
-                        shape = SegmentedButtonDefaults.itemShape(index, options.size)
-                    ) {
-                        Text(label)
-                    }
-                }
-            }
+            ChoiceChipRow(
+                options = options,
+                selected = options.firstOrNull { it.first == currentMinutes } ?: options[1],
+                label = { it.second },
+                onSelect = { onIntervalChange(it.first) },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             BackgroundRefreshBlock(
                 manualOnly = currentMinutes == 0L,
@@ -1450,21 +1448,15 @@ private fun SecuritySection(
                 modifier = Modifier.padding(top = 16.dp)
             )
             val visibilityOptions = LockScreenVisibility.entries
-            SingleChoiceSegmentedButtonRow(
+            ChoiceChipRow(
+                options = visibilityOptions,
+                selected = lockScreenVisibility,
+                label = { stringResource(lockScreenVisibilityLabelRes(it)) },
+                onSelect = onLockScreenVisibilityChange,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp)
-            ) {
-                visibilityOptions.forEachIndexed { index, option ->
-                    SegmentedButton(
-                        selected = option == lockScreenVisibility,
-                        onClick = { onLockScreenVisibilityChange(option) },
-                        shape = SegmentedButtonDefaults.itemShape(index, visibilityOptions.size)
-                    ) {
-                        Text(stringResource(lockScreenVisibilityLabelRes(option)), maxLines = 1)
-                    }
-                }
-            }
+            )
             Text(
                 text = stringResource(lockScreenVisibilityHintRes(lockScreenVisibility)),
                 style = MaterialTheme.typography.bodySmall,
@@ -1566,7 +1558,7 @@ private fun DeleteConfirmDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.action_delete_all)) },
         text = {
-            Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.delete_dialog_text))
                 Spacer(modifier = Modifier.height(12.dp))
                 TextField(
@@ -1785,7 +1777,10 @@ private fun CopilotLoginDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.copilot_login_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 when {
                     state.error != null -> Text(
                         text = copilotLoginErrorText(state.error),

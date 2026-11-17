@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +44,7 @@ import java.time.Instant
 import kotlin.math.roundToInt
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun QuotaGaugeBar(
     utilization: Double,
@@ -127,10 +130,11 @@ fun QuotaGaugeBar(
             )
         }
 
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(dimens.spaceXs)
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceXs, Alignment.Start),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceXs),
+            itemVerticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = detail ?: if (showUsed) {
@@ -139,21 +143,28 @@ fun QuotaGaugeBar(
                     stringResource(R.string.gauge_used, usedPct)
                 },
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (resetText != null) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_schedule_rounded),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(dimens.inlineIcon)
-                )
-                Text(
-                    text = resetText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceXs)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_schedule_rounded),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .alignBy { it.measuredHeight }
+                            .size(dimens.inlineIcon)
+                    )
+                    Text(
+                        text = resetText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.alignByBaseline()
+                    )
+                }
             }
         }
     }

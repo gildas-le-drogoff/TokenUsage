@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
+import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.core.domain.model.DisplayCurrency
 import fr.gildasledrogoff.tokenusage.core.domain.model.FxRateSource
 import fr.gildasledrogoff.tokenusage.ui.i18n.appErrorMessage
@@ -70,17 +71,13 @@ internal fun CurrencySettingsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                DisplayCurrency.entries.forEachIndexed { index, currency ->
-                    SegmentedButton(
-                        selected = currency == state.displayCurrency,
-                        onClick = { onDisplayCurrencyChange(currency) },
-                        shape = SegmentedButtonDefaults.itemShape(index, DisplayCurrency.entries.size)
-                    ) {
-                        Text(currency.code ?: stringResource(R.string.fx_currency_original), maxLines = 1)
-                    }
-                }
-            }
+            ChoiceChipRow(
+                options = DisplayCurrency.entries,
+                selected = state.displayCurrency,
+                label = { it.code ?: stringResource(R.string.fx_currency_original) },
+                onSelect = onDisplayCurrencyChange,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             AnimatedVisibility(visible = state.displayCurrency == DisplayCurrency.ORIGINAL) {
                 Text(

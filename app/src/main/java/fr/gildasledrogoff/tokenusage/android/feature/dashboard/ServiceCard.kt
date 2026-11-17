@@ -12,6 +12,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -106,6 +108,7 @@ fun ServiceCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded: Boolean) {
     val dimens = MaterialTheme.dimens
@@ -120,9 +123,10 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
             size = dimens.serviceIcon
         )
         Column(modifier = Modifier.weight(1f)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimens.spaceS)
+            FlowRow(
+                itemVerticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceS),
+                verticalArrangement = Arrangement.spacedBy(dimens.spaceXs)
             ) {
                 Text(
                     text = cardData.service.displayName,
@@ -136,6 +140,8 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
                     ) {
                         Text(
                             text = tier,
+                            maxLines = 1,
+                            softWrap = false,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = dimens.spaceS, vertical = dimens.spaceXs / 2),
                             color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -193,6 +199,8 @@ fun StatusPill(status: QuotaStatus, modifier: Modifier = Modifier) {
             StatusDot(status)
             Text(
                 text = quotaStatusLabel(status),
+                maxLines = 1,
+                softWrap = false,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = pair.onContainer
@@ -351,21 +359,29 @@ private fun WeeklyBreakdown(rows: List<UsageBreakdownRowUi>) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         rows.forEach { row ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimens.spaceS)
-            ) {
-                Text(
-                    text = row.label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(BREAKDOWN_LABEL_WEIGHT)
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceXs)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceS)
+                ) {
+                    Text(
+                        text = row.label,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = stringResource(R.string.gauge_percent_value, row.percent.toInt()),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Box(
                     modifier = Modifier
-                        .weight(1f - BREAKDOWN_LABEL_WEIGHT)
+                        .fillMaxWidth()
                         .height(dimens.spaceXs)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -378,12 +394,6 @@ private fun WeeklyBreakdown(rows: List<UsageBreakdownRowUi>) {
                             .background(MaterialTheme.colorScheme.secondary)
                     )
                 }
-                Text(
-                    text = stringResource(R.string.gauge_percent_value, row.percent.toInt()),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
@@ -410,27 +420,34 @@ private fun AccountBalanceRow(account: AccountBalanceUi) {
                 text = account.label.ifBlank { stringResource(R.string.account_default) },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
+            if (account.error == null) {
+                Text(
+                    text = if (account.rate != null) {
+                        stringResource(
+                            R.string.fx_converted_value,
+                            account.rate.convert(account.totalBalance),
+                            account.rate.to
+                        )
+                    } else {
+                        stringResource(R.string.history_balance_value, account.totalBalance, account.currency)
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = statusColor
+                )
+            }
+        }
+        if (account.error != null) {
             Text(
-                text = when {
-                    account.error != null -> accountErrorText(account.error)
-                    account.rate != null -> stringResource(
-                        R.string.fx_converted_value,
-                        account.rate.convert(account.totalBalance),
-                        account.rate.to
-                    )
-                    else -> stringResource(R.string.history_balance_value, account.totalBalance, account.currency)
-                },
-                style = if (account.error != null) {
-                    MaterialTheme.typography.bodyMedium
-                } else {
-                    MaterialTheme.typography.titleMedium
-                },
+                text = accountErrorText(account.error),
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = statusColor
+                color = statusColor,
+                modifier = Modifier.padding(start = dimens.spaceS + dimens.spaceS)
             )
         }
 
@@ -480,4 +497,3 @@ private fun accountErrorText(error: AppError): String = when (error) {
 }
 
 
-private const val BREAKDOWN_LABEL_WEIGHT = 0.4f
