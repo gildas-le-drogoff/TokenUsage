@@ -2,7 +2,10 @@ package fr.gildasledrogoff.tokenusage.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import fr.gildasledrogoff.tokenusage.core.database.BalanceSnapshotDao
+import fr.gildasledrogoff.tokenusage.core.database.LastFetchDao
 import fr.gildasledrogoff.tokenusage.core.database.TokenUsageDatabase
 import fr.gildasledrogoff.tokenusage.core.database.DatabaseKeyProvider
 import fr.gildasledrogoff.tokenusage.core.database.SqlCipherDatabasePreparer
@@ -24,6 +27,20 @@ object DatabaseModule {
 
     private const val DATABASE_NAME = "tokenusage.db"
 
+    private val MIGRATION_1_2 = object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS last_fetch (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    timestamp INTEGER NOT NULL,
+                    payload TEXT
+                )
+                """.trimIndent()
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(
@@ -41,6 +58,7 @@ object DatabaseModule {
 
         return Room.databaseBuilder(context, TokenUsageDatabase::class.java, DATABASE_NAME)
             .openHelperFactory(SupportOpenHelperFactory(key.rawKey, MemorySecurityHook, false))
+            .addMigrations(MIGRATION_1_2)
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
@@ -56,6 +74,11 @@ object DatabaseModule {
     @Provides
     fun provideBalanceSnapshotDao(database: TokenUsageDatabase): BalanceSnapshotDao {
         return database.balanceSnapshotDao()
+    }
+
+    @Provides
+    fun provideLastFetchDao(database: TokenUsageDatabase): LastFetchDao {
+        return database.lastFetchDao()
     }
 
     @Provides

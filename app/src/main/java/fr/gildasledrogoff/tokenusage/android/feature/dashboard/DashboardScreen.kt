@@ -54,6 +54,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,6 +130,7 @@ fun DashboardScreen(
                         CardList(
                             cards = state.cards,
                             errorBanner = null,
+                            lastUpdatedText = formatLastUpdated(state.lastUpdated),
                             consumptionChart = consumptionChart,
                             deepseekExpanded = deepseekExpanded,
                             onToggleDeepseek = { deepseekExpanded = !deepseekExpanded },
@@ -139,6 +145,7 @@ fun DashboardScreen(
                     CardList(
                         cards = state.cards,
                         errorBanner = stringResource(R.string.error_failed_services, errorServices),
+                        lastUpdatedText = formatLastUpdated(state.lastUpdated),
                         consumptionChart = consumptionChart,
                         deepseekExpanded = deepseekExpanded,
                         onToggleDeepseek = { deepseekExpanded = !deepseekExpanded },
@@ -176,6 +183,7 @@ fun DashboardScreen(
 private fun CardList(
     cards: List<ServiceCardData>,
     errorBanner: String?,
+    lastUpdatedText: String,
     consumptionChart: ConsumptionChartUiState,
     deepseekExpanded: Boolean,
     onToggleDeepseek: () -> Unit,
@@ -192,6 +200,13 @@ private fun CardList(
     ) {
         if (errorBanner != null) {
             item(span = StaggeredGridItemSpan.FullLine) { ErrorBanner(errorBanner) }
+        }
+        item(span = StaggeredGridItemSpan.FullLine) {
+            Text(
+                text = stringResource(R.string.dashboard_last_updated, lastUpdatedText),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         item(span = StaggeredGridItemSpan.FullLine) { StatusLegend() }
         items(cards) { card ->
@@ -213,6 +228,11 @@ private fun CardList(
         }
     }
 }
+
+private fun formatLastUpdated(instant: Instant): String =
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+        .withLocale(Locale.getDefault())
+        .format(instant.atZone(ZoneId.systemDefault()))
 
 @Composable
 private fun ErrorBanner(text: String) {

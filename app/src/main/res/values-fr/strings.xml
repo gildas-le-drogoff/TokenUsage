@@ -41,6 +41,7 @@
     <string name="dashboard_empty_title">Aucun service configuré</string>
     <string name="dashboard_empty_subtitle">Ajoutez vos identifiants API dans les paramètres</string>
     <string name="dashboard_load_failed">Échec du chargement des quotas</string>
+    <string name="dashboard_last_updated">Dernière actualisation : %1$s</string>
     <string name="error_failed_services">Échec du chargement : %1$s</string>
 
     <string name="gauge_percent_left">%1$d%% restants</string>

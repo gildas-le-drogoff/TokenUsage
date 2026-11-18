@@ -18,7 +18,8 @@ sealed class DashboardUiState {
 
     data class PartialSuccess(
         val cards: List<ServiceCardData>,
-        val errors: Map<AiService, AppError>
+        val errors: Map<AiService, AppError>,
+        val lastUpdated: Instant
     ) : DashboardUiState()
 
     data class Error(val error: AppError) : DashboardUiState()

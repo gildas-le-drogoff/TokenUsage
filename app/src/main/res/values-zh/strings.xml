@@ -41,6 +41,7 @@
     <string name="dashboard_empty_title">未配置任何服务</string>
     <string name="dashboard_empty_subtitle">请前往设置添加 API 凭据</string>
     <string name="dashboard_load_failed">配额数据加载失败</string>
+    <string name="dashboard_last_updated">上次更新：%1$s</string>
     <string name="error_failed_services">加载失败：%1$s</string>
 
     <string name="gauge_percent_left">剩余 %1$d%%</string>

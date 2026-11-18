@@ -10,13 +10,17 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
 import fr.gildasledrogoff.tokenusage.core.domain.repository.BalanceHistoryRepository
+import fr.gildasledrogoff.tokenusage.core.domain.repository.CachedQuotaResult
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ClaudeQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DemoDataRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ExchangeRateRepository
+import fr.gildasledrogoff.tokenusage.core.domain.repository.LastFetchRepository
+import fr.gildasledrogoff.tokenusage.core.domain.repository.LastFetchSnapshot
 import fr.gildasledrogoff.tokenusage.core.domain.repository.MultiAccountQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.QuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ZaiRepository
+import fr.gildasledrogoff.tokenusage.core.data.FetchRateLimiter
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
 import fr.gildasledrogoff.tokenusage.core.widget.WidgetQuotaPublisher
 import fr.gildasledrogoff.tokenusage.di.ClaudeRepository
@@ -37,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 
@@ -72,10 +77,13 @@ class DashboardViewModel @Inject constructor(
     private val exchangeRates: ExchangeRateRepository,
     private val widgetQuotaPublisher: WidgetQuotaPublisher,
     private val balanceHistory: BalanceHistoryRepository,
-    private val displayPreferences: DisplayPreferencesRepository
+    private val displayPreferences: DisplayPreferencesRepository,
+    private val lastFetchRepository: LastFetchRepository,
+    private val rateLimiter: FetchRateLimiter,
+    private val clock: Clock
 ) : ViewModel() {
 
-    
+
     fun toggleTheme(isDarkNow: Boolean) {
         displayPreferences.setThemeMode(if (isDarkNow) ThemeMode.LIGHT else ThemeMode.DARK)
         viewModelScope.launch { widgetQuotaPublisher.refreshWidgets() }
@@ -89,14 +97,14 @@ class DashboardViewModel @Inject constructor(
 
     private var consumptionJob: Job? = null
 
-    
+
     fun loadConsumption() {
         consumptionJob?.cancel()
         consumptionJob = viewModelScope.launch {
             val previous = _consumptionChart.value as? ConsumptionChartUiState.Ready
             if (previous == null) _consumptionChart.value = ConsumptionChartUiState.Loading
 
-            
+
             val demo = demoData.isEnabled()
             val accounts = if (demo) demoData.sampleDeepseekAccounts() else prefsManager.getDeepseekAccounts()
             val history = if (demo) demoData.history else balanceHistory
@@ -139,7 +147,7 @@ class DashboardViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    
+
     private var lastCredentialsFingerprint: String? = null
 
     init {
@@ -150,10 +158,10 @@ class DashboardViewModel @Inject constructor(
         doRefresh(resetState = true)
     }
 
-    
+
     fun refreshIfCredentialsChanged() {
         if (credentialsFingerprint() != lastCredentialsFingerprint) {
-            doRefresh(resetState = false)
+            doRefresh(resetState = false, bypassCooldown = true)
         }
     }
 
@@ -175,112 +183,170 @@ class DashboardViewModel @Inject constructor(
         prefsManager.getManualUsdCnyRate()
     ).joinToString("|")
 
-    private fun doRefresh(resetState: Boolean) {
+    private fun doRefresh(resetState: Boolean, bypassCooldown: Boolean = false) {
         lastCredentialsFingerprint = credentialsFingerprint()
 
         viewModelScope.launch {
-            _isRefreshing.value = true
-            val currentState = _uiState.value
-            if (resetState || currentState is DashboardUiState.Error || currentState is DashboardUiState.Loading) {
-                _uiState.value = DashboardUiState.Loading
-            }
-
-            val results = if (demoData.isEnabled()) {
-                
-                demoData.sampleQuotas().map { FetchOutcome(it.service, it.accountLabel, it.result) }
-            } else coroutineScope {
-                val deferreds = buildList {
-                    val claudeAccounts = prefsManager.getClaudeAccounts()
-                    claudeAccounts.forEachIndexed { index, account ->
-                        val (label, number) = accountNaming(account.label, index, claudeAccounts.size)
-                        add(async {
-                            FetchOutcome(AiService.CLAUDE, label, claudeRepository.fetchQuotaForAccount(account), number)
-                        })
-                    }
-                    if (prefsManager.hasCredential(AiService.CODEX)) {
-                        add(async { FetchOutcome(AiService.CODEX, null, codexRepository.fetchQuota()) })
-                    }
-                    if (prefsManager.hasCredential(AiService.GEMINI)) {
-                        add(async { FetchOutcome(AiService.GEMINI, null, geminiRepository.fetchQuota()) })
-                    }
-                    if (prefsManager.hasCredential(AiService.DEEPSEEK)) {
-                        add(async { FetchOutcome(AiService.DEEPSEEK, null, deepseekRepository.fetchQuota()) })
-                    }
-                    for ((service, repository) in singleKeyRepositories()) {
-                        if (prefsManager.hasCredential(service)) {
-                            add(async { FetchOutcome(service, null, repository.fetchQuota()) })
-                        }
-                    }
-                    val zaiAccounts = prefsManager.getZaiAccounts()
-                    zaiAccounts.forEachIndexed { index, account ->
-                        val (label, number) = accountNaming(account.label, index, zaiAccounts.size)
-                        add(async {
-                            FetchOutcome(AiService.ZAI, label, zaiRepository.fetchQuotaForAccount(account), number)
-                        })
-                    }
-                }
-                deferreds.awaitAll()
-            }
-
-            if (results.isEmpty()) {
-                _uiState.value = DashboardUiState.Success(emptyList(), Instant.now())
+            if (demoData.isEnabled()) {
+                enterRefreshing(resetState)
+                val results = demoData.sampleQuotas().map { FetchOutcome(it.service, it.accountLabel, it.result) }
+                applyResults(results, clock.instant())
+                if (_consumptionChart.value is ConsumptionChartUiState.Ready) loadConsumption()
                 _isRefreshing.value = false
                 return@launch
             }
 
-            
-            val fresh = results.mapNotNull { (it.result as? Result.Success)?.value }
-            viewModelScope.launch {
-                runCatching { widgetQuotaPublisher.publish(fresh) }
+            val cached = lastFetchRepository.snapshot()
+            if (!bypassCooldown && rateLimiter.isCoolingDown(cached?.fetchedAt)) {
+                serveFromCache(cached)
+                return@launch
             }
 
-            val fxRates = resolveDisplayRates(results)
+            enterRefreshing(resetState)
+            val results = fetchAllServices()
 
-            val successCards = mutableListOf<ServiceCardData>()
-            val errors = mutableMapOf<AiService, AppError>()
-
-            for (outcome in results) {
-                when (val result = outcome.result) {
-                    is Result.Success -> {
-                        successCards.add(
-                            mapToCardData(result.value, outcome.accountLabel, fxRates)
-                                .copy(accountNumber = outcome.accountNumber)
-                        )
-                    }
-                    is Result.Failure -> {
-                        errors[outcome.service] = result.error
-                        successCards.add(
-                            ServiceCardData(
-                                service = outcome.service,
-                                windows = emptyList(),
-                                extraUsage = null,
-                                tier = null,
-                                accountLabel = outcome.accountLabel,
-                                accountNumber = outcome.accountNumber,
-                                error = result.error
-                            )
-                        )
-                    }
-                }
+            if (results.isEmpty()) {
+                _uiState.value = DashboardUiState.Success(emptyList(), clock.instant())
+                _isRefreshing.value = false
+                return@launch
             }
 
-            val sortedCards = successCards.sortedByDescending { card ->
-                card.windows.maxOfOrNull { it.utilization } ?: 0.0
+            val fetchedAt = clock.instant()
+            runCatching {
+                lastFetchRepository.record(fetchedAt, results.map { it.toCachedResult() })
             }
 
-            _uiState.value = if (errors.isEmpty()) {
-                DashboardUiState.Success(sortedCards, Instant.now())
-            } else if (successCards.all { it.error != null }) {
-                DashboardUiState.Error(errors.values.first())
-            } else {
-                DashboardUiState.PartialSuccess(sortedCards, errors)
-            }
-
+            applyResults(results, fetchedAt)
             if (_consumptionChart.value is ConsumptionChartUiState.Ready) loadConsumption()
 
             _isRefreshing.value = false
         }
     }
+
+    private fun enterRefreshing(resetState: Boolean) {
+        _isRefreshing.value = true
+        val currentState = _uiState.value
+        if (resetState || currentState is DashboardUiState.Error || currentState is DashboardUiState.Loading) {
+            _uiState.value = DashboardUiState.Loading
+        }
+    }
+
+    private suspend fun fetchAllServices(): List<FetchOutcome> = coroutineScope {
+        val deferreds = buildList {
+            val claudeAccounts = prefsManager.getClaudeAccounts()
+            claudeAccounts.forEachIndexed { index, account ->
+                val (label, number) = accountNaming(account.label, index, claudeAccounts.size)
+                add(async {
+                    FetchOutcome(AiService.CLAUDE, label, claudeRepository.fetchQuotaForAccount(account), number)
+                })
+            }
+            if (prefsManager.hasCredential(AiService.CODEX)) {
+                add(async { FetchOutcome(AiService.CODEX, null, codexRepository.fetchQuota()) })
+            }
+            if (prefsManager.hasCredential(AiService.GEMINI)) {
+                add(async { FetchOutcome(AiService.GEMINI, null, geminiRepository.fetchQuota()) })
+            }
+            if (prefsManager.hasCredential(AiService.DEEPSEEK)) {
+                add(async { FetchOutcome(AiService.DEEPSEEK, null, deepseekRepository.fetchQuota()) })
+            }
+            for ((service, repository) in singleKeyRepositories()) {
+                if (prefsManager.hasCredential(service)) {
+                    add(async { FetchOutcome(service, null, repository.fetchQuota()) })
+                }
+            }
+            val zaiAccounts = prefsManager.getZaiAccounts()
+            zaiAccounts.forEachIndexed { index, account ->
+                val (label, number) = accountNaming(account.label, index, zaiAccounts.size)
+                add(async {
+                    FetchOutcome(AiService.ZAI, label, zaiRepository.fetchQuotaForAccount(account), number)
+                })
+            }
+        }
+        deferreds.awaitAll()
+    }
+
+    private suspend fun serveFromCache(snapshot: LastFetchSnapshot?) {
+        val results = snapshot?.results?.map { it.toFetchOutcome() }
+        if (results == null) {
+            val current = _uiState.value
+            if (current is DashboardUiState.Loading || current is DashboardUiState.Error) {
+                _uiState.value = DashboardUiState.Success(emptyList(), snapshot?.fetchedAt ?: clock.instant())
+            }
+            return
+        }
+        applyResults(results, snapshot.fetchedAt, publishWidgets = false)
+    }
+
+    private suspend fun applyResults(
+        results: List<FetchOutcome>,
+        lastUpdatedAt: Instant,
+        publishWidgets: Boolean = true
+    ) {
+        if (publishWidgets) {
+            val fresh = results.mapNotNull { (it.result as? Result.Success)?.value }
+            viewModelScope.launch {
+                runCatching { widgetQuotaPublisher.publish(fresh) }
+            }
+        }
+
+        val fxRates = resolveDisplayRates(results)
+
+        val successCards = mutableListOf<ServiceCardData>()
+        val errors = mutableMapOf<AiService, AppError>()
+
+        for (outcome in results) {
+            when (val result = outcome.result) {
+                is Result.Success -> {
+                    successCards.add(
+                        mapToCardData(result.value, outcome.accountLabel, fxRates)
+                            .copy(accountNumber = outcome.accountNumber)
+                    )
+                }
+                is Result.Failure -> {
+                    errors[outcome.service] = result.error
+                    successCards.add(
+                        ServiceCardData(
+                            service = outcome.service,
+                            windows = emptyList(),
+                            extraUsage = null,
+                            tier = null,
+                            accountLabel = outcome.accountLabel,
+                            accountNumber = outcome.accountNumber,
+                            error = result.error
+                        )
+                    )
+                }
+            }
+        }
+
+        val sortedCards = successCards.sortedByDescending { card ->
+            card.windows.maxOfOrNull { it.utilization } ?: 0.0
+        }
+
+        _uiState.value = if (errors.isEmpty()) {
+            DashboardUiState.Success(sortedCards, lastUpdatedAt)
+        } else if (successCards.all { it.error != null }) {
+            DashboardUiState.Error(errors.values.first())
+        } else {
+            DashboardUiState.PartialSuccess(sortedCards, errors, lastUpdatedAt)
+        }
+    }
+
+    private fun FetchOutcome.toCachedResult() = CachedQuotaResult(
+        service = service,
+        accountLabel = accountLabel,
+        accountNumber = accountNumber,
+        quota = result.getOrNull(),
+        error = result.errorOrNull()
+    )
+
+    private fun CachedQuotaResult.toFetchOutcome() = FetchOutcome(
+        service = service,
+        accountLabel = accountLabel,
+        result = quota?.let { Result.Success(it) }
+            ?: Result.Failure(error ?: AppError.NetworkError("No cached payload for this account")),
+        accountNumber = accountNumber
+    )
 
     private fun singleKeyRepositories(): List<Pair<AiService, QuotaRepository>> = listOf(
         AiService.COPILOT to copilotRepository,
@@ -288,7 +354,7 @@ class DashboardViewModel @Inject constructor(
         AiService.OPENAI to openAiRepository
     )
 
-    
+
     private suspend fun resolveDisplayRates(results: List<FetchOutcome>): Map<String, FxRate> {
         val currencies = results
             .mapNotNull { (it.result as? Result.Success)?.value }

@@ -8,6 +8,7 @@ import fr.gildasledrogoff.tokenusage.core.data.DisplayPreferencesRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.DeepseekRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.ExchangeRateRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.GeminiRepositoryImpl
+import fr.gildasledrogoff.tokenusage.core.data.LastFetchRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.OpenAiRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.OpenRouterRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.ZaiRepositoryImpl
@@ -15,6 +16,7 @@ import fr.gildasledrogoff.tokenusage.core.domain.repository.BalanceHistoryReposi
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ClaudeQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ExchangeRateRepository
+import fr.gildasledrogoff.tokenusage.core.domain.repository.LastFetchRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.MultiAccountQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.QuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ZaiRepository
@@ -167,6 +169,12 @@ object RepositoryModule {
     fun provideBalanceHistoryRepository(
         balanceHistoryRepository: BalanceHistoryRepositoryImpl
     ): BalanceHistoryRepository = balanceHistoryRepository
+
+    @Provides
+    @Singleton
+    fun provideLastFetchRepository(
+        lastFetchRepository: LastFetchRepositoryImpl
+    ): LastFetchRepository = lastFetchRepository
 
     @Provides
     @Singleton

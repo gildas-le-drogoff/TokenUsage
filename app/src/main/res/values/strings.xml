@@ -41,6 +41,7 @@
     <string name="dashboard_empty_title">No services configured</string>
     <string name="dashboard_empty_subtitle">Go to Settings to add your API credentials</string>
     <string name="dashboard_load_failed">Failed to load quota data</string>
+    <string name="dashboard_last_updated">Last updated: %1$s</string>
     <string name="error_failed_services">Failed to load: %1$s</string>
 
     <string name="gauge_percent_left">%1$d%% left</string>

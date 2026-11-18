@@ -1,0 +1,22 @@
+package fr.gildasledrogoff.tokenusage.core.data
+
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import javax.inject.Inject
+
+class FetchRateLimiter @Inject constructor(
+    private val clock: Clock
+) {
+
+    fun canFetchNow(lastFetchAt: Instant?): Boolean = !isCoolingDown(lastFetchAt)
+
+    fun isCoolingDown(lastFetchAt: Instant?): Boolean {
+        lastFetchAt ?: return false
+        return Duration.between(lastFetchAt, clock.instant()) < MIN_FETCH_INTERVAL
+    }
+
+    companion object {
+        val MIN_FETCH_INTERVAL: Duration = Duration.ofSeconds(15)
+    }
+}
