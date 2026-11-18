@@ -160,13 +160,22 @@
     <string name="export_error_qr_too_large">配置过大，无法生成二维码</string>
     <string name="export_error_generic">导出失败</string>
     <string name="qr_dialog_title">加密配置二维码</string>
+    <string name="qr_dialog_multi_title">二维码 %1$d / %2$d</string>
     <string name="qr_dialog_hint">在目标设备上用 TokenUsage 扫描此二维码，然后输入密码解密。</string>
+    <string name="qr_dialog_multi_hint">此配置分布在多个二维码中。在目标设备上用 TokenUsage 逐个扫描 — 顺序不限，但每个都必须扫描。点击“下一个二维码”显示下一个代码。</string>
     <string name="qr_dialog_warning">任何截取此图片并知道密码的人都能读取你的凭据。</string>
+    <string name="action_next_qr">下一个二维码</string>
+    <string name="action_previous_qr">上一个</string>
 
     <string name="import_title">导入</string>
     <string name="import_description">恢复加密备份：ZIP 文件（含历史记录）或其他设备上的二维码。备份中的凭据将替换本设备的凭据。</string>
     <string name="action_import_qr">扫描二维码</string>
     <string name="import_scan_prompt">将相机对准 TokenUsage 配置二维码</string>
+    <string name="import_scan_prompt_multi">二维码 %1$d / %2$d — 将相机对准下一个 TokenUsage 二维码</string>
+    <string name="import_qr_progress">已接收二维码：%1$d / %2$d</string>
+    <string name="import_qr_progress_next">请继续扫描第 %1$d 个二维码</string>
+    <string name="action_scan_next_qr">扫描下一个二维码</string>
+    <string name="action_restart_qr_scan">重新开始</string>
     <string name="import_dialog_title">导入配置</string>
     <string name="import_dialog_hint">请输入在源设备导出时设置的密码。</string>
     <string name="field_import_pin">备份密码</string>
@@ -176,6 +185,7 @@
     <string name="import_error_wrong_pin">密码错误或备份已损坏</string>
     <string name="import_error_version">备份由更新版本的 TokenUsage 创建 — 请先更新应用</string>
     <string name="import_error_generic">导入失败</string>
+    <string name="import_error_qr_mismatch">此二维码不属于当前的多码导入 — 请重新开始扫描</string>
     <string name="action_import_zip">ZIP</string>
     <plurals name="import_history_added">
         <item quantity="other">已添加 %1$d 条历史记录</item>

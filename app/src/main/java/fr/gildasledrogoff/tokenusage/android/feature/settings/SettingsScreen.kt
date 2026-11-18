@@ -161,7 +161,10 @@ fun SettingsScreen(
         }
     }
 
-    val scanPrompt = stringResource(R.string.import_scan_prompt)
+    val scanSession = uiState.importState.scanSession
+    val scanPrompt = scanSession?.let { session ->
+        stringResource(R.string.import_scan_prompt_multi, session.nextIndex, session.total)
+    } ?: stringResource(R.string.import_scan_prompt)
     val qrScanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
         result.contents?.let { viewModel.onQrScanned(it) }
     }
@@ -372,7 +375,9 @@ fun SettingsScreen(
                 onExportZip = { viewModel.prepareZipExport() },
                 onShowQr = { viewModel.prepareQrExport() },
                 importError = uiState.importState.error.takeUnless { uiState.importState.awaitingPin },
+                scanSession = uiState.importState.scanSession,
                 onScanQr = launchQrScan,
+                onRestartQrScan = { viewModel.restartQrScanSession() },
                 onPickZip = launchZipPick
             )
 
@@ -397,9 +402,12 @@ fun SettingsScreen(
         )
     }
 
-    uiState.export.qrPayload?.let { payload ->
+    uiState.export.qrCodes?.let { codes ->
         ExportQrDialog(
-            payload = payload,
+            qrCodes = codes,
+            index = uiState.export.qrIndex.coerceIn(0, codes.size - 1),
+            onNext = { viewModel.nextExportQr() },
+            onPrevious = { viewModel.previousExportQr() },
             onDismiss = { viewModel.dismissQrExport() }
         )
     }
@@ -966,7 +974,9 @@ private fun BackupSection(
     onExportZip: () -> Unit,
     onShowQr: () -> Unit,
     importError: ImportError?,
+    scanSession: QrScanProgress?,
     onScanQr: () -> Unit,
+    onRestartQrScan: () -> Unit,
     onPickZip: () -> Unit
 ) {
     val pinValid = BackupCrypto.isValidPassword(export.pin)
@@ -1089,16 +1099,25 @@ private fun BackupSection(
                 modifier = Modifier.padding(top = 4.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = onPickZip) {
-                    Icon(painter = painterResource(R.drawable.ic_file_open_rounded), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.action_import_zip))
-                }
-                OutlinedButton(onClick = onScanQr) {
-                    Icon(painter = painterResource(R.drawable.ic_qr_code_scanner_rounded), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.action_import_qr))
+
+            if (scanSession != null) {
+                MultiQrScanProgress(
+                    session = scanSession,
+                    onScanNext = onScanQr,
+                    onRestart = onRestartQrScan
+                )
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = onPickZip) {
+                        Icon(painter = painterResource(R.drawable.ic_file_open_rounded), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_import_zip))
+                    }
+                    OutlinedButton(onClick = onScanQr) {
+                        Icon(painter = painterResource(R.drawable.ic_qr_code_scanner_rounded), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_import_qr))
+                    }
                 }
             }
 
@@ -1109,6 +1128,44 @@ private fun BackupSection(
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MultiQrScanProgress(
+    session: QrScanProgress,
+    onScanNext: () -> Unit,
+    onRestart: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        LinearProgressIndicator(
+            progress = { session.received.size.toFloat() / session.total },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.import_qr_progress, session.received.size, session.total),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = stringResource(R.string.import_qr_progress_next, session.nextIndex),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(onClick = onScanNext) {
+                Icon(painter = painterResource(R.drawable.ic_qr_code_scanner_rounded), contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.action_scan_next_qr))
+            }
+            TextButton(onClick = onRestart) {
+                Text(stringResource(R.string.action_restart_qr_scan))
             }
         }
     }
@@ -1200,21 +1257,31 @@ private fun ImportPinDialog(
 
 @Composable
 private fun ExportQrDialog(
-    payload: String,
+    qrCodes: List<String>,
+    index: Int,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val multi = qrCodes.size > 1
+    val payload = qrCodes[index]
     val qrImage = rememberQrImage(payload, QR_SIZE_PX)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.qr_dialog_title)) },
+        title = {
+            Text(
+                if (multi) stringResource(R.string.qr_dialog_multi_title, index + 1, qrCodes.size)
+                else stringResource(R.string.qr_dialog_title)
+            )
+        },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = stringResource(R.string.qr_dialog_hint),
+                    text = stringResource(if (multi) R.string.qr_dialog_multi_hint else R.string.qr_dialog_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1247,14 +1314,26 @@ private fun ExportQrDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_close))
+            if (multi && index < qrCodes.size - 1) {
+                TextButton(onClick = onNext) {
+                    Text(stringResource(R.string.action_next_qr))
+                }
+            } else {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.action_close))
+                }
+            }
+        },
+        dismissButton = {
+            if (multi) {
+                TextButton(onClick = onPrevious, enabled = index > 0) {
+                    Text(stringResource(R.string.action_previous_qr))
+                }
             }
         }
     )
 }
 
-/** Renders the QR code off the main thread; null until ready. */
 @Composable
 private fun rememberQrImage(content: String, sizePx: Int): ImageBitmap? {
     var bitmap by remember(content) { mutableStateOf<ImageBitmap?>(null) }
@@ -1335,13 +1414,6 @@ private fun RefreshIntervalSection(
     }
 }
 
-/**
- * Battery-optimization exemption, left to the user. Without it Android
- * (Doze, App Standby buckets, OEM task killers) may defer or skip the
- * periodic refresh, so the notification, widgets and tile can show stale
- * quotas: the warning says so explicitly. Granting it only makes the
- * scheduled refresh reliable — the interval chosen above stays the cadence.
- */
 @Composable
 private fun BackgroundRefreshBlock(
     manualOnly: Boolean,
@@ -1418,7 +1490,6 @@ private fun NotificationsSection(
     )
 }
 
-/** Security settings: app lock with biometric / device-credential gate. */
 @Composable
 private fun SecuritySection(
     lockScreenVisibility: LockScreenVisibility,
@@ -1651,14 +1722,6 @@ private fun DeleteConfirmDialog(
     )
 }
 
-/**
- * A credential can be validated when it carries enough data for the service.
- * Claude accepts either OAuth tokens or a web session key (sk-ant-sid01-/02-…).
- */
-/**
- * Single static key services (Copilot, OpenRouter, OpenAI): one secret
- * field, a short hint, and for Copilot a GitHub sign-in that fills it.
- */
 @Composable
 private fun ApiKeyServiceSection(
     service: AiService,
@@ -1774,7 +1837,6 @@ private fun apiKeyFieldHintRes(service: AiService): Int = when (service) {
     else -> R.string.field_openrouter_key_hint
 }
 
-/** "Valid" in green, or the localized error in red; nothing before a validation. */
 @Composable
 internal fun ValidationResultLabel(result: ValidationResult?, modifier: Modifier = Modifier) {
     val valid = Color(0xFF4CAF50)
@@ -1809,10 +1871,6 @@ internal fun ValidationResultLabel(result: ValidationResult?, modifier: Modifier
     }
 }
 
-/**
- * GitHub device flow: shows the one-time code, copies it and opens
- * github.com/login/device; the ViewModel polls until the user approves.
- */
 @Composable
 private fun CopilotLoginDialog(
     state: CopilotLoginUi,
@@ -1911,20 +1969,12 @@ private fun copilotLoginErrorText(error: AppError): String = when {
 
 private const val GITHUB_DEVICE_URL = "https://github.com/login/device"
 
-/**
- * Multi-account services (Claude, DeepSeek, Z.ai) are "in use" when at least one
- * account carries an API key; [accountStatus] turns the count into a label.
- */
 @Composable
 internal fun accountStatus(count: Int): String = when (count) {
     0 -> stringResource(R.string.status_not_in_use)
     else -> pluralStringResource(R.plurals.accounts_in_use, count, count)
 }
 
-/**
- * Localized text for a semantic export failure ([ExportError] is produced by
- * the ViewModel without any string so it stays locale-independent).
- */
 @Composable
 private fun exportErrorMessage(error: ExportError): String = when (error) {
     ExportError.PinTooShort ->
@@ -1940,14 +1990,9 @@ private fun importErrorMessage(error: ImportError): String = when (error) {
     ImportError.WrongPin -> stringResource(R.string.import_error_wrong_pin)
     ImportError.UnsupportedVersion -> stringResource(R.string.import_error_version)
     ImportError.Failed -> stringResource(R.string.import_error_generic)
+    ImportError.QrMismatch -> stringResource(R.string.import_error_qr_mismatch)
 }
 
-/**
- * Clickable card header for a collapsible configuration section. Always visible
- * whether collapsed or expanded, it shows the service icon, its name, an
- * in-use indicator (green check when configured, greyed-out check otherwise)
- * and an expand chevron.
- */
 @Composable
 internal fun ExpandableSectionHeader(
     iconRes: Int,

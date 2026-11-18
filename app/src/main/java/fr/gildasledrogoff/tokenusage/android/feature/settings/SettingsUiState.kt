@@ -17,7 +17,7 @@ data class SettingsUiState(
     val deepseekAccounts: List<DeepseekAccountUi> = emptyList(),
     val zaiAccounts: List<ZaiAccountUi> = emptyList(),
     val zaiHideMonthlyTools: Boolean = true,
-    
+
     val copilotLogin: CopilotLoginUi? = null,
     val currencyConversion: CurrencyConversionUi = CurrencyConversionUi(),
     val refreshIntervalMinutes: Long = 30L,
@@ -25,9 +25,9 @@ data class SettingsUiState(
     val quotaDisplayMode: QuotaDisplayMode = QuotaDisplayMode.REMAINING,
     val lockScreenVisibility: LockScreenVisibility = LockScreenVisibility.SYSTEM,
     val notificationsEnabled: Boolean = true,
-    
+
     val appLockEnabled: Boolean = false,
-    
+
     val demoDataAvailable: Boolean = false,
     val demoDataEnabled: Boolean = false,
     val showDeleteConfirmDialog: Boolean = false,
@@ -37,25 +37,35 @@ data class SettingsUiState(
 
 
 sealed interface ImportError {
-    
+
     data object NotABackup : ImportError
-    
+
     data object WrongPin : ImportError
-    
+
     data object UnsupportedVersion : ImportError
     data object Failed : ImportError
+
+    data object QrMismatch : ImportError
+}
+
+data class QrScanProgress(
+    val total: Int,
+    val received: Set<Int>
+) {
+    val nextIndex: Int get() = (1..total).firstOrNull { it !in received } ?: total
 }
 
 
 data class ImportUiState(
-    
+
     val awaitingPin: Boolean = false,
     val pin: String = "",
     val isBusy: Boolean = false,
     val error: ImportError? = null,
-    
+    val scanSession: QrScanProgress? = null,
+
     val importedCount: Int? = null,
-    
+
     val importedHistoryEntries: Int = 0
 )
 
@@ -73,27 +83,28 @@ data class ExportUiState(
     val confirmPin: String = "",
     val isBusy: Boolean = false,
     val error: ExportError? = null,
-    
+
     val zipReady: Boolean = false,
     val zipFileName: String = "",
-    
-    val qrPayload: String? = null
+
+    val qrCodes: List<String>? = null,
+    val qrIndex: Int = 0
 )
 
 
 data class CurrencyConversionUi(
     val displayCurrency: DisplayCurrency = DisplayCurrency.ORIGINAL,
     val source: FxRateSource = FxRateSource.DEFAULT,
-    
+
     val apiFetchAllowed: Boolean = false,
-    
+
     val manualUsdEurText: String = "",
     val manualUsdEurInvalid: Boolean = false,
-    
+
     val manualUsdCnyText: String = "",
     val manualUsdCnyInvalid: Boolean = false,
     val isFetching: Boolean = false,
-    
+
     val remoteRates: List<FxRate> = emptyList(),
     val fetchError: AppError? = null
 )
@@ -107,9 +118,9 @@ data class ClaudeAccountUi(
     val refreshToken: String = "",
     val isValidating: Boolean = false,
     val validationResult: ValidationResult? = null,
-    
+
     val hasStoredCredential: Boolean = false,
-    
+
     val credentialEdited: Boolean = false
 ) {
     val isConfigured: Boolean get() =
@@ -119,7 +130,7 @@ data class ClaudeAccountUi(
 data class DeepseekAccountUi(
     val id: String,
     val label: String = "",
-    
+
     val apiKey: String = "",
     val hasStoredKey: Boolean = false,
     val isValidating: Boolean = false,
@@ -129,7 +140,7 @@ data class DeepseekAccountUi(
 data class ZaiAccountUi(
     val id: String,
     val label: String = "",
-    
+
     val apiKey: String = "",
     val hasStoredKey: Boolean = false,
     val isValidating: Boolean = false,
@@ -152,7 +163,7 @@ data class ServiceCredentialState(
     val oauthClientId: String = "",
     val oauthClientSecret: String = "",
     val expiresAtDisplay: String = "",
-    
+
     val isStored: Boolean = false,
     val isValidating: Boolean = false,
     val validationResult: ValidationResult? = null
@@ -160,6 +171,6 @@ data class ServiceCredentialState(
 
 sealed class ValidationResult {
     data object Success : ValidationResult()
-    
+
     data class Failure(val error: AppError) : ValidationResult()
 }

@@ -32,7 +32,7 @@ class ConfigBackupManager @Inject constructor(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    
+
     private suspend fun buildPayload(includeHistory: Boolean): BackupPayload {
         val credentials = AiService.entries
             .filter { it !in MULTI_ACCOUNT_SERVICES }
@@ -77,7 +77,7 @@ class ConfigBackupManager @Inject constructor(
         )
     }
 
-    
+
     suspend fun createZipBytes(pin: String): ByteArray {
         val container = encryptedContainer(buildPayload(includeHistory = true), pin)
         return ByteArrayOutputStream(container.size).use { out ->
@@ -90,37 +90,36 @@ class ConfigBackupManager @Inject constructor(
         }
     }
 
-    
+
     suspend fun createQrPayload(pin: String): String {
         val container = encryptedContainer(buildPayload(includeHistory = false), pin)
-        val payload = Base64.encodeToString(container, Base64.NO_WRAP)
-        if (payload.length > QR_MAX_PAYLOAD_CHARS) {
-            throw QrPayloadTooLargeException()
-        }
-        return payload
+        return Base64.encodeToString(container, Base64.NO_WRAP)
     }
+
+    suspend fun createQrCodes(pin: String): List<String> =
+        QrChunkCodec.encode(createQrPayload(pin))
 
     private fun encryptedContainer(payload: BackupPayload, pin: String): ByteArray =
         BackupCrypto.encrypt(BackupCrypto.deflate(json.encodeToString(payload).toByteArray()), pin)
 
 
-    
+
     fun parseQrPayload(text: String): ByteArray = BackupCodec.parseQrPayload(text)
 
-    
+
     fun parseZip(zipBytes: ByteArray): ByteArray = BackupCodec.parseZip(zipBytes)
 
-    
+
     fun readBackupFile(input: java.io.InputStream): ByteArray? = BackupCodec.readBounded(input)
 
-    
+
     fun decryptContainer(container: ByteArray, pin: String): BackupPayload =
         BackupCodec.decodePayload(
             BackupCrypto.inflate(BackupCrypto.decrypt(container, pin)),
             json
         )
 
-    
+
     suspend fun restore(payload: BackupPayload): ImportSummary {
         val restoredServices = mutableListOf<AiService>()
         for ((serviceName, backup) in payload.credentials) {
@@ -197,7 +196,7 @@ class ConfigBackupManager @Inject constructor(
         )
     }
 
-    
+
     private fun restoreClaudeAccounts(payload: BackupPayload): Int {
         val imported: List<Pair<ClaudeAccount, String?>> = payload.claudeAccounts
             .mapNotNull { backup ->
@@ -265,19 +264,17 @@ class ConfigBackupManager @Inject constructor(
         )
 
     companion object {
-        
+
         const val CONTAINED_ENTRY_NAME = "tokenusage-backup.cbx"
 
-        
+
         private const val LEGACY_FX_SOURCE_OFF = "OFF"
 
-        
-        const val QR_MAX_PAYLOAD_CHARS = 2900
 
         internal const val AUTH_MODE_OAUTH = "oauth"
         internal const val AUTH_MODE_WEB_SESSION = "web_session"
 
-        
+
         private val MULTI_ACCOUNT_SERVICES = setOf(AiService.CLAUDE, AiService.DEEPSEEK, AiService.ZAI)
     }
 }
@@ -290,7 +287,7 @@ data class ImportSummary(
     val zaiAccounts: Int,
     val historyEntries: Int
 ) {
-    
+
     val credentialCount: Int get() = services.size + claudeAccounts + deepseekAccounts + zaiAccounts
 }
 

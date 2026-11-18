@@ -162,13 +162,22 @@
     <string name="export_error_qr_too_large">Configuration too large for a QR code</string>
     <string name="export_error_generic">Export failed</string>
     <string name="qr_dialog_title">Encrypted Config QR</string>
+    <string name="qr_dialog_multi_title">QR code %1$d / %2$d</string>
     <string name="qr_dialog_hint">Scan this code with TokenUsage on the destination device, then enter the password to decrypt.</string>
+    <string name="qr_dialog_multi_hint">This config spans several QR codes. Scan each one with TokenUsage on the destination device — order doesn\'t matter, but every code is required. Use “Next QR” to display the following code.</string>
     <string name="qr_dialog_warning">Anyone who captures this image and knows the password can read your credentials.</string>
+    <string name="action_next_qr">Next QR</string>
+    <string name="action_previous_qr">Previous</string>
 
     <string name="import_title">Import</string>
     <string name="import_description">Restore an encrypted backup: a ZIP file (history included) or the QR code from another device. Backup credentials replace this device\'s.</string>
     <string name="action_import_qr">Scan QR</string>
     <string name="import_scan_prompt">Point the camera at the TokenUsage configuration QR code</string>
+    <string name="import_scan_prompt_multi">QR code %1$d of %2$d — point the camera at the next TokenUsage QR code</string>
+    <string name="import_qr_progress">QR codes received: %1$d / %2$d</string>
+    <string name="import_qr_progress_next">Continue with QR code #%1$d</string>
+    <string name="action_scan_next_qr">Scan next QR code</string>
+    <string name="action_restart_qr_scan">Start over</string>
     <string name="import_dialog_title">Import configuration</string>
     <string name="import_dialog_hint">Enter the password chosen during the export on the source device.</string>
     <string name="field_import_pin">Backup password</string>
@@ -178,6 +187,7 @@
     <string name="import_error_wrong_pin">Wrong password or corrupted backup</string>
     <string name="import_error_version">Backup made by a newer version of TokenUsage — update the app</string>
     <string name="import_error_generic">Import failed</string>
+    <string name="import_error_qr_mismatch">This QR code doesn\'t belong to the current multi-code import — restart the scan</string>
     <string name="action_import_zip">ZIP</string>
     <plurals name="import_history_added">
         <item quantity="one">%1$d history entry added</item>

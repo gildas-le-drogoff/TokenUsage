@@ -161,13 +161,22 @@
     <string name="export_error_qr_too_large">Configuration trop volumineuse pour un QR code</string>
     <string name="export_error_generic">Échec de l\'export</string>
     <string name="qr_dialog_title">QR de configuration chiffrée</string>
+    <string name="qr_dialog_multi_title">QR code %1$d / %2$d</string>
     <string name="qr_dialog_hint">Scannez ce code avec TokenUsage sur l\'appareil de destination, puis saisissez le mot de passe pour déchiffrer.</string>
+    <string name="qr_dialog_multi_hint">Cette configuration s\'étend sur plusieurs QR codes. Scannez chacun avec TokenUsage sur l\'appareil de destination — l\'ordre n\'a pas d\'importance, mais tous sont nécessaires. Utilisez « QR suivant » pour afficher le code suivant.</string>
     <string name="qr_dialog_warning">Quiconque capture cette image et connaît le mot de passe peut lire vos identifiants.</string>
+    <string name="action_next_qr">QR suivant</string>
+    <string name="action_previous_qr">Précédent</string>
 
     <string name="import_title">Import</string>
     <string name="import_description">Restaure une sauvegarde chiffrée : fichier ZIP (historique inclus) ou QR code d\'un autre appareil. Ses identifiants remplacent ceux de l\'appareil.</string>
     <string name="action_import_qr">Scanner QR</string>
     <string name="import_scan_prompt">Visez le QR code de configuration TokenUsage</string>
+    <string name="import_scan_prompt_multi">QR code %1$d sur %2$d — visez le prochain QR code TokenUsage</string>
+    <string name="import_qr_progress">QR codes reçus : %1$d / %2$d</string>
+    <string name="import_qr_progress_next">Continuez avec le QR code n°%1$d</string>
+    <string name="action_scan_next_qr">Scanner le QR suivant</string>
+    <string name="action_restart_qr_scan">Recommencer</string>
     <string name="import_dialog_title">Importer la configuration</string>
     <string name="import_dialog_hint">Saisissez le mot de passe choisi lors de l\'export sur l\'appareil d\'origine.</string>
     <string name="field_import_pin">Mot de passe de la sauvegarde</string>
@@ -177,6 +186,7 @@
     <string name="import_error_wrong_pin">Mot de passe incorrect ou sauvegarde corrompue</string>
     <string name="import_error_version">Sauvegarde créée par une version plus récente de TokenUsage — mettez l\'app à jour</string>
     <string name="import_error_generic">Échec de l\'import</string>
+    <string name="import_error_qr_mismatch">Ce QR code n\'appartient pas à l\'import multi-codes en cours — recommencez le scan</string>
     <string name="action_import_zip">ZIP</string>
     <plurals name="import_history_added">
         <item quantity="one">%1$d relevé d\'historique ajouté</item>

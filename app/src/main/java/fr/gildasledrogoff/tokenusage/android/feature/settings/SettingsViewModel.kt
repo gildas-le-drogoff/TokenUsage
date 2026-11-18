@@ -9,6 +9,7 @@ import fr.gildasledrogoff.tokenusage.core.backup.BackupCrypto
 import fr.gildasledrogoff.tokenusage.core.backup.BackupCryptoException
 import fr.gildasledrogoff.tokenusage.core.backup.ConfigBackupManager
 import fr.gildasledrogoff.tokenusage.core.backup.InvalidBackupException
+import fr.gildasledrogoff.tokenusage.core.backup.QrChunkCodec
 import fr.gildasledrogoff.tokenusage.core.backup.QrPayloadTooLargeException
 import fr.gildasledrogoff.tokenusage.core.data.CopilotDeviceFlow
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
@@ -851,7 +852,20 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun dismissQrExport() {
-        _uiState.update { it.copy(export = it.export.copy(qrPayload = null)) }
+        _uiState.update { it.copy(export = it.export.copy(qrCodes = null, qrIndex = 0)) }
+    }
+
+    fun nextExportQr() {
+        _uiState.update {
+            val max = (it.export.qrCodes?.size ?: 1) - 1
+            it.copy(export = it.export.copy(qrIndex = (it.export.qrIndex + 1).coerceAtMost(max)))
+        }
+    }
+
+    fun previousExportQr() {
+        _uiState.update {
+            it.copy(export = it.export.copy(qrIndex = (it.export.qrIndex - 1).coerceAtLeast(0)))
+        }
     }
 
     
@@ -900,11 +914,11 @@ class SettingsViewModel @Inject constructor(
         setExportBusy(true)
         val pin = _uiState.value.export.pin
         viewModelScope.launch(Dispatchers.Default) {
-            val result = runCatching { backupManager.createQrPayload(pin) }
+            val result = runCatching { backupManager.createQrCodes(pin) }
             withContext(Dispatchers.Main) { setExportBusy(false) }
             result.fold(
-                onSuccess = { payload ->
-                    _uiState.update { it.copy(export = it.export.copy(qrPayload = payload, error = null)) }
+                onSuccess = { codes ->
+                    _uiState.update { it.copy(export = it.export.copy(qrCodes = codes, qrIndex = 0, error = null)) }
                 },
                 onFailure = { exportFailed(it) }
             )
@@ -941,12 +955,84 @@ class SettingsViewModel @Inject constructor(
     }
 
 
-    
+
     private var pendingImportContainer: ByteArray? = null
 
-    
+    private val qrScanChunks = mutableMapOf<Int, QrChunkCodec.Chunk>()
+    private var qrSessionHash: String? = null
+
+
     fun onQrScanned(contents: String) {
-        onContainerLoaded(runCatching { backupManager.parseQrPayload(contents) }.getOrNull())
+        val text = contents.trim()
+        if (QrChunkCodec.isMultiQr(text)) {
+            onMultiQrChunkScanned(text)
+            return
+        }
+        if (_uiState.value.importState.scanSession != null) {
+            setImportError(ImportError.QrMismatch)
+            return
+        }
+        onContainerLoaded(runCatching { backupManager.parseQrPayload(text) }.getOrNull())
+    }
+
+    private fun onMultiQrChunkScanned(text: String) {
+        val chunk = runCatching { QrChunkCodec.parseChunk(text) }.getOrNull()
+        if (chunk == null) {
+            setImportError(ImportError.NotABackup)
+            return
+        }
+        val session = _uiState.value.importState.scanSession
+        if (session == null) {
+            qrScanChunks.clear()
+            qrSessionHash = chunk.fullHash
+            _uiState.update {
+                it.copy(importState = it.importState.copy(scanSession = QrScanProgress(chunk.total, emptySet())))
+            }
+        } else if (session.total != chunk.total || qrSessionHash != chunk.fullHash) {
+            setImportError(ImportError.QrMismatch)
+            return
+        }
+        qrScanChunks[chunk.index] = chunk
+        if (qrScanChunks.size == chunk.total) {
+            completeQrScanSession()
+        } else {
+            publishQrScanProgress(chunk.total)
+        }
+    }
+
+    private fun completeQrScanSession() {
+        val payload = runCatching { QrChunkCodec.reassemble(qrScanChunks.values) }.getOrNull()
+        resetQrScanSession()
+        if (payload == null) {
+            setImportError(ImportError.QrMismatch)
+            return
+        }
+        onContainerLoaded(runCatching { backupManager.parseQrPayload(payload) }.getOrNull())
+    }
+
+    private fun publishQrScanProgress(total: Int) {
+        _uiState.update {
+            it.copy(
+                importState = it.importState.copy(
+                    scanSession = QrScanProgress(total, qrScanChunks.keys.toSet()),
+                    error = null
+                )
+            )
+        }
+    }
+
+    private fun setImportError(error: ImportError) {
+        _uiState.update { it.copy(importState = it.importState.copy(error = error)) }
+    }
+
+    private fun resetQrScanSession() {
+        qrScanChunks.clear()
+        qrSessionHash = null
+        _uiState.update { it.copy(importState = it.importState.copy(scanSession = null)) }
+    }
+
+    fun restartQrScanSession() {
+        resetQrScanSession()
     }
 
     
@@ -978,6 +1064,8 @@ class SettingsViewModel @Inject constructor(
 
     fun dismissImport() {
         pendingImportContainer = null
+        qrScanChunks.clear()
+        qrSessionHash = null
         _uiState.update { it.copy(importState = ImportUiState()) }
     }
 
