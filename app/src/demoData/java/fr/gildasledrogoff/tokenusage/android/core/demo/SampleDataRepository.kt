@@ -8,12 +8,10 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.CreditBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
-import fr.gildasledrogoff.tokenusage.core.domain.model.ExtraUsage
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.SpendAmount
 import fr.gildasledrogoff.tokenusage.core.domain.model.SpendPeriod
-import fr.gildasledrogoff.tokenusage.core.domain.model.UsageBreakdownRow
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsagePace
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageSeverity
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageWindow
@@ -84,7 +82,9 @@ class SampleDataRepository @Inject constructor(
         }
         return series.asReversed()
     }
-    override fun sampleDeepseekAccounts(): List<DeepseekAccount> = localizedSpecs().map { it.account }
+    override fun sampleDeepseekAccounts(): List<DeepseekAccount> = displayedSpecs().map { it.account }
+    private fun displayedSpecs(): List<SampleAccountSpec> =
+        localizedSpecs().filter { it.account.id != ID_NEW && it.account.id != ID_OLD }
     private fun localizedSpecs(): List<SampleAccountSpec> = DEEPSEEK_SPECS.map { spec ->
         spec.copy(account = spec.account.copy(label = context.getString(labelRes(spec.account.id))))
     }
@@ -99,55 +99,36 @@ class SampleDataRepository @Inject constructor(
         val now = clock.instant()
         return listOf(
             DemoQuota(AiService.CLAUDE, context.getString(R.string.demo_claude_personal), Result.Success(claude(now)), accountId = ID_CLAUDE_PERSONAL),
+            DemoQuota(AiService.GEMINI, null, Result.Success(gemini(now))),
             DemoQuota(AiService.CLAUDE, context.getString(R.string.demo_claude_work), Result.Success(claudeWork(now)), accountId = ID_CLAUDE_WORK),
             DemoQuota(AiService.CLAUDE_PLATFORM, context.getString(R.string.demo_claude_platform), Result.Success(claudePlatform(now)), accountId = ID_CLAUDE_PLATFORM),
             DemoQuota(AiService.CODEX, context.getString(R.string.demo_codex_personal), Result.Success(codex(now))),
             DemoQuota(AiService.CODEX, context.getString(R.string.demo_codex_work), Result.Success(codexWork(now))),
-            DemoQuota(AiService.GEMINI, null, Result.Success(gemini(now))),
         ) + deepseekQuotas(now) + listOf(
             DemoQuota(AiService.ZAI, context.getString(R.string.demo_zai_personal), Result.Success(zai(now))),
             DemoQuota(AiService.ZAI, context.getString(R.string.demo_zai_work), Result.Success(zaiWork(now))),
             DemoQuota(AiService.COPILOT, context.getString(R.string.demo_copilot_personal), Result.Success(copilot(now))),
-            DemoQuota(
-                AiService.COPILOT,
-                context.getString(R.string.demo_copilot_work),
-                Result.Failure(AppError.ServiceUnavailable),
-                fallback = copilotWork(now.minus(COPILOT_WORK_STALE_FOR))
-            ),
+            DemoQuota(AiService.COPILOT, context.getString(R.string.demo_copilot_work), Result.Success(copilotWork(now))),
             DemoQuota(AiService.OPENROUTER, null, Result.Success(openRouter(now))),
             DemoQuota(AiService.OPENAI, null, Result.Success(openAi(now)))
         )
     }
     private fun claude(now: Instant): QuotaInfo {
-        val weeklyReset = now + CLAUDE_PERSONAL_7D.remaining
         return QuotaInfo(
             service = AiService.CLAUDE,
             windows = listOf(
                 CLAUDE_PERSONAL_5H.window(WINDOW_5H, now, SESSION_MINUTES),
-                CLAUDE_PERSONAL_7D.window(WINDOW_7D, now, WEEKLY_MINUTES),
-                UsageWindow("Sonnet", 0.47, weeklyReset, windowMinutes = WEEKLY_MINUTES),
-                UsageWindow("Opus", 0.25, weeklyReset, windowMinutes = WEEKLY_MINUTES),
-                UsageWindow("Claude Design", 0.12, weeklyReset, windowMinutes = WEEKLY_MINUTES)
+                CLAUDE_PERSONAL_7D.window(WINDOW_7D, now, WEEKLY_MINUTES)
             ),
-            extraUsage = ExtraUsage(
-                isEnabled = true,
-                monthlyLimit = 50.0,
-                usedCredits = 12.40,
-                utilization = 12.40 / 50.0,
-                currency = "USD"
-            ),
+            extraUsage = null,
             tier = "Max 20x",
-            weeklyBreakdown = listOf(
-                UsageBreakdownRow("Claude Code", 82.0),
-                UsageBreakdownRow("Claude Design", 3.0)
-            ),
             fetchedAt = now
         )
     }
     private fun claudeWork(now: Instant) = QuotaInfo(
         service = AiService.CLAUDE,
         windows = listOf(
-            CLAUDE_WORK_5H.window(WINDOW_5H, now, SESSION_MINUTES, UsageSeverity.WARNING),
+            CLAUDE_WORK_5H.window(WINDOW_5H, now, SESSION_MINUTES),
             CLAUDE_WORK_7D.window(WINDOW_7D, now, WEEKLY_MINUTES)
         ),
         tier = "Pro",
@@ -156,8 +137,8 @@ class SampleDataRepository @Inject constructor(
     private fun claudePlatform(now: Instant) = QuotaInfo(
         service = AiService.CLAUDE_PLATFORM,
         windows = listOf(
-            UsageWindow("API credit", 0.35, now + Duration.ofDays(18)),
-            UsageWindow("Purchased credit", 0.62, now + Duration.ofDays(210))
+            UsageWindow("API credit", 0.25, now + Duration.ofDays(18)),
+            UsageWindow("Purchased credit", 0.28, now + Duration.ofDays(210))
         ),
         extraUsage = null,
         tier = "Acme Labs",
@@ -212,7 +193,7 @@ class SampleDataRepository @Inject constructor(
         service = AiService.CODEX,
         windows = listOf(
             UsageWindow("5-Hour", 0.18, now + Duration.ofMinutes(47)),
-            UsageWindow("7-Day", 0.55, now + Duration.ofDays(5).plusHours(2))
+            UsageWindow("7-Day", 0.41, now + Duration.ofDays(5).plusHours(2))
         ),
         extraUsage = null,
         tier = "Plus",
@@ -221,7 +202,7 @@ class SampleDataRepository @Inject constructor(
     private fun codexWork(now: Instant) = QuotaInfo(
         service = AiService.CODEX,
         windows = listOf(
-            UsageWindow("5-Hour", 0.64, now + Duration.ofMinutes(112)),
+            UsageWindow("5-Hour", 0.36, now + Duration.ofMinutes(112)),
             UsageWindow("7-Day", 0.21, now + Duration.ofDays(2).plusHours(9))
         ),
         extraUsage = null,
@@ -231,16 +212,16 @@ class SampleDataRepository @Inject constructor(
     private fun gemini(now: Instant) = QuotaInfo(
         service = AiService.GEMINI,
         windows = listOf(
-            UsageWindow("Pro", 0.45, now + Duration.ofHours(9)),
-            UsageWindow("Flash", 0.60, now + Duration.ofHours(9)),
+            UsageWindow("Pro", 0.32, now + Duration.ofHours(9)),
+            UsageWindow("Flash", 0.44, now + Duration.ofHours(9)),
             UsageWindow("Flash Lite", 0.08, now + Duration.ofHours(9))
         ),
         extraUsage = null,
         tier = "Free",
         fetchedAt = now
     )
-    
-    private suspend fun deepseekQuotas(now: Instant): List<DemoQuota> = localizedSpecs().map { spec ->
+
+    private suspend fun deepseekQuotas(now: Instant): List<DemoQuota> = displayedSpecs().map { spec ->
         val account = spec.account
         val result: Result<QuotaInfo, AppError> = when (account.id) {
             ID_OLD -> Result.Failure(AppError.AuthError(AiService.DEEPSEEK, isTerminal = true))
@@ -280,7 +261,7 @@ class SampleDataRepository @Inject constructor(
         service = AiService.ZAI,
         windows = listOfNotNull(
             UsageWindow("Session (5h)", 0.33, now + Duration.ofMinutes(208), windowMinutes = SESSION_MINUTES),
-            monthlyWindow("Monthly Tools", 0.6, now + Duration.ofDays(12))
+            monthlyWindow("Monthly Tools", 0.38, now + Duration.ofDays(12))
                 .takeUnless { prefsManager.isZaiMonthlyToolsHidden() },
             monthlyWindow("Monthly Quota", 0.27, now + Duration.ofDays(12))
         ),
@@ -305,7 +286,7 @@ class SampleDataRepository @Inject constructor(
     private fun copilot(now: Instant) = QuotaInfo(
         service = AiService.COPILOT,
         windows = listOf(
-            UsageWindow("Premium requests", 0.51, now + Duration.ofDays(16)),
+            UsageWindow("Premium requests", 0.34, now + Duration.ofDays(16)),
             UsageWindow("Chat", 0.12, now + Duration.ofDays(16)),
             UsageWindow("Completions", 0.07, now + Duration.ofDays(16))
         ),
@@ -325,7 +306,7 @@ class SampleDataRepository @Inject constructor(
     )
     private fun openRouter(now: Instant) = QuotaInfo(
         service = AiService.OPENROUTER,
-        windows = listOf(UsageWindow("API key limit", 0.42, now + Duration.ofDays(3))),
+        windows = listOf(UsageWindow("API key limit", 0.30, now + Duration.ofDays(3))),
         extraUsage = null,
         accountBalances = listOf(
             AccountBalance(
@@ -359,11 +340,11 @@ class SampleDataRepository @Inject constructor(
                 service to ProviderStatus(indicator, description, now.minus(updatedAgo), source.pageUrl)
             }
         return listOfNotNull(
-            status(AiService.CLAUDE, StatusIndicator.MINOR, "Elevated errors on Claude Opus", Duration.ofMinutes(25)),
-            status(AiService.CLAUDE_PLATFORM, StatusIndicator.MINOR, "Elevated errors on Claude Opus", Duration.ofMinutes(25)),
+            status(AiService.CLAUDE, StatusIndicator.NONE, "All Systems Operational", Duration.ofHours(2)),
+            status(AiService.CLAUDE_PLATFORM, StatusIndicator.NONE, "All Systems Operational", Duration.ofHours(2)),
             status(AiService.CODEX, StatusIndicator.NONE, "All Systems Operational", Duration.ofHours(6)),
             status(AiService.OPENAI, StatusIndicator.NONE, "All Systems Operational", Duration.ofHours(6)),
-            status(AiService.COPILOT, StatusIndicator.MAJOR, "Disruption with some GitHub services", Duration.ofMinutes(12)),
+            status(AiService.COPILOT, StatusIndicator.NONE, "All Systems Operational", Duration.ofHours(3)),
             status(AiService.OPENROUTER, StatusIndicator.NONE, null, Duration.ofDays(2)),
             status(AiService.DEEPSEEK, StatusIndicator.NONE, null, Duration.ofDays(4))
         ).toMap()
@@ -373,11 +354,10 @@ class SampleDataRepository @Inject constructor(
             UsageWindow(label, utilization, now + remaining, severity, windowMinutes = minutes)
     }
     companion object {
-        private val CLAUDE_PERSONAL_5H = ClaudeWindowSpec(0.42, Duration.ofMinutes(133))
-        private val CLAUDE_PERSONAL_7D = ClaudeWindowSpec(0.86, Duration.ofDays(3).plusHours(5))
-        private val CLAUDE_WORK_5H = ClaudeWindowSpec(0.71, Duration.ofMinutes(54))
-        private val CLAUDE_WORK_7D = ClaudeWindowSpec(0.31, Duration.ofDays(5).plusHours(11))
-        private val COPILOT_WORK_STALE_FOR: Duration = Duration.ofMinutes(160)
+        private val CLAUDE_PERSONAL_5H = ClaudeWindowSpec(0.24, Duration.ofMinutes(133))
+        private val CLAUDE_PERSONAL_7D = ClaudeWindowSpec(0.48, Duration.ofDays(3).plusHours(5))
+        private val CLAUDE_WORK_5H = ClaudeWindowSpec(0.33, Duration.ofMinutes(54))
+        private val CLAUDE_WORK_7D = ClaudeWindowSpec(0.19, Duration.ofDays(5).plusHours(11))
         private const val PREFS_NAME = "tokenusage_debug_demo"
         private const val KEY_ENABLED = "demo_enabled"
         private const val SIMULATED_LATENCY_MS = 800L
