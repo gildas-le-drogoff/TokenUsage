@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
 plugins {
@@ -50,7 +49,9 @@ android {
     signingConfigs {
         if (keystoreProperties.isNotEmpty()) {
             create("release") {
-                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile").removePrefix("../"))
+                storeFile = rootProject.file(
+                    keystoreProperties.getProperty("storeFile").removePrefix("../")
+                )
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
@@ -66,12 +67,12 @@ android {
             buildConfigField("Boolean", "IS_DEBUG", "true")
         }
         release {
-            
+
             isDebuggable = false
             isJniDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
-            ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
+            ndk { abiFilters += listOf("arm64-v8a") }
             vcsInfo { include = false }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -90,7 +91,7 @@ android {
         includeInBundle = false
     }
 
-    
+
     sourceSets {
         getByName("debug") {
             java.directories.add("src/demoData/java")
@@ -111,7 +112,10 @@ android {
         compose = true
         buildConfig = true
     }
-
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
     androidResources {
         localeFilters += listOf("en", "fr", "zh")
     }
@@ -119,6 +123,11 @@ android {
     packaging {
         jniLibs {
             keepDebugSymbols += "**/*.so"
+            // Compress native libs in the APK (smaller download; extracted at install).
+            useLegacyPackaging = true
+        }
+        dex {
+            useLegacyPackaging = true
         }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -173,6 +182,9 @@ kover {
         }
     }
 }
+dependencyLocking {
+    lockAllConfigurations()
+}
 
 dependencies {
     val composeBom = platform(libs.compose.bom)
@@ -199,7 +211,7 @@ dependencies {
 
     implementation(libs.retrofit)
     implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
+    debugImplementation(libs.okhttp.logging)
     implementation(libs.retrofit.kotlinx.serialization)
 
     implementation(libs.kotlinx.serialization.json)
@@ -208,8 +220,8 @@ dependencies {
 
     implementation(libs.work.runtime.ktx)
 
-    
-    
+
+
     implementation(libs.tink.android)
     implementation(libs.androidx.biometric)
 
@@ -227,6 +239,7 @@ dependencies {
 
     implementation(libs.sqlcipher.android)
     implementation(libs.sqlite.ktx)
+    testImplementation(libs.okhttp.logging)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)

@@ -22,6 +22,10 @@ updates:
         patterns:
           - com.squareup.*
           - com.jakewharton.retrofit*
+      # bcpkix and bcprov must stay on the same version (AGP signing breaks otherwise).
+      bouncycastle:
+        patterns:
+          - org.bouncycastle*
 
   - package-ecosystem: github-actions
     directory: /

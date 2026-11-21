@@ -28,7 +28,6 @@ import fr.gildasledrogoff.tokenusage.core.network.zai.ZaiApiService
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
@@ -111,15 +110,7 @@ object NetworkModule {
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(RetryInterceptor())
-        if (BuildConfig.IS_DEBUG) {
-            val logging = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-                redactHeader("Authorization")
-                redactHeader("Cookie")
-                redactHeader("Set-Cookie")
-            }
-            builder.addInterceptor(logging)
-        }
+        if (BuildConfig.IS_DEBUG) builder.addBodyLogging()
         return builder
     }
 
@@ -383,11 +374,7 @@ object NetworkModule {
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
             .callTimeout(20, TimeUnit.SECONDS)
-        if (BuildConfig.IS_DEBUG) {
-            builder.addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BASIC
-            })
-        }
+        if (BuildConfig.IS_DEBUG) builder.addBasicLogging()
         return builder.build()
     }
 }

@@ -41,6 +41,12 @@ EOF
 	echo "⚠️  Les perdre, c'est perdre la clé d'upload Play.${NC}"
 fi
 
+LOCKFILES=(app/gradle.lockfile buildscript-gradle.lockfile settings-gradle.lockfile)
+./gradlew :app:dependencies buildEnvironment --write-locks --console=plain -q > /dev/null
+if ! git diff --quiet -- "${LOCKFILES[@]}" 2> /dev/null; then
+	echo "${YELLOW}⚠️  Lockfiles modifiés, à commiter : $(git diff --name-only -- "${LOCKFILES[@]}" | tr '\n' ' ')${NC}"
+fi
+
 ./gradlew assembleDebug assembleRelease --console=plain
 
 RELEASE_APK="${APK_OUT}/release/app-release.apk"
@@ -55,4 +61,4 @@ DEST="${SYNC_DIR}"
 rsync -ah --info=progress2 "${NAME}.apk" "${DEST}/${NAME}_$(date +%F_%H).apk"
 rsync -ah --info=progress2 "${NAME}.apk" "${DEST}/${NAME}.apk"
 
-adb install -r "$RELEASE_APK"
+timeout 60 adb install -r "$RELEASE_APK" || echo "${YELLOW}⚠️  adb install ignoré (appareil absent ou erreur).${NC}"
