@@ -1,0 +1,11 @@
+{
+  "plan_type": "pro",
+  "user_id": "user-EXAMPLE",
+  "email": "user@example.invalid",
+  "rate_limit": {
+    "primary_window": {"used_percent": 1, "reset_at": null, "new_thing": 42},
+    "extra_window": {"used_percent": 50}
+  },
+  "credits": {"has_credits": false, "unlimited": true, "balance": null, "approx_cloud_messages": [1, 2]},
+  "promo": null
+}

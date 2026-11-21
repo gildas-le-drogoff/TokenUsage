@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -284,8 +285,11 @@ private fun CardContent(cardData: ServiceCardData) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceM)) {
+                // The card header already names the account when it holds a single balance.
+                val named = cardData.accountLabel != null || cardData.accountNumber != null
+                val showLabel = !(named && cardData.accountBalances.size == 1)
                 cardData.accountBalances.forEach { account ->
-                    AccountBalanceRow(account)
+                    AccountBalanceRow(account, showLabel)
                 }
             }
         }
@@ -401,7 +405,7 @@ private fun WeeklyBreakdown(rows: List<UsageBreakdownRowUi>) {
 
 
 @Composable
-private fun AccountBalanceRow(account: AccountBalanceUi) {
+private fun AccountBalanceRow(account: AccountBalanceUi, showLabel: Boolean = true) {
     val dimens = MaterialTheme.dimens
     val status = if (account.error != null || !account.isAvailable || account.totalBalance <= 0.0) {
         QuotaStatus.CRITICAL
@@ -416,14 +420,18 @@ private fun AccountBalanceRow(account: AccountBalanceUi) {
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceS)
         ) {
             StatusDot(status)
-            Text(
-                text = account.label.ifBlank { stringResource(R.string.account_default) },
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
+            if (showLabel) {
+                Text(
+                    text = account.label.ifBlank { stringResource(R.string.account_default) },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
             if (account.error == null) {
                 Text(
                     text = if (account.rate != null) {

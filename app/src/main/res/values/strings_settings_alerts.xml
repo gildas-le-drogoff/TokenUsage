@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_alerts">Quota alerts</string>
+    <string name="notif_channel_alerts_desc">Warns when a quota or a balance reaches your thresholds, or is about to run out</string>
+    <string name="notif_public_alert">A quota alert was raised</string>
+    <string name="notif_alert_quota_title">%1$s: quota at %2$d%%</string>
+    <string name="notif_alert_quota_body">%1$s: %2$d%% used (threshold %3$d%%).</string>
+    <string name="notif_alert_balance_title">%1$s: low balance</string>
+    <string name="notif_alert_balance_body">Remaining balance %1$s (threshold %2$s).</string>
+    <string name="notif_alert_depletion_title">%1$s: depletion expected</string>
+    <string name="notif_alert_depletion_body">%1$s is expected to run out around %2$s.</string>
+    <string name="notif_alert_depletion_suffix">\u0020Expected depletion: %1$s.</string>
+    <string name="notif_alert_subject_balance">Balance</string>
+    <string name="settings_menu_alerts">Alerts</string>
+    <string name="settings_menu_alerts_summary">Quota and balance thresholds, depletion forecast</string>
+    <string name="alerts_title">Alerts</string>
+    <string name="alerts_intro">Get a notification when a quota or a balance reaches a threshold, or is about to run out. Each alert is shown once, and again only after the value went back under the threshold or the quota was reset.</string>
+    <string name="alerts_notifications_off">Notifications are turned off: alerts will not be shown. Turn them on in Refresh settings.</string>
+    <string name="alerts_no_accounts">No account configured yet. Add an account to set up its alerts.</string>
+    <string name="alerts_default_rule">Default for all accounts</string>
+    <string name="alerts_account_n">Account %1$d</string>
+    <string name="alerts_account_custom">Own alert rule</string>
+    <string name="alerts_account_uses_default">Uses the default rule</string>
+    <string name="alerts_enabled">Alerts enabled</string>
+    <string name="alerts_quota_threshold">Quota threshold</string>
+    <string name="alerts_quota_threshold_value">Quota threshold: %1$d%%</string>
+    <string name="alerts_window_filter">Applies to</string>
+    <string name="alerts_window_all">All windows</string>
+    <string name="alerts_balance_threshold">Low balance</string>
+    <string name="alerts_balance_field">Alert when the balance is at or under</string>
+    <string name="alerts_balance_hint">In the currency of the account</string>
+    <string name="alerts_depletion">Predicted depletion</string>
+    <string name="alerts_depletion_hint">Alert when the quota or the balance is expected to run out within:</string>
+    <string name="alerts_horizon_hours">%1$d h</string>
+    <string name="alerts_horizon_days">%1$d d</string>
+    <string name="history_depletion_estimate">Estimated depletion: %1$s</string>
+    <string name="history_depletion_unknown">Depletion estimate unavailable (not enough consumption data)</string>
+    <string name="settings_menu_accounts">Accounts</string>
+    <string name="settings_menu_accounts_summary">Credentials and accounts of each AI service</string>
+    <string name="settings_menu_display_summary">Theme, quota display, lock screen, currency</string>
+    <string name="settings_menu_refresh">Refresh</string>
+    <string name="settings_menu_refresh_summary">Interval, notifications, background refresh</string>
+    <string name="settings_menu_backup_summary">Export and import your configuration</string>
+    <string name="settings_menu_security_summary">App lock, sample data, delete all data</string>
+    <string name="settings_menu_diagnostics">Diagnostics</string>
+    <string name="settings_menu_diagnostics_summary">Last status, data age and last error per service</string>
+</resources>

@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.text.Normalizer
+import java.util.zip.DataFormatException
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 import javax.crypto.Cipher
@@ -110,10 +111,16 @@ object BackupCrypto {
             val buffer = ByteArray(8 * 1024)
             while (!inflater.finished()) {
                 val n = inflater.inflate(buffer)
-                if (n == 0 && inflater.needsInput()) throw BackupCryptoException("Corrupted backup: truncated data")
+                // Un flux vide se termine avec n == 0 : seul un flux non terminé qui réclame
+                // des données est tronqué.
+                if (n == 0 && !inflater.finished() && inflater.needsInput()) {
+                    throw BackupCryptoException("Corrupted backup: truncated data")
+                }
                 out.write(buffer, 0, n)
             }
             return out.toByteArray()
+        } catch (_: DataFormatException) {
+            throw BackupCryptoException("Corrupted backup: invalid data")
         } finally {
             inflater.end()
         }

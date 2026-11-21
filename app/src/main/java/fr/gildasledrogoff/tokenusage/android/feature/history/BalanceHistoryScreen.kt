@@ -44,6 +44,10 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionPoint
 import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.FxRate
 import fr.gildasledrogoff.tokenusage.ui.i18n.fxRateNote
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,7 +123,9 @@ fun BalanceHistoryScreen(
                         CurrentBalanceCard(
                             balance = uiState.latestBalance,
                             currency = uiState.currency,
-                            fxRate = uiState.fxRate
+                            fxRate = uiState.fxRate,
+                            depletionAt = uiState.depletionAt,
+                            depletionEstimated = uiState.depletionEstimated
                         )
 
                         HistoryCard(
@@ -181,7 +187,9 @@ private fun GranularitySelector(
 private fun CurrentBalanceCard(
     balance: Double?,
     currency: String,
-    fxRate: FxRate?
+    fxRate: FxRate?,
+    depletionAt: Instant?,
+    depletionEstimated: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -203,6 +211,18 @@ private fun CurrentBalanceCard(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
+            if (balance != null && depletionEstimated) {
+                Text(
+                    text = if (depletionAt != null) {
+                        stringResource(R.string.history_depletion_estimate, formatDepletionDate(depletionAt))
+                    } else {
+                        stringResource(R.string.history_depletion_unknown)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             if (fxRate != null) {
                 Text(
                     text = fxRateNote(fxRate) + "\n" + stringResource(R.string.fx_history_approx),
@@ -258,3 +278,7 @@ private fun HistoryCard(
         }
     }
 }
+
+private fun formatDepletionDate(instant: Instant): String =
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+        .format(instant.atZone(ZoneId.systemDefault()))

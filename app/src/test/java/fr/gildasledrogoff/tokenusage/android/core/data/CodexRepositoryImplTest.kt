@@ -1,5 +1,6 @@
 package fr.gildasledrogoff.tokenusage.core.data
 
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
@@ -65,7 +66,7 @@ class CodexRepositoryImplTest {
             .create(CodexTokenRefreshService::class.java)
 
         prefsManager = mock(EncryptedPrefsManager::class.java)
-        `when`(prefsManager.loadCredential(AiService.CODEX)).thenReturn(testCredential)
+        `when`(prefsManager.getAccounts(AiService.CODEX)).thenReturn(listOf(ServiceAccount("id-1", "", testCredential)))
         widgetPrefs = mock(WidgetPrefsManager::class.java)
         widgetQuotaPublisher = mock(WidgetQuotaPublisher::class.java)
 
@@ -158,7 +159,7 @@ class CodexRepositoryImplTest {
         assertTrue(result is Result.Failure)
         val error = (result as Result.Failure).error
         assertTrue(error is AppError.AuthError && error.isTerminal)
-        org.mockito.Mockito.verify(prefsManager).deleteCredential(AiService.CODEX)
+        org.mockito.Mockito.verify(prefsManager).deleteAccount(AiService.CODEX, "id-1")
         org.mockito.Mockito.verify(widgetPrefs).removeServiceEverywhere(AiService.CODEX)
         org.mockito.Mockito.verify(widgetQuotaPublisher).refreshWidgets()
     }
@@ -171,7 +172,22 @@ class CodexRepositoryImplTest {
         val result = repository.fetchQuota()
 
         assertTrue(result is Result.Failure)
-        org.mockito.Mockito.verify(prefsManager).deleteCredential(AiService.CODEX)
+        org.mockito.Mockito.verify(prefsManager).deleteAccount(AiService.CODEX, "id-1")
+    }
+
+    @Test
+    fun `token already refreshed elsewhere is reused instead of exchanging the refresh token again`() = runTest {
+        // The stored credential is newer than the one the fetch started with (TokenRefreshWorker won the race).
+        val stale = ServiceAccount("id-1", "", testCredential.copy(accessToken = "stale-token"))
+        mockWebServer.enqueue(MockResponse().setResponseCode(401))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"plan_type":"pro"}"""))
+
+        val result = repository.fetchQuota(stale)
+
+        assertTrue(result is Result.Success)
+        assertEquals(2, mockWebServer.requestCount)
+        mockWebServer.takeRequest()
+        assertEquals("Bearer test-access-token", mockWebServer.takeRequest().getHeader("Authorization"))
     }
 
     @Test
@@ -186,7 +202,7 @@ class CodexRepositoryImplTest {
 
     @Test
     fun `fetchQuota returns CredentialNotFound when no credential`() = runTest {
-        `when`(prefsManager.loadCredential(AiService.CODEX)).thenReturn(null)
+        `when`(prefsManager.getAccounts(AiService.CODEX)).thenReturn(emptyList())
 
         val result = repository.fetchQuota()
 

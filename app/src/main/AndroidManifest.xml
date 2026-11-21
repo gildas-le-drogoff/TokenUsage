@@ -139,13 +139,22 @@
                 android:resource="@xml/balances_widget_info" />
         </receiver>
 
+        <!-- Ne reçoit que des diffusions système protégées : inutile de l'exporter. -->
         <receiver
             android:name=".core.workmanager.BootReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- Android 14+ : un travail WorkManager passé au premier plan (setForeground / expedited)
+             exige le type de service déclaré ici (cf. QuotaRefreshWorker.getForegroundInfo). -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

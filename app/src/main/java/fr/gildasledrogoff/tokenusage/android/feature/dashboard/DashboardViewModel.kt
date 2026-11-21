@@ -9,28 +9,19 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.FxRate
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
+import fr.gildasledrogoff.tokenusage.core.domain.model.accountNaming
 import fr.gildasledrogoff.tokenusage.core.domain.repository.BalanceHistoryRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.CachedQuotaResult
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
-import fr.gildasledrogoff.tokenusage.core.domain.repository.ClaudeQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DemoDataRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ExchangeRateRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.LastFetchRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.LastFetchSnapshot
-import fr.gildasledrogoff.tokenusage.core.domain.repository.MultiAccountQuotaRepository
-import fr.gildasledrogoff.tokenusage.core.domain.repository.QuotaRepository
-import fr.gildasledrogoff.tokenusage.core.domain.repository.ZaiRepository
 import fr.gildasledrogoff.tokenusage.core.data.FetchRateLimiter
+import fr.gildasledrogoff.tokenusage.core.provider.ProviderRegistry
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
+import fr.gildasledrogoff.tokenusage.core.widget.WidgetAccountQuota
 import fr.gildasledrogoff.tokenusage.core.widget.WidgetQuotaPublisher
-import fr.gildasledrogoff.tokenusage.di.ClaudeRepository
-import fr.gildasledrogoff.tokenusage.di.CodexRepository
-import fr.gildasledrogoff.tokenusage.di.CopilotRepository
-import fr.gildasledrogoff.tokenusage.di.DeepseekRepository
-import fr.gildasledrogoff.tokenusage.di.GeminiRepository
-import fr.gildasledrogoff.tokenusage.di.OpenAiRepository
-import fr.gildasledrogoff.tokenusage.di.OpenRouterRepository
-import fr.gildasledrogoff.tokenusage.di.ZaiRepositoryQualifier
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -46,32 +37,17 @@ import java.time.Instant
 import javax.inject.Inject
 
 
-private val singleKeyServices = AiService.entries.filter { it.usesSingleApiKey }
-
-
 private data class FetchOutcome(
     val service: AiService,
     val accountLabel: String?,
     val result: Result<QuotaInfo, AppError>,
-    val accountNumber: Int? = null
+    val accountNumber: Int? = null,
+    val accountId: String? = null
 )
-
-
-private fun accountNaming(label: String, index: Int, count: Int): Pair<String?, Int?> {
-    val named = label.takeIf { it.isNotBlank() }
-    return named to (if (named == null && count > 1) index + 1 else null)
-}
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    @ClaudeRepository private val claudeRepository: ClaudeQuotaRepository,
-    @CodexRepository private val codexRepository: QuotaRepository,
-    @GeminiRepository private val geminiRepository: QuotaRepository,
-    @DeepseekRepository private val deepseekRepository: MultiAccountQuotaRepository,
-    @ZaiRepositoryQualifier private val zaiRepository: ZaiRepository,
-    @CopilotRepository private val copilotRepository: QuotaRepository,
-    @OpenRouterRepository private val openRouterRepository: QuotaRepository,
-    @OpenAiRepository private val openAiRepository: QuotaRepository,
+    private val providerRegistry: ProviderRegistry,
     private val prefsManager: EncryptedPrefsManager,
     private val demoData: DemoDataRepository,
     private val exchangeRates: ExchangeRateRepository,
@@ -106,16 +82,23 @@ class DashboardViewModel @Inject constructor(
 
 
             val demo = demoData.isEnabled()
-            val accounts = if (demo) demoData.sampleDeepseekAccounts() else prefsManager.getDeepseekAccounts()
             val history = if (demo) demoData.history else balanceHistory
+            // (service, account id, label) of every account whose balance history is recorded.
+            val tracked: List<Triple<AiService, String, String>> = if (demo) {
+                demoData.sampleDeepseekAccounts().map { Triple(AiService.DEEPSEEK, it.id, it.label) }
+            } else {
+                providerRegistry.providers.filter { it.tracksBalanceHistory }.flatMap { provider ->
+                    provider.accounts().map { Triple(provider.service, it.id, it.label) }
+                }
+            }
 
-            val charts = accounts.map { account ->
-                val points = history.consumption(AiService.DEEPSEEK, account.id, ConsumptionGranularity.DAILY)
+            val charts = tracked.map { (service, accountId, label) ->
+                val points = history.consumption(service, accountId, ConsumptionGranularity.DAILY)
                 val currency = points.lastOrNull()?.currency ?: ""
                 val rate = exchangeRates.displayRate(currency)
                 AccountConsumptionUi(
-                    accountId = account.id,
-                    label = account.label,
+                    accountId = accountId,
+                    label = label,
                     points = if (rate == null) points else points.map { point ->
                         if (point.currency == currency) {
                             point.copy(consumed = rate.convert(point.consumed), currency = rate.to)
@@ -167,16 +150,11 @@ class DashboardViewModel @Inject constructor(
 
     private fun credentialsFingerprint(): String = listOf(
         demoData.isEnabled(),
-        prefsManager.getClaudeAccounts().joinToString(",") {
-            "${it.id}:${it.label}:${it.credential.accessToken.hashCode()}"
+        providerRegistry.providers.joinToString(";") { provider ->
+            provider.accounts().joinToString(",") {
+                "${it.id}:${it.label}:${it.credential.accessToken.hashCode()}:${it.credential.refreshToken.hashCode()}"
+            } + provider.form.options.joinToString("") { option -> provider.optionValue(option.key).toString() }
         },
-        prefsManager.hasCredential(AiService.CODEX),
-        prefsManager.hasCredential(AiService.GEMINI),
-        prefsManager.hasCredential(AiService.DEEPSEEK),
-        prefsManager.hasCredential(AiService.ZAI),
-        prefsManager.getZaiAccounts().joinToString(",") { "${it.id}:${it.label}:${it.apiKey.hashCode()}" },
-        singleKeyServices.joinToString(",") { prefsManager.loadCredential(it)?.accessToken.orEmpty().hashCode().toString() },
-        prefsManager.isZaiMonthlyToolsHidden(),
         prefsManager.getDisplayCurrency(),
         prefsManager.getFxRateSource(),
         prefsManager.getManualUsdEurRate(),
@@ -189,7 +167,9 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             if (demoData.isEnabled()) {
                 enterRefreshing(resetState)
-                val results = demoData.sampleQuotas().map { FetchOutcome(it.service, it.accountLabel, it.result) }
+                val results = demoData.sampleQuotas().map {
+                    FetchOutcome(it.service, it.accountLabel, it.result, it.accountNumber, it.accountId)
+                }
                 applyResults(results, clock.instant())
                 if (_consumptionChart.value is ConsumptionChartUiState.Ready) loadConsumption()
                 _isRefreshing.value = false
@@ -232,37 +212,17 @@ class DashboardViewModel @Inject constructor(
     }
 
     private suspend fun fetchAllServices(): List<FetchOutcome> = coroutineScope {
-        val deferreds = buildList {
-            val claudeAccounts = prefsManager.getClaudeAccounts()
-            claudeAccounts.forEachIndexed { index, account ->
-                val (label, number) = accountNaming(account.label, index, claudeAccounts.size)
-                add(async {
-                    FetchOutcome(AiService.CLAUDE, label, claudeRepository.fetchQuotaForAccount(account), number)
-                })
+        providerRegistry.targets().map { target ->
+            async {
+                FetchOutcome(
+                    service = target.service,
+                    accountLabel = target.label,
+                    result = target.fetchQuota(),
+                    accountNumber = target.number,
+                    accountId = target.account.id
+                )
             }
-            if (prefsManager.hasCredential(AiService.CODEX)) {
-                add(async { FetchOutcome(AiService.CODEX, null, codexRepository.fetchQuota()) })
-            }
-            if (prefsManager.hasCredential(AiService.GEMINI)) {
-                add(async { FetchOutcome(AiService.GEMINI, null, geminiRepository.fetchQuota()) })
-            }
-            if (prefsManager.hasCredential(AiService.DEEPSEEK)) {
-                add(async { FetchOutcome(AiService.DEEPSEEK, null, deepseekRepository.fetchQuota()) })
-            }
-            for ((service, repository) in singleKeyRepositories()) {
-                if (prefsManager.hasCredential(service)) {
-                    add(async { FetchOutcome(service, null, repository.fetchQuota()) })
-                }
-            }
-            val zaiAccounts = prefsManager.getZaiAccounts()
-            zaiAccounts.forEachIndexed { index, account ->
-                val (label, number) = accountNaming(account.label, index, zaiAccounts.size)
-                add(async {
-                    FetchOutcome(AiService.ZAI, label, zaiRepository.fetchQuotaForAccount(account), number)
-                })
-            }
-        }
-        deferreds.awaitAll()
+        }.awaitAll()
     }
 
     private suspend fun serveFromCache(snapshot: LastFetchSnapshot?) {
@@ -283,9 +243,11 @@ class DashboardViewModel @Inject constructor(
         publishWidgets: Boolean = true
     ) {
         if (publishWidgets) {
-            val fresh = results.mapNotNull { (it.result as? Result.Success)?.value }
+            val entries = results.map {
+                WidgetAccountQuota(it.service, it.accountLabel, it.accountNumber, it.result.getOrNull())
+            }
             viewModelScope.launch {
-                runCatching { widgetQuotaPublisher.publish(fresh) }
+                runCatching { widgetQuotaPublisher.publish(entries) }
             }
         }
 
@@ -299,7 +261,7 @@ class DashboardViewModel @Inject constructor(
                 is Result.Success -> {
                     successCards.add(
                         mapToCardData(result.value, outcome.accountLabel, fxRates)
-                            .copy(accountNumber = outcome.accountNumber)
+                            .copy(accountNumber = outcome.accountNumber, accountId = outcome.accountId)
                     )
                 }
                 is Result.Failure -> {
@@ -312,6 +274,7 @@ class DashboardViewModel @Inject constructor(
                             tier = null,
                             accountLabel = outcome.accountLabel,
                             accountNumber = outcome.accountNumber,
+                            accountId = outcome.accountId,
                             error = result.error
                         )
                     )
@@ -336,6 +299,7 @@ class DashboardViewModel @Inject constructor(
         service = service,
         accountLabel = accountLabel,
         accountNumber = accountNumber,
+        accountId = accountId,
         quota = result.getOrNull(),
         error = result.errorOrNull()
     )
@@ -345,15 +309,9 @@ class DashboardViewModel @Inject constructor(
         accountLabel = accountLabel,
         result = quota?.let { Result.Success(it) }
             ?: Result.Failure(error ?: AppError.NetworkError("No cached payload for this account")),
-        accountNumber = accountNumber
+        accountNumber = accountNumber,
+        accountId = accountId ?: quota?.accountId
     )
-
-    private fun singleKeyRepositories(): List<Pair<AiService, QuotaRepository>> = listOf(
-        AiService.COPILOT to copilotRepository,
-        AiService.OPENROUTER to openRouterRepository,
-        AiService.OPENAI to openAiRepository
-    )
-
 
     private suspend fun resolveDisplayRates(results: List<FetchOutcome>): Map<String, FxRate> {
         val currencies = results
@@ -376,6 +334,7 @@ class DashboardViewModel @Inject constructor(
     ): ServiceCardData {
         return ServiceCardData(
             service = quotaInfo.service,
+            hasConsumptionHistory = providerRegistry.provider(quotaInfo.service).tracksBalanceHistory,
             accountLabel = accountLabel,
             windows = quotaInfo.windows.map { window ->
                 UsageWindowUi(

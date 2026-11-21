@@ -112,9 +112,9 @@ class QuotaGlanceWidget : GlanceAppWidget() {
                         Spacer(modifier = GlanceModifier.width(6.dp))
                         Text(
                             text = if (snapshots.size > 1) {
-                                "${service.service.displayName} +${snapshots.size - 1}"
+                                "${service.title(context)} +${snapshots.size - 1}"
                             } else {
-                                service.service.displayName
+                                service.title(context)
                             },
                             style = TextStyle(
                                 color = Palette.title,

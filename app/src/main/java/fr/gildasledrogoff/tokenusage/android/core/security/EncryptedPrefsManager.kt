@@ -7,6 +7,7 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
 import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.DisplayCurrency
 import fr.gildasledrogoff.tokenusage.core.domain.model.FxRateSource
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.ZaiAccount
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -47,6 +48,25 @@ private data class ClaudeAccountPref(
 )
 
 
+/**
+ * Generic account storage, one JSON list per service under `"<SERVICE>_accounts"`.
+ * [type] says which [Credential] the other fields rebuild.
+ */
+@Serializable
+private data class StoredAccountPref(
+    val id: String,
+    val label: String = "",
+    val type: String,
+    val accessToken: String,
+    val refreshToken: String? = null,
+    val accountId: String? = null,
+    val expiresAtMs: Long? = null,
+    val oauthClientId: String? = null,
+    val oauthClientSecret: String? = null,
+    val hostedDomain: String? = null
+)
+
+
 @Serializable
 data class CachedEurRate(
     val rate: Double,
@@ -73,91 +93,125 @@ class EncryptedPrefsManager @Inject constructor(
 
     private val fxJson = Json { ignoreUnknownKeys = true }
 
+    private val genericJson = Json { ignoreUnknownKeys = true }
+
     private val prefs: SharedPreferences by lazy { storageFactory.credentials }
 
+    // ---------------------------------------------------------------------------------------
+    // Accounts: every service holds N accounts. Claude, DeepSeek and Z.ai keep their historical
+    // storage format (see [customStores]); all other services use the generic format.
+    // ---------------------------------------------------------------------------------------
+
+    private interface AccountStore {
+        fun read(): List<ServiceAccount>
+        fun write(accounts: List<ServiceAccount>)
+    }
+
+    private val claudeStore = object : AccountStore {
+        override fun read() = getClaudeAccounts().map { ServiceAccount(it.id, it.label, it.credential) }
+        override fun write(accounts: List<ServiceAccount>) = saveClaudeAccounts(
+            accounts.filter { it.credential is Credential.ClaudeCredential || it.credential is Credential.ClaudeWebCredential }
+                .map { ClaudeAccount(it.id, it.label, it.credential) }
+        )
+    }
+
+    private val deepseekStore = object : AccountStore {
+        override fun read() = getDeepseekAccounts()
+            .map { ServiceAccount(it.id, it.label, Credential.DeepseekCredential(it.apiKey)) }
+        override fun write(accounts: List<ServiceAccount>) = saveDeepseekAccounts(
+            accounts.map { DeepseekAccount(it.id, it.label, it.credential.accessToken) }
+        )
+    }
+
+    private val zaiStore = object : AccountStore {
+        override fun read() = getZaiAccounts()
+            .map { ServiceAccount(it.id, it.label, Credential.ZaiCredential(it.apiKey)) }
+        override fun write(accounts: List<ServiceAccount>) = saveZaiAccounts(
+            accounts.map { ZaiAccount(it.id, it.label, it.credential.accessToken) }
+        )
+    }
+
+    /** Services whose accounts keep a historical storage format. */
+    private val customStores: Map<AiService, AccountStore> by lazy {
+        mapOf(AiService.CLAUDE to claudeStore, AiService.DEEPSEEK to deepseekStore, AiService.ZAI to zaiStore)
+    }
+
+    private fun storeFor(service: AiService): AccountStore =
+        customStores[service] ?: object : AccountStore {
+            override fun read() = readGenericAccounts(service)
+            override fun write(accounts: List<ServiceAccount>) = writeGenericAccounts(service, accounts)
+        }
+
+    /** Accounts configured for [service], in display order. Never null, may be empty. */
     @Synchronized
-    fun saveCredential(service: AiService, credential: Credential) {
-        if (service == AiService.CLAUDE) {
-            val primary = readClaudeAccountPrefs().firstOrNull()
-            if (primary != null) {
-                updateClaudeAccountCredential(primary.id, credential)
-            } else {
-                saveClaudeAccounts(listOf(ClaudeAccount(UUID.randomUUID().toString(), "", credential)))
-            }
-            return
-        }
+    fun getAccounts(service: AiService): List<ServiceAccount> = storeFor(service).read()
 
+    /** Replaces the whole account list of [service]. */
+    @Synchronized
+    fun saveAccounts(service: AiService, accounts: List<ServiceAccount>) = storeFor(service).write(accounts)
+
+    /** Appends a new account and returns it. */
+    @Synchronized
+    fun addAccount(service: AiService, label: String, credential: Credential): ServiceAccount {
+        val account = ServiceAccount(ServiceAccount.newId(), label, credential)
+        saveAccounts(service, getAccounts(service) + account)
+        return account
+    }
+
+    @Synchronized
+    fun updateAccountCredential(service: AiService, accountId: String, credential: Credential) {
+        val accounts = getAccounts(service)
+        if (accounts.none { it.id == accountId }) return
+        saveAccounts(service, accounts.map { if (it.id == accountId) it.copy(credential = credential) else it })
+    }
+
+    @Synchronized
+    fun updateAccountLabel(service: AiService, accountId: String, label: String) {
+        val accounts = getAccounts(service)
+        if (accounts.none { it.id == accountId }) return
+        saveAccounts(service, accounts.map { if (it.id == accountId) it.copy(label = label) else it })
+    }
+
+    @Synchronized
+    fun deleteAccount(service: AiService, accountId: String) {
+        saveAccounts(service, getAccounts(service).filterNot { it.id == accountId })
+    }
+
+    private fun readGenericAccounts(service: AiService): List<ServiceAccount> {
+        val raw = prefs.getString(accountsKey(service), null) ?: return migrateLegacyAccount(service)
+        return try {
+            genericJson.decodeFromString<List<StoredAccountPref>>(raw).mapNotNull { it.toDomain() }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun writeGenericAccounts(service: AiService, accounts: List<ServiceAccount>) {
         val editor = prefs.edit()
-        val prefix = service.name
-
-        editor.putString("${prefix}_access_token", credential.accessToken)
-        editor.putString("${prefix}_refresh_token", credential.refreshToken)
-
-        when (credential) {
-            is Credential.ClaudeCredential, is Credential.ClaudeWebCredential -> {
-            }
-            is Credential.CodexCredential -> {
-                credential.accountId?.let {
-                    editor.putString("${prefix}_account_id", it)
-                }
-            }
-            is Credential.GeminiCredential -> {
-                editor.putLong("${prefix}_expires_at_ms", credential.expiresAtMs)
-                editor.putString("${prefix}_oauth_client_id", credential.oauthClientId)
-                editor.putString("${prefix}_oauth_client_secret", credential.oauthClientSecret)
-                if (credential.hostedDomain != null) {
-                    editor.putString("${prefix}_hosted_domain", credential.hostedDomain)
-                } else {
-                    editor.remove("${prefix}_hosted_domain")
-                }
-            }
-            is Credential.DeepseekCredential -> {
-            }
-            is Credential.ZaiCredential -> {
-            }
-            is Credential.ApiKeyCredential -> {
-            }
+        if (accounts.isEmpty()) {
+            editor.remove(accountsKey(service))
+        } else {
+            editor.putString(accountsKey(service), genericJson.encodeToString(accounts.mapNotNull { it.toPref() }))
         }
-
         editor.apply()
     }
 
-    fun loadCredential(service: AiService): Credential? {
+    private fun accountsKey(service: AiService) = "${service.name}_accounts"
+
+    /**
+     * Before multi-account support a service held one credential in flat keys
+     * (`<SERVICE>_access_token`, …). It becomes the first account, with nothing lost.
+     */
+    private fun migrateLegacyAccount(service: AiService): List<ServiceAccount> {
         val prefix = service.name
-
-        if (service == AiService.DEEPSEEK) {
-            return getDeepseekAccounts().firstOrNull()
-                ?.let { Credential.DeepseekCredential(accessToken = it.apiKey) }
-        }
-
-        if (service == AiService.ZAI) {
-            return getZaiAccounts().firstOrNull()
-                ?.let { Credential.ZaiCredential(accessToken = it.apiKey) }
-        }
-
-        if (service == AiService.CLAUDE) {
-            return getClaudeAccounts().firstOrNull()?.credential
-        }
-
-        val accessToken = prefs.getString("${prefix}_access_token", null) ?: return null
-
-        return when (service) {
-            AiService.CLAUDE -> null
-            AiService.CODEX -> {
-                val refreshToken = prefs.getString("${prefix}_refresh_token", null) ?: return null
-                val accountId = prefs.getString("${prefix}_account_id", null)
-                Credential.CodexCredential(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken,
-                    accountId = accountId
-                )
-            }
-            AiService.GEMINI -> {
-                val refreshToken = prefs.getString("${prefix}_refresh_token", null) ?: return null
-                val expiresAtMs = prefs.getLong("${prefix}_expires_at_ms", -1L)
-                    .takeIf { it > 0 } ?: return null
-                val clientId = prefs.getString("${prefix}_oauth_client_id", null) ?: return null
-                val clientSecret = prefs.getString("${prefix}_oauth_client_secret", null) ?: return null
+        val accessToken = prefs.getString("${prefix}_access_token", null) ?: return emptyList()
+        val refreshToken = prefs.getString("${prefix}_refresh_token", null)
+        val clientId = prefs.getString("${prefix}_oauth_client_id", null)
+        val credential: Credential = when {
+            clientId != null -> {
+                val expiresAtMs = prefs.getLong("${prefix}_expires_at_ms", -1L).takeIf { it > 0 }
+                val clientSecret = prefs.getString("${prefix}_oauth_client_secret", null)
+                if (refreshToken == null || expiresAtMs == null || clientSecret == null) return emptyList()
                 Credential.GeminiCredential(
                     accessToken = accessToken,
                     refreshToken = refreshToken,
@@ -167,12 +221,68 @@ class EncryptedPrefsManager @Inject constructor(
                     hostedDomain = prefs.getString("${prefix}_hosted_domain", null)
                 )
             }
-            AiService.DEEPSEEK -> null
-            AiService.ZAI -> null
-            AiService.COPILOT, AiService.OPENROUTER, AiService.OPENAI ->
-                Credential.ApiKeyCredential(accessToken = accessToken)
+            refreshToken != null -> Credential.CodexCredential(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                accountId = prefs.getString("${prefix}_account_id", null)
+            )
+            else -> Credential.ApiKeyCredential(accessToken = accessToken)
+        }
+        val migrated = ServiceAccount(ServiceAccount.newId(), "", credential)
+        val editor = prefs.edit()
+        LEGACY_FLAT_SUFFIXES.forEach { editor.remove("${prefix}_$it") }
+        editor.apply()
+        writeGenericAccounts(service, listOf(migrated))
+        return listOf(migrated)
+    }
+
+    private fun StoredAccountPref.toDomain(): ServiceAccount? {
+        if (accessToken.isBlank()) return null
+        val credential: Credential = when (type) {
+            TYPE_CODEX -> Credential.CodexCredential(accessToken, refreshToken ?: return null, accountId)
+            TYPE_GEMINI -> Credential.GeminiCredential(
+                accessToken = accessToken,
+                refreshToken = refreshToken ?: return null,
+                expiresAtMs = expiresAtMs ?: return null,
+                oauthClientId = oauthClientId ?: return null,
+                oauthClientSecret = oauthClientSecret ?: return null,
+                hostedDomain = hostedDomain
+            )
+            TYPE_API_KEY -> Credential.ApiKeyCredential(accessToken)
+            else -> return null
+        }
+        return ServiceAccount(id, label, credential)
+    }
+
+    private fun ServiceAccount.toPref(): StoredAccountPref? = when (val c = credential) {
+        is Credential.CodexCredential -> StoredAccountPref(
+            id = id, label = label, type = TYPE_CODEX,
+            accessToken = c.accessToken, refreshToken = c.refreshToken, accountId = c.accountId
+        )
+        is Credential.GeminiCredential -> StoredAccountPref(
+            id = id, label = label, type = TYPE_GEMINI,
+            accessToken = c.accessToken, refreshToken = c.refreshToken, expiresAtMs = c.expiresAtMs,
+            oauthClientId = c.oauthClientId, oauthClientSecret = c.oauthClientSecret, hostedDomain = c.hostedDomain
+        )
+        is Credential.ApiKeyCredential -> StoredAccountPref(
+            id = id, label = label, type = TYPE_API_KEY, accessToken = c.accessToken
+        )
+        else -> null
+    }
+
+    // --- Single-credential shortcuts: they stand for the first (primary) account. ---
+
+    @Synchronized
+    fun saveCredential(service: AiService, credential: Credential) {
+        val primary = getAccounts(service).firstOrNull()
+        if (primary != null) {
+            updateAccountCredential(service, primary.id, credential)
+        } else {
+            addAccount(service, "", credential)
         }
     }
+
+    fun loadCredential(service: AiService): Credential? = getAccounts(service).firstOrNull()?.credential
 
     fun deleteCredential(service: AiService) {
         val prefix = service.name
@@ -188,18 +298,7 @@ class EncryptedPrefsManager @Inject constructor(
         prefs.edit().clear().apply()
     }
 
-    fun hasCredential(service: AiService): Boolean {
-        if (service == AiService.DEEPSEEK) {
-            return getDeepseekAccounts().isNotEmpty()
-        }
-        if (service == AiService.ZAI) {
-            return getZaiAccounts().isNotEmpty()
-        }
-        if (service == AiService.CLAUDE) {
-            return getClaudeAccounts().isNotEmpty()
-        }
-        return prefs.getString("${service.name}_access_token", null) != null
-    }
+    fun hasCredential(service: AiService): Boolean = getAccounts(service).isNotEmpty()
 
 
     fun getDeepseekAccounts(): List<DeepseekAccount> {
@@ -493,6 +592,13 @@ class EncryptedPrefsManager @Inject constructor(
     }
 
     private companion object {
+        const val TYPE_CODEX = "codex"
+        const val TYPE_GEMINI = "gemini"
+        const val TYPE_API_KEY = "api_key"
+        val LEGACY_FLAT_SUFFIXES = listOf(
+            "access_token", "refresh_token", "account_id", "expires_at_ms",
+            "oauth_client_id", "oauth_client_secret", "hosted_domain"
+        )
         const val AUTH_MODE_OAUTH = "oauth"
         const val AUTH_MODE_WEB_SESSION = "web_session"
         const val DISPLAY_CURRENCY_KEY = "display_currency"

@@ -44,8 +44,16 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import fr.gildasledrogoff.tokenusage.feature.dashboard.DashboardScreen
+import fr.gildasledrogoff.tokenusage.feature.diagnostics.DiagnosticsScreen
 import fr.gildasledrogoff.tokenusage.feature.history.BalanceHistoryScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.SettingsAccountsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.SettingsDestination
 import fr.gildasledrogoff.tokenusage.feature.settings.SettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.alerts.AlertsSettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.backup.BackupSettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.display.DisplaySettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.refresh.RefreshSettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.security.SecuritySettingsScreen
 import fr.gildasledrogoff.tokenusage.ui.theme.TokenUsageTheme
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -221,10 +229,34 @@ class MainActivity : FragmentActivity() {
                                 onNavigateBack = {
                                     navController.popBackStack()
                                 },
+                                onNavigateTo = { navController.navigate(it.route) },
                                 onNavigateToCredits = {
                                     navController.navigate("credits")
-                                }
+                                },
+                                // Flip once A3's "diagnostics" route exists (see COORDINATION.md).
+                                showDiagnostics = SETTINGS_DIAGNOSTICS_ROUTE_READY
                             )
+                        }
+                        composable(SettingsDestination.ACCOUNTS.route) {
+                            SettingsAccountsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.DISPLAY.route) {
+                            DisplaySettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.ALERTS.route) {
+                            AlertsSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.REFRESH.route) {
+                            RefreshSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.BACKUP.route) {
+                            BackupSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.SECURITY.route) {
+                            SecuritySettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable("diagnostics") {
+                            DiagnosticsScreen(onNavigateBack = { navController.popBackStack() })
                         }
                         composable("credits") {
                             CreditsScreen(
@@ -254,3 +286,6 @@ class MainActivity : FragmentActivity() {
         TokenUsageTheme(themeMode = themeMode, quotaDisplayMode = quotaDisplayMode, content = content)
     }
 }
+
+/** `true` once the `"diagnostics"` route (owned by the diagnostics feature) is registered in the NavHost. */
+private const val SETTINGS_DIAGNOSTICS_ROUTE_READY = true

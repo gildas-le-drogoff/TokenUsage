@@ -1,5 +1,6 @@
 package fr.gildasledrogoff.tokenusage.core.data
 
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
@@ -41,7 +42,7 @@ class OpenRouterRepositoryImplTest {
             .build()
             .create(OpenRouterApiService::class.java)
         prefsManager = mock(EncryptedPrefsManager::class.java)
-        `when`(prefsManager.loadCredential(AiService.OPENROUTER)).thenReturn(Credential.ApiKeyCredential("sk-or-v1-x"))
+        `when`(prefsManager.getAccounts(AiService.OPENROUTER)).thenReturn(listOf(ServiceAccount("id-1", "", Credential.ApiKeyCredential("sk-or-v1-x"))))
         repository = OpenRouterRepositoryImpl(api, prefsManager)
     }
 

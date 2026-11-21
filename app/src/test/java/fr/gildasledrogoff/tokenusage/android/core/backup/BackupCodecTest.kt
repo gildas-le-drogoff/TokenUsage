@@ -1,8 +1,8 @@
 package fr.gildasledrogoff.tokenusage.core.backup
 
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
-import fr.gildasledrogoff.tokenusage.core.domain.model.ClaudeAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -152,16 +152,19 @@ class BackupCodecTest {
         )
     }
 
+    private fun apiKeyAccount(id: String, label: String, key: String) =
+        ServiceAccount(id, label, Credential.ApiKeyCredential(key))
+
     @Test
     fun `account merge replaces same id or key and keeps the others`() {
         val existing = listOf(
-            AccountBackup("a", "Old A", "key-a"),
-            AccountBackup("b", "B", "key-b"),
-            AccountBackup("c", "C", "key-c")
+            apiKeyAccount("a", "Old A", "key-a"),
+            apiKeyAccount("b", "B", "key-b"),
+            apiKeyAccount("c", "C", "key-c")
         )
         val imported = listOf(
-            AccountBackup("a", "New A", "key-a2"),
-            AccountBackup("x", "C again", "key-c")
+            apiKeyAccount("a", "New A", "key-a2"),
+            apiKeyAccount("x", "C again", "key-c")
         )
         val merged = BackupCodec.mergeAccounts(existing, imported)
         assertEquals(listOf("b", "a", "x"), merged.map { it.id })
@@ -170,14 +173,96 @@ class BackupCodecTest {
 
     @Test
     fun `claude account merge replaces same id or key and keeps the others`() {
-        fun web(id: String, key: String) = ClaudeAccount(id, id, Credential.ClaudeWebCredential(key))
+        fun web(id: String, key: String) = ServiceAccount(id, id, Credential.ClaudeWebCredential(key))
         val existing = listOf(web("local-1", "sk-ant-sid02-a"), web("local-2", "sk-ant-sid02-b"), web("same-id", "old"))
         val imported = listOf(web("imported", "sk-ant-sid02-b"), web("same-id", "sk-ant-sid02-c"))
 
-        val merged = BackupCodec.mergeClaudeAccounts(existing, imported)
+        val merged = BackupCodec.mergeAccounts(existing, imported)
 
         assertEquals(listOf("local-1", "imported", "same-id"), merged.map { it.id })
         assertEquals("sk-ant-sid02-c", merged.last().credential.accessToken)
+    }
+
+    @Test
+    fun `v4 accounts of every service are read back with their credential type`() {
+        val gemini = Credential.GeminiCredential("at", "rt", 5L, "client-id", "client-secret")
+        val codex = Credential.CodexCredential("at", "rt", "acct")
+        val payload = BackupPayload(
+            exportedAtEpochMs = 1,
+            accounts = mapOf(
+                "CODEX" to listOf(
+                    ServiceAccountBackup("c1", "Perso", BackupCodec.toBackup(codex)),
+                    ServiceAccountBackup("c2", "Work", BackupCodec.toBackup(codex.copy(accessToken = "at2")))
+                ),
+                "GEMINI" to listOf(ServiceAccountBackup("g1", "", BackupCodec.toBackup(gemini))),
+                "DEEPSEEK" to listOf(
+                    ServiceAccountBackup("d1", "Main", BackupCodec.toBackup(Credential.DeepseekCredential("sk-1")))
+                ),
+                "CLAUDE" to listOf(
+                    ServiceAccountBackup(
+                        "k1", "Web", BackupCodec.toBackup(Credential.ClaudeWebCredential("sk-ant-sid02-x")), orgId = "org"
+                    )
+                )
+            )
+        )
+
+        val imported = BackupCodec.importedAccounts(payload)
+
+        assertEquals(listOf("c1", "c2"), imported.getValue(AiService.CODEX).map { it.account.id })
+        assertEquals(codex, imported.getValue(AiService.CODEX).first().account.credential)
+        assertEquals(gemini, imported.getValue(AiService.GEMINI).single().account.credential)
+        assertEquals("sk-1", imported.getValue(AiService.DEEPSEEK).single().account.credential.accessToken)
+        val claude = imported.getValue(AiService.CLAUDE).single()
+        assertEquals(Credential.ClaudeWebCredential("sk-ant-sid02-x"), claude.account.credential)
+        assertEquals("org", claude.orgId)
+    }
+
+    @Test
+    fun `v3 payload sections still import as accounts`() {
+        val legacy = BackupPayload(
+            version = 3,
+            exportedAtEpochMs = 1,
+            credentials = mapOf(
+                "CODEX" to ServiceCredentialBackup(accessToken = "at", refreshToken = "rt"),
+                "OPENAI" to ServiceCredentialBackup(accessToken = "sk-admin")
+            ),
+            deepseekAccounts = listOf(AccountBackup("d1", "Main", "ds-key")),
+            zaiAccounts = listOf(AccountBackup("z1", "Z", "zai-key")),
+            claudeAccounts = listOf(
+                ClaudeAccountBackup(
+                    "k1", "Perso",
+                    ServiceCredentialBackup(authMode = "web_session", accessToken = "sk-ant-sid02-y"),
+                    orgId = "org-1"
+                )
+            )
+        )
+
+        val imported = BackupCodec.importedAccounts(legacy)
+
+        assertEquals(setOf(AiService.CODEX, AiService.OPENAI, AiService.DEEPSEEK, AiService.ZAI, AiService.CLAUDE), imported.keys)
+        assertTrue(imported.getValue(AiService.CODEX).single().account.credential is Credential.CodexCredential)
+        assertEquals("ds-key", imported.getValue(AiService.DEEPSEEK).single().account.credential.accessToken)
+        assertEquals("org-1", imported.getValue(AiService.CLAUDE).single().orgId)
+    }
+
+    @Test
+    fun `current payload carries the accounts and decodes back`() {
+        val written = json.encodeToString(
+            BackupPayload(
+                exportedAtEpochMs = 1,
+                accounts = mapOf(
+                    "OPENROUTER" to listOf(
+                        ServiceAccountBackup("o1", "A", BackupCodec.toBackup(Credential.ApiKeyCredential("k1"))),
+                        ServiceAccountBackup("o2", "B", BackupCodec.toBackup(Credential.ApiKeyCredential("k2")))
+                    )
+                )
+            )
+        )
+
+        val decoded = BackupCodec.decodePayload(written.toByteArray(), json)
+
+        assertEquals(BackupPayload.CURRENT_VERSION, decoded.version)
+        assertEquals(listOf("o1", "o2"), decoded.accounts.getValue("OPENROUTER").map { it.id })
     }
 
     @Test

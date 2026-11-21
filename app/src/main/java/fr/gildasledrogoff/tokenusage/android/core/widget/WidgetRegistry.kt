@@ -221,7 +221,7 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
                 ) {
                     Column(modifier = GlanceModifier.defaultWeight()) {
                         Text(
-                            text = service.service.displayName,
+                            text = service.title(context),
                             style = TextStyle(
                                 color = Palette.title,
                                 fontSize = 11.sp,
@@ -258,7 +258,7 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
                         ServiceDot(service.service.brandColor, 8.dp)
                         Spacer(modifier = GlanceModifier.width(6.dp))
                         Text(
-                            text = service.service.displayName,
+                            text = service.title(context),
                             style = TextStyle(
                                 color = Palette.title,
                                 fontSize = 13.sp,
@@ -334,7 +334,7 @@ private fun BalancesContent(snapshots: List<ServiceSnapshot>) {
                         ServiceDot(snapshot.service.brandColor, 10.dp)
                         Spacer(modifier = GlanceModifier.width(8.dp))
                         Text(
-                            text = snapshot.service.displayName,
+                            text = snapshot.title(LocalContext.current),
                             style = TextStyle(
                                 color = Palette.title,
                                 fontSize = 15.sp,

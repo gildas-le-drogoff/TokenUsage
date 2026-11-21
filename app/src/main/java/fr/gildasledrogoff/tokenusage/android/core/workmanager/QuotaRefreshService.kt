@@ -3,31 +3,28 @@ package fr.gildasledrogoff.tokenusage.core.workmanager
 import android.content.ComponentName
 import android.content.Context
 import android.service.quicksettings.TileService
+import fr.gildasledrogoff.tokenusage.core.alert.QuotaAlertCoordinator
+import fr.gildasledrogoff.tokenusage.core.diagnostics.DiagnosticsStore
+import fr.gildasledrogoff.tokenusage.core.diagnostics.RefreshOrigin
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
-import fr.gildasledrogoff.tokenusage.core.domain.repository.ClaudeQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DemoDataRepository
-import fr.gildasledrogoff.tokenusage.core.domain.repository.MultiAccountQuotaRepository
-import fr.gildasledrogoff.tokenusage.core.domain.repository.QuotaRepository
-import fr.gildasledrogoff.tokenusage.core.domain.repository.ZaiRepository
 import fr.gildasledrogoff.tokenusage.core.notification.QuotaNotificationService
+import fr.gildasledrogoff.tokenusage.core.provider.ProviderRegistry
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
 import fr.gildasledrogoff.tokenusage.core.tile.QuotaTileService
+import fr.gildasledrogoff.tokenusage.core.widget.WidgetAccountQuota
 import fr.gildasledrogoff.tokenusage.core.widget.WidgetQuotaPublisher
-import fr.gildasledrogoff.tokenusage.di.ClaudeRepository
-import fr.gildasledrogoff.tokenusage.di.CodexRepository
-import fr.gildasledrogoff.tokenusage.di.CopilotRepository
-import fr.gildasledrogoff.tokenusage.di.DeepseekRepository
-import fr.gildasledrogoff.tokenusage.di.GeminiRepository
-import fr.gildasledrogoff.tokenusage.di.OpenAiRepository
-import fr.gildasledrogoff.tokenusage.di.OpenRouterRepository
-import fr.gildasledrogoff.tokenusage.di.ZaiRepositoryQualifier
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -40,19 +37,21 @@ import javax.inject.Singleton
 @Singleton
 class QuotaRefreshService @Inject constructor(
     @ApplicationContext private val context: Context,
-    @ClaudeRepository private val claudeRepository: ClaudeQuotaRepository,
-    @CodexRepository private val codexRepository: QuotaRepository,
-    @GeminiRepository private val geminiRepository: QuotaRepository,
-    @DeepseekRepository private val deepseekRepository: MultiAccountQuotaRepository,
-    @ZaiRepositoryQualifier private val zaiRepository: ZaiRepository,
-    @CopilotRepository private val copilotRepository: QuotaRepository,
-    @OpenRouterRepository private val openRouterRepository: QuotaRepository,
-    @OpenAiRepository private val openAiRepository: QuotaRepository,
+    private val providerRegistry: ProviderRegistry,
     private val prefsManager: EncryptedPrefsManager,
     private val demoData: DemoDataRepository,
     private val notificationService: QuotaNotificationService,
-    private val widgetQuotaPublisher: WidgetQuotaPublisher
+    private val alertCoordinator: QuotaAlertCoordinator,
+    private val widgetQuotaPublisher: WidgetQuotaPublisher,
+    private val diagnosticsStore: DiagnosticsStore
 ) {
+
+    /**
+     * Un seul rafraîchissement à la fois : périodique, action de notification, widget ou
+     * tuile qui arrivent en même temps partagent la même exécution (pas de double fetch,
+     * pas de refresh de token concurrent, pas de notification en double).
+     */
+    private val singleFlight = SingleFlight<Outcome>(CoroutineScope(SupervisorJob() + Dispatchers.Default))
 
     
     data class Outcome(
@@ -61,55 +60,64 @@ class QuotaRefreshService @Inject constructor(
     )
 
     
-    suspend fun refreshNow(): Outcome {
+    suspend fun refreshNow(origin: RefreshOrigin = RefreshOrigin.MANUAL_SERVICE): Outcome =
+        singleFlight.run { performRefresh(origin) }
+
+    private suspend fun performRefresh(origin: RefreshOrigin): Outcome {
         
         if (demoData.isEnabled()) {
-            val samples = demoData.sampleQuotas().mapNotNull { quota ->
-                when (val result = quota.result) {
-                    is Result.Success -> result.value
-                    is Result.Failure -> null
-                }
+            val demo = demoData.sampleQuotas()
+            val samples = demo.mapNotNull { it.result.getOrNull() }
+            if (samples.isNotEmpty()) {
+                widgetQuotaPublisher.publish(
+                    demo.map { WidgetAccountQuota(it.service, it.accountLabel, quota = it.result.getOrNull()) }
+                )
             }
-            if (samples.isNotEmpty()) widgetQuotaPublisher.publish(samples)
             return Outcome(samples, anyServiceConfigured = true)
         }
 
-        val repos = buildList {
-            if (prefsManager.hasCredential(AiService.CLAUDE)) add(AiService.CLAUDE to claudeRepository)
-            if (prefsManager.hasCredential(AiService.CODEX)) add(AiService.CODEX to codexRepository)
-            if (prefsManager.hasCredential(AiService.GEMINI)) add(AiService.GEMINI to geminiRepository)
-            if (prefsManager.hasCredential(AiService.DEEPSEEK)) add(AiService.DEEPSEEK to deepseekRepository)
-            if (prefsManager.hasCredential(AiService.ZAI)) add(AiService.ZAI to zaiRepository)
-            if (prefsManager.hasCredential(AiService.COPILOT)) add(AiService.COPILOT to copilotRepository)
-            if (prefsManager.hasCredential(AiService.OPENROUTER)) add(AiService.OPENROUTER to openRouterRepository)
-            if (prefsManager.hasCredential(AiService.OPENAI)) add(AiService.OPENAI to openAiRepository)
+        // Every account of every registered provider.
+        val fetches = providerRegistry.targets().map { target ->
+            AccountFetch(target.service, target.label, target.number) { target.fetchQuota() }
         }
 
-        if (repos.isEmpty()) return Outcome(emptyList(), anyServiceConfigured = false)
+        if (fetches.isEmpty()) return Outcome(emptyList(), anyServiceConfigured = false)
 
         return try {
-            val quotas = coroutineScope {
-                repos.map { (_, repo) ->
+            val fetched = coroutineScope {
+                fetches.map { fetch ->
                     async {
-                        withTimeoutOrNull(REPO_TIMEOUT_MS) { repo.fetchQuota() }
-                            ?: Result.Failure(AppError.NetworkError("manual refresh timeout"))
+                        val result = withTimeoutOrNull(REPO_TIMEOUT_MS) { fetch.fetch() }
+                            ?: Result.Failure(AppError.NetworkError("refresh timeout"))
+                        fetch to result
                     }
                 }.awaitAll()
             }
-
-            val successfulQuotas = quotas.mapNotNull { result ->
-                when (result) {
-                    is Result.Success -> result.value
-                    is Result.Failure -> null
-                }
+            // Diagnostic local : on garde le Result complet (erreur comprise) ; ce qui est publié aux widgets ne change pas.
+            runCatching {
+                diagnosticsStore.recordFetches(
+                    origin,
+                    fetched.map { (fetch, result) ->
+                        DiagnosticsStore.FetchRecord(fetch.service, fetch.accountLabel, fetch.accountNumber, result)
+                    }
+                )
+            }
+            val results = fetched.map { (fetch, result) ->
+                WidgetAccountQuota(fetch.service, fetch.accountLabel, fetch.accountNumber, result.getOrNull())
             }
 
+            val successfulQuotas = results.mapNotNull { it.quota }
+
             if (successfulQuotas.isNotEmpty()) {
-                widgetQuotaPublisher.publish(successfulQuotas)
+                widgetQuotaPublisher.publish(results)
 
                 if (prefsManager.isNotificationsEnabled()) {
-                    notificationService.showQuotaNotification(successfulQuotas)
-                    checkForResets(successfulQuotas)
+                    // Notifications and reset tracking are keyed per service: keep one account each.
+                    val perService = successfulQuotas.distinctBy { it.service }
+                    notificationService.showQuotaNotification(perService)
+                    checkForResets(perService)
+                    // Threshold / depletion alerts cover every account, not one per service.
+                    alertCoordinator.process(successfulQuotas)
                 }
             }
 
@@ -119,6 +127,8 @@ class QuotaRefreshService @Inject constructor(
             )
 
             Outcome(successfulQuotas, anyServiceConfigured = true)
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             Outcome(emptyList(), anyServiceConfigured = true)
         }
@@ -142,6 +152,13 @@ class QuotaRefreshService @Inject constructor(
             )
         }
     }
+
+    private class AccountFetch(
+        val service: AiService,
+        val accountLabel: String? = null,
+        val accountNumber: Int? = null,
+        val fetch: suspend () -> Result<QuotaInfo, AppError>
+    )
 
     companion object {
         

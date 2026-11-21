@@ -2,7 +2,7 @@ package fr.gildasledrogoff.tokenusage.core.data
 
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
-import fr.gildasledrogoff.tokenusage.core.domain.model.ClaudeAccount
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
 import fr.gildasledrogoff.tokenusage.core.domain.model.ExtraUsage
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
@@ -10,12 +10,17 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageBreakdownRow
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageSeverity
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageWindow
-import fr.gildasledrogoff.tokenusage.core.domain.repository.ClaudeQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeApiService
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeDto
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeTokenRefreshService
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeWebApiService
+import fr.gildasledrogoff.tokenusage.core.provider.BaseQuotaProvider
+import fr.gildasledrogoff.tokenusage.core.provider.CredentialField
+import fr.gildasledrogoff.tokenusage.core.provider.CredentialForm
+import fr.gildasledrogoff.tokenusage.core.provider.LoginAction
+import fr.gildasledrogoff.tokenusage.core.provider.LoginMethod
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
+import fr.gildasledrogoff.tokenusage.R
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -23,36 +28,52 @@ import java.io.IOException
 import java.time.Instant
 import java.time.OffsetDateTime
 import javax.inject.Inject
+import javax.inject.Singleton
 
 
+@Singleton
 class ClaudeRepositoryImpl @Inject constructor(
     private val apiService: ClaudeApiService,
     private val webApiService: ClaudeWebApiService,
     private val tokenRefreshService: ClaudeTokenRefreshService,
-    private val prefsManager: EncryptedPrefsManager
-) : ClaudeQuotaRepository {
+    prefsManager: EncryptedPrefsManager
+) : BaseQuotaProvider(AiService.CLAUDE, prefsManager) {
 
-    
-    override suspend fun fetchQuota(): Result<QuotaInfo, AppError> {
-        val account = prefsManager.getClaudeAccounts().firstOrNull()
-            ?: return Result.Failure(AppError.CredentialNotFound(AiService.CLAUDE))
-        return fetchQuotaForAccount(account)
-    }
+    override val form = CredentialForm(
+        fields = listOf(
+            CredentialField(KEY_SESSION_KEY, R.string.field_session_key, hintRes = R.string.field_session_key_hint),
+            CredentialField(KEY_ACCESS_TOKEN, R.string.field_access_token, advanced = true),
+            CredentialField(
+                KEY_REFRESH_TOKEN, R.string.field_refresh_token,
+                hintRes = R.string.field_refresh_token_hint, advanced = true
+            )
+        ),
+        hintRes = R.string.claude_accounts_hint,
+        emptyRes = R.string.claude_empty,
+        login = LoginAction(
+            LoginMethod.WEB_SESSION, R.string.claude_sign_in, KEY_SESSION_KEY,
+            hintRes = R.string.claude_sign_in_hint
+        ),
+        advancedToggleRes = R.string.claude_oauth_toggle,
+        assemble = { values, _ ->
+            val sessionKey = values[KEY_SESSION_KEY].orEmpty().trim()
+            val accessToken = values[KEY_ACCESS_TOKEN].orEmpty().trim()
+            when {
+                sessionKey.isNotBlank() -> Credential.ClaudeWebCredential(accessToken = sessionKey)
+                accessToken.isNotBlank() -> Credential.ClaudeCredential(
+                    accessToken = accessToken,
+                    refreshToken = values[KEY_REFRESH_TOKEN].orEmpty().trim().ifBlank { null }
+                )
+                else -> null
+            }
+        }
+    )
 
-    override suspend fun fetchQuotaForAccount(account: ClaudeAccount): Result<QuotaInfo, AppError> {
+    override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
         return when (val credential = account.credential) {
             is Credential.ClaudeWebCredential -> fetchQuotaViaWebSession(account.id, credential)
             is Credential.ClaudeCredential -> fetchQuotaViaOAuth(account.id, credential)
             else -> Result.Failure(AppError.CredentialNotFound(AiService.CLAUDE))
-        }
-    }
-
-    override suspend fun validateAccount(accountId: String): Result<Unit, AppError> {
-        val account = prefsManager.getClaudeAccounts().find { it.id == accountId }
-            ?: return Result.Failure(AppError.CredentialNotFound(AiService.CLAUDE))
-        return when (val result = fetchQuotaForAccount(account)) {
-            is Result.Success -> Result.Success(Unit)
-            is Result.Failure -> Result.Failure(result.error)
         }
     }
 
@@ -221,13 +242,6 @@ class ClaudeRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun validateCredential(): Result<Unit, AppError> {
-        return when (val result = fetchQuota()) {
-            is Result.Success -> Result.Success(Unit)
-            is Result.Failure -> Result.Failure(result.error)
-        }
-    }
-
     private suspend fun ensureValidToken(
         accountId: String,
         credential: Credential.ClaudeCredential
@@ -240,6 +254,12 @@ class ClaudeRepositoryImpl @Inject constructor(
     }
 
     private suspend fun refreshToken(
+        accountId: String,
+        credential: Credential.ClaudeCredential
+    ): Credential.ClaudeCredential? =
+        refreshSerialized(accountId, credential) { exchangeRefreshToken(accountId, credential) }
+
+    private suspend fun exchangeRefreshToken(
         accountId: String,
         credential: Credential.ClaudeCredential
     ): Credential.ClaudeCredential? {
@@ -400,5 +420,11 @@ class ClaudeRepositoryImpl @Inject constructor(
         val offsetParsed = runCatching { OffsetDateTime.parse(isoString).toInstant() }.getOrNull()
         if (offsetParsed != null) return offsetParsed
         return runCatching { Instant.parse(isoString) }.getOrNull()
+    }
+
+    companion object {
+        const val KEY_SESSION_KEY = "sessionKey"
+        const val KEY_ACCESS_TOKEN = "accessToken"
+        const val KEY_REFRESH_TOKEN = "refreshToken"
     }
 }

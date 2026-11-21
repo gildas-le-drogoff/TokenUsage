@@ -6,36 +6,42 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageWindow
-import fr.gildasledrogoff.tokenusage.core.domain.repository.QuotaRepository
 import fr.gildasledrogoff.tokenusage.core.network.copilot.CopilotApiService
 import fr.gildasledrogoff.tokenusage.core.network.copilot.CopilotDto
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
+import fr.gildasledrogoff.tokenusage.core.provider.BaseQuotaProvider
+import fr.gildasledrogoff.tokenusage.core.provider.KEY_API_KEY
+import fr.gildasledrogoff.tokenusage.core.provider.LoginAction
+import fr.gildasledrogoff.tokenusage.core.provider.LoginMethod
+import fr.gildasledrogoff.tokenusage.core.provider.apiKeyForm
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
+import fr.gildasledrogoff.tokenusage.R
 import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import javax.inject.Inject
+import javax.inject.Singleton
 
 
+@Singleton
 class CopilotRepositoryImpl @Inject constructor(
     private val apiService: CopilotApiService,
-    private val prefsManager: EncryptedPrefsManager
-) : QuotaRepository {
+    prefsManager: EncryptedPrefsManager
+) : BaseQuotaProvider(AiService.COPILOT, prefsManager) {
 
-    override suspend fun fetchQuota(): Result<QuotaInfo, AppError> {
-        val token = (prefsManager.loadCredential(AiService.COPILOT) as? Credential.ApiKeyCredential)
-            ?.accessToken?.takeIf { it.isNotBlank() }
+    override val form = apiKeyForm(
+        labelRes = R.string.field_github_token,
+        fieldHintRes = R.string.field_github_token_hint,
+        hintRes = R.string.copilot_hint,
+        login = LoginAction(LoginMethod.DEVICE_FLOW, R.string.copilot_sign_in, KEY_API_KEY)
+    ) { Credential.ApiKeyCredential(accessToken = it) }
+
+    override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
+        val token = account.credential.accessToken.takeIf { it.isNotBlank() }
             ?: return Result.Failure(AppError.CredentialNotFound(AiService.COPILOT))
-        return try {
-            fetchWithToken(token)
-        } catch (e: IOException) {
-            Result.Failure(AppError.NetworkError(e.message ?: "Network error", e))
-        } catch (e: Exception) {
-            Result.Failure(AppError.ParseError("${e::class.simpleName}: ${e.message}", e))
-        }
+        return fetchWithToken(token)
     }
-
-    override suspend fun validateCredential(): Result<Unit, AppError> = fetchQuota().map { }
 
     private suspend fun fetchWithToken(token: String): Result<QuotaInfo, AppError> {
         val response = apiService.getUser(authorization = "token $token")

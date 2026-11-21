@@ -1,5 +1,7 @@
 package fr.gildasledrogoff.tokenusage.core.data
 
+import fr.gildasledrogoff.tokenusage.core.domain.model.toServiceAccount
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.ClaudeAccount
@@ -83,7 +85,7 @@ class ClaudeRepositoryImplTest {
 
     
     private fun givenAccount(credential: Credential) {
-        `when`(prefsManager.getClaudeAccounts()).thenReturn(listOf(ClaudeAccount(ACCOUNT_ID, "", credential)))
+        `when`(prefsManager.getAccounts(AiService.CLAUDE)).thenReturn(listOf(ServiceAccount(ACCOUNT_ID, "", credential)))
     }
 
     @After
@@ -185,7 +187,7 @@ class ClaudeRepositoryImplTest {
 
     @Test
     fun `fetchQuota returns CredentialNotFound when no credential saved`() = runTest {
-        `when`(prefsManager.getClaudeAccounts()).thenReturn(emptyList())
+        `when`(prefsManager.getAccounts(AiService.CLAUDE)).thenReturn(emptyList())
 
         val result = repository.fetchQuota()
 
@@ -562,11 +564,11 @@ class ClaudeRepositoryImplTest {
 
 
     @Test
-    fun `fetchQuotaForAccount authenticates with that account's own token`() = runTest {
+    fun `fetchQuota authenticates with that account's own token`() = runTest {
         val work = ClaudeAccount("work", "Work", Credential.ClaudeCredential("work-token", "work-refresh"))
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"five_hour": {"utilization": 10}}"""))
 
-        val result = repository.fetchQuotaForAccount(work)
+        val result = repository.fetchQuota(work.toServiceAccount())
 
         assertTrue(result is Result.Success)
         assertEquals("Bearer work-token", mockWebServer.takeRequest().getHeader("Authorization"))
@@ -590,7 +592,7 @@ class ClaudeRepositoryImplTest {
         )
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"five_hour": {"utilization": 10}}"""))
 
-        val result = repo.fetchQuotaForAccount(work)
+        val result = repo.fetchQuota(work.toServiceAccount())
 
         assertTrue(result is Result.Success)
         val stored = realPrefs.getClaudeAccounts()
@@ -607,7 +609,7 @@ class ClaudeRepositoryImplTest {
     fun `validateAccount targets the requested account`() = runTest {
         val perso = ClaudeAccount("perso", "", Credential.ClaudeCredential("perso-token", null))
         val work = ClaudeAccount("work", "", Credential.ClaudeCredential("work-token", null))
-        `when`(prefsManager.getClaudeAccounts()).thenReturn(listOf(perso, work))
+        `when`(prefsManager.getAccounts(AiService.CLAUDE)).thenReturn(listOf(perso, work).map { it.toServiceAccount() })
         mockWebServer.enqueue(
             MockResponse().setResponseCode(200).setBody("""{"five_hour": {"utilization": 10}}""")
         )

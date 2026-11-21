@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kover)
 }
 val keystoreProperties =
     Properties().apply {
@@ -137,6 +138,47 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_25
+    }
+}
+
+// Couverture de code (Kover) : Kover n'instrumente que les tâches de test
+// (jamais l'APK), et la CI ne mesure que la variante debug : aucun impact sur
+// les builds release / F-Droid (reproductibilité).
+// Rapports : ./gradlew koverXmlReportDebug koverHtmlReportDebug
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    // Code généré par Hilt / Dagger
+                    "*_Factory",
+                    "*_Factory\$*",
+                    "*_HiltModules*",
+                    "*_HiltComponents*",
+                    "*_MembersInjector",
+                    "Hilt_*",
+                    "*.Hilt_*",
+                    "dagger.hilt.internal.*",
+                    "hilt_aggregated_deps.*",
+                    "*_GeneratedInjector",
+                    // Code généré par Room
+                    "*_Impl",
+                    "*_Impl\$*",
+                    // Généré par AGP / Compose
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R\$*",
+                    "*ComposableSingletons*",
+                    // Thème et constantes visuelles Compose
+                    "*.ui.theme.ThemeKt",
+                    "*.ui.theme.DimensKt",
+                )
+                annotatedBy(
+                    "androidx.compose.ui.tooling.preview.Preview",
+                    "androidx.compose.ui.tooling.preview.PreviewLightDark",
+                )
+            }
+        }
     }
 }
 

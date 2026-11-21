@@ -4,6 +4,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
+import fr.gildasledrogoff.tokenusage.core.domain.model.toServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.repository.BalanceHistoryRepository
 import fr.gildasledrogoff.tokenusage.core.network.deepseek.DeepseekApiService
@@ -16,6 +17,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -75,7 +77,7 @@ class DeepseekRepositoryImplTest {
             .create(DeepseekApiService::class.java)
 
         prefsManager = mock(EncryptedPrefsManager::class.java)
-        `when`(prefsManager.getDeepseekAccounts()).thenReturn(listOf(account1, account2))
+        `when`(prefsManager.getAccounts(AiService.DEEPSEEK)).thenReturn(listOf(account1, account2).map { it.toServiceAccount() })
         fakeHistoryRepository = FakeBalanceHistoryRepository()
 
         repository = DeepseekRepositoryImpl(apiService, prefsManager, fakeHistoryRepository)
@@ -86,8 +88,13 @@ class DeepseekRepositoryImplTest {
         mockWebServer.shutdown()
     }
 
+    private val accounts = listOf(account1, account2).map { it.toServiceAccount() }
+
+    /** One result per configured account, queried in order. */
+    private suspend fun fetchEach() = accounts.map { repository.fetchQuota(it) }
+
     @Test
-    fun `fetchQuota fetches every account and parses balances`() = runTest {
+    fun `fetchQuota parses the balance of each account`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
         mockWebServer.enqueue(
             MockResponse().setResponseCode(200).setBody(
@@ -95,59 +102,50 @@ class DeepseekRepositoryImplTest {
             )
         )
 
-        val result = repository.fetchQuota()
+        val (first, second) = fetchEach().map { (it as Result.Success).value }
 
-        assertTrue(result is Result.Success)
-        val quotaInfo = (result as Result.Success).value
-        assertEquals(AiService.DEEPSEEK, quotaInfo.service)
-        assertTrue(quotaInfo.windows.isEmpty())
-        assertEquals(2, quotaInfo.accountBalances.size)
-        assertTrue(quotaInfo.accountBalances.all { it.error == null })
+        assertEquals(AiService.DEEPSEEK, first.service)
+        assertTrue(first.windows.isEmpty())
+        assertEquals("id-1", first.accountId)
+        assertEquals("Personal", first.accountLabel)
+        assertEquals("id-2", second.accountId)
 
-        val cny = quotaInfo.accountBalances.mapNotNull { it.balance }.first { it.currency == "CNY" }
+        val cny = first.accountBalances.single().balance!!
+        assertEquals("CNY", cny.currency)
         assertEquals(110.0, cny.totalBalance, 0.001)
         assertEquals(10.0, cny.grantedBalance!!, 0.001)
         assertEquals(100.0, cny.toppedUpBalance!!, 0.001)
         assertTrue(cny.isAvailable)
 
-        val usd = quotaInfo.accountBalances.mapNotNull { it.balance }.first { it.currency == "USD" }
+        val usd = second.accountBalances.single().balance!!
         assertEquals(3.20, usd.totalBalance, 0.001)
         assertEquals(0.0, usd.grantedBalance!!, 0.001)
         assertEquals(3.20, usd.toppedUpBalance!!, 0.001)
     }
 
     @Test
-    fun `fetchQuota sends bearer token per account`() = runTest {
+    fun `fetchQuota sends the bearer token of the queried account`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
 
-        repository.fetchQuota()
+        fetchEach()
 
-        val authHeaders = (1..2).map { mockWebServer.takeRequest() }
-        authHeaders.forEach { request ->
-            assertEquals("/user/balance", request.path)
-        }
-        assertEquals(
-            setOf("Bearer sk-key-1", "Bearer sk-key-2"),
-            authHeaders.map { it.getHeader("Authorization") }.toSet()
-        )
+        val requests = (1..2).map { mockWebServer.takeRequest() }
+        requests.forEach { assertEquals("/user/balance", it.path) }
+        assertEquals(listOf("Bearer sk-key-1", "Bearer sk-key-2"), requests.map { it.getHeader("Authorization") })
     }
 
     @Test
-    fun `fetchQuota keeps other accounts when one fails auth`() = runTest {
+    fun `one account failing auth does not affect the others`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(401))
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
 
-        val result = repository.fetchQuota()
+        val (failed, ok) = fetchEach()
 
-        assertTrue(result is Result.Success)
-        val quotaInfo = (result as Result.Success).value
-        assertEquals(2, quotaInfo.accountBalances.size)
-        val failed = quotaInfo.accountBalances.filter { it.balance == null }
-        assertEquals(1, failed.size)
-        assertTrue(failed.single().error is AppError.AuthError)
-        val ok = quotaInfo.accountBalances.filter { it.balance != null }
-        assertEquals(1, ok.size)
+        val error = (failed as Result.Failure).error
+        assertTrue(error is AppError.AuthError)
+        assertTrue((error as AppError.AuthError).isTerminal)
+        assertTrue(ok is Result.Success)
     }
 
     @Test
@@ -157,13 +155,10 @@ class DeepseekRepositoryImplTest {
         )
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
 
-        val result = repository.fetchQuota()
+        val (unavailable, available) = fetchEach().map { (it as Result.Success).value.accountBalances.single().balance!! }
 
-        assertTrue(result is Result.Success)
-        val accounts = (result as Result.Success).value.accountBalances
-        assertEquals(2, accounts.count { it.balance != null })
-        assertEquals(1, accounts.count { it.balance?.isAvailable == false })
-        assertEquals(1, accounts.count { it.balance?.isAvailable == true })
+        assertFalse(unavailable.isAvailable)
+        assertTrue(available.isAvailable)
     }
 
     @Test
@@ -173,12 +168,10 @@ class DeepseekRepositoryImplTest {
         )
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
 
-        val result = repository.fetchQuota()
+        val (empty, ok) = fetchEach()
 
-        assertTrue(result is Result.Success)
-        val accounts = (result as Result.Success).value.accountBalances
-        assertEquals(1, accounts.count { it.error is AppError.ParseError })
-        assertEquals(1, accounts.count { it.balance != null })
+        assertTrue((empty as Result.Failure).error is AppError.ParseError)
+        assertTrue(ok is Result.Success)
     }
 
     @Test
@@ -186,17 +179,15 @@ class DeepseekRepositoryImplTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(429))
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
 
-        val result = repository.fetchQuota()
+        val (limited, ok) = fetchEach()
 
-        assertTrue(result is Result.Success)
-        val accounts = (result as Result.Success).value.accountBalances
-        assertEquals(1, accounts.count { it.error is AppError.RateLimited })
-        assertEquals(1, accounts.count { it.balance != null })
+        assertTrue((limited as Result.Failure).error is AppError.RateLimited)
+        assertTrue(ok is Result.Success)
     }
 
     @Test
-    fun `fetchQuota returns CredentialNotFound when no account configured`() = runTest {
-        `when`(prefsManager.getDeepseekAccounts()).thenReturn(emptyList())
+    fun `fetchQuota without argument uses the first account and reports a missing one`() = runTest {
+        `when`(prefsManager.getAccounts(AiService.DEEPSEEK)).thenReturn(emptyList())
 
         val result = repository.fetchQuota()
 
@@ -238,7 +229,7 @@ class DeepseekRepositoryImplTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(balanceBody()))
 
-        repository.fetchQuota()
+        fetchEach()
 
         assertEquals(2, fakeHistoryRepository.recorded.size)
         assertEquals(setOf("id-1", "id-2"), fakeHistoryRepository.recorded.map { it.accountId }.toSet())

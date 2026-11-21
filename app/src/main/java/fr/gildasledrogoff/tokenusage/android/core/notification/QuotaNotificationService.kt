@@ -12,7 +12,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
-import fr.gildasledrogoff.tokenusage.core.domain.model.LockScreenVisibility
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
@@ -58,23 +57,8 @@ class QuotaNotificationService @Inject constructor(
     private fun NotificationCompat.Builder.applyLockScreenVisibility(
         channelId: String,
         @StringRes publicTextRes: Int
-    ): NotificationCompat.Builder {
-        when (displayPreferences.lockScreenVisibility.value) {
-            LockScreenVisibility.SHOW_ALL -> setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            LockScreenVisibility.HIDDEN -> setVisibility(NotificationCompat.VISIBILITY_SECRET)
-            LockScreenVisibility.SYSTEM -> {
-                setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                setPublicVersion(
-                    NotificationCompat.Builder(context, channelId)
-                        .setSmallIcon(R.drawable.ic_quota)
-                        .setContentTitle(context.getString(R.string.app_name))
-                        .setContentText(context.getString(publicTextRes))
-                        .build()
-                )
-            }
-        }
-        return this
-    }
+    ): NotificationCompat.Builder =
+        applyLockScreenVisibility(context, displayPreferences.lockScreenVisibility.value, channelId, publicTextRes)
 
     private fun createNotificationChannels() {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

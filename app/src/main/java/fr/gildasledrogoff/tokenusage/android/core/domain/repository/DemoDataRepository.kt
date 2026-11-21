@@ -34,5 +34,7 @@ interface DemoDataRepository {
 data class DemoQuota(
     val service: AiService,
     val accountLabel: String?,
-    val result: Result<QuotaInfo, AppError>
+    val result: Result<QuotaInfo, AppError>,
+    val accountNumber: Int? = null,
+    val accountId: String? = null
 )

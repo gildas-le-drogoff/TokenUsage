@@ -2,6 +2,10 @@ package fr.gildasledrogoff.tokenusage.feature.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import fr.gildasledrogoff.tokenusage.core.alert.AlertPreferencesStore
+import fr.gildasledrogoff.tokenusage.core.alert.BalanceSeriesSource
+import fr.gildasledrogoff.tokenusage.core.alert.DepletionForecast
+import fr.gildasledrogoff.tokenusage.core.alert.DepletionPredictor
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionGranularity
 import fr.gildasledrogoff.tokenusage.core.domain.repository.BalanceHistoryRepository
@@ -9,11 +13,14 @@ import fr.gildasledrogoff.tokenusage.core.domain.repository.DemoDataRepository
 import fr.gildasledrogoff.tokenusage.core.domain.repository.ExchangeRateRepository
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.Duration
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,7 +28,11 @@ class BalanceHistoryViewModel @Inject constructor(
     private val historyRepository: BalanceHistoryRepository,
     private val prefsManager: EncryptedPrefsManager,
     private val demoData: DemoDataRepository,
-    private val exchangeRates: ExchangeRateRepository
+    private val exchangeRates: ExchangeRateRepository,
+    private val balanceSeries: BalanceSeriesSource,
+    private val depletionPredictor: DepletionPredictor,
+    private val alertPreferences: AlertPreferencesStore,
+    private val clock: Clock
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BalanceHistoryUiState())
@@ -73,6 +84,8 @@ class BalanceHistoryViewModel @Inject constructor(
             val latest = history.latestSample(AiService.DEEPSEEK, selectedId)
             val currency = latest?.currency ?: points.lastOrNull()?.currency ?: ""
 
+            val depletion = if (demo) null else estimateDepletion(selectedId)
+
             val rate = exchangeRates.displayRate(currency)
             val shownPoints = if (rate == null) points else points.map { point ->
                 if (point.currency == currency) {
@@ -90,8 +103,23 @@ class BalanceHistoryViewModel @Inject constructor(
                 latestBalance = latest?.totalBalance?.let { rate?.convert(it) ?: it },
                 currency = rate?.to ?: currency,
                 fxRate = rate,
+                depletionAt = depletion?.depletionAt,
+                depletionEstimated = !demo,
                 isLoading = false
             )
+        }
+    }
+
+    /** Date the balance is expected to reach zero, from the recorded history (`null` if it cannot be told). */
+    private suspend fun estimateDepletion(accountId: String): DepletionForecast? {
+        val lookback = Duration.ofDays(alertPreferences.currentConfig().forecastWindowDays.toLong())
+        return try {
+            val points = balanceSeries.series(AiService.DEEPSEEK, accountId, clock.instant().minus(lookback))
+            depletionPredictor.predictBalance(points, target = 0.0, lookback = lookback)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
         }
     }
 }

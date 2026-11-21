@@ -12,8 +12,15 @@ data class QuotaInfo(
     val weeklyBreakdown: List<UsageBreakdownRow> = emptyList(),
     
     val spending: List<SpendAmount> = emptyList(),
-    val fetchedAt: Instant = Instant.now()
-)
+    val fetchedAt: Instant = Instant.now(),
+    /** Stable id of the account this quota belongs to (null = default/single account). */
+    val accountId: String? = null,
+    /** User-given label of the account, if any. */
+    val accountLabel: String? = null
+) {
+    /** Identity key shared by alerts and diagnostics: `"SERVICE:accountId"` (or `default`). */
+    val accountKey: String get() = "${service.name}:${accountId ?: "default"}"
+}
 
 
 data class CreditBalance(

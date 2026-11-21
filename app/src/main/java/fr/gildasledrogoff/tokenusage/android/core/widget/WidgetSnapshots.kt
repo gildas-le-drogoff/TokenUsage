@@ -1,6 +1,7 @@
 package fr.gildasledrogoff.tokenusage.core.widget
 
 import android.content.Context
+import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.data.DisplayPreferencesRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
@@ -10,7 +11,9 @@ data class ServiceSnapshot(
     val service: AiService,
     val tier: String?,
     val windows: List<WindowSnapshot>,
-    val balanceText: String?
+    val balanceText: String?,
+    val accountLabel: String? = null,
+    val accountNumber: Int? = null
 )
 
 data class WindowSnapshot(
@@ -30,20 +33,34 @@ internal object WidgetSnapshots {
         val showUsed = DisplayPreferencesRepositoryImpl.quotaDisplayMode(context) == QuotaDisplayMode.USED
         return widgetPrefs.getSelectedServices(appWidgetId)
             .sortedBy { it.ordinal }
-            .map { service ->
-                ServiceSnapshot(
-                    service = service,
-                    tier = widgetPrefs.getCachedTier(service),
-                    windows = widgetPrefs.getCachedLabels(service).map { label ->
-                        WindowSnapshot(
-                            label = label,
-                            utilization = widgetPrefs.getCachedUtilization(service, label),
-                            resetsAtEpochSecond = widgetPrefs.getCachedResetsAt(service, label),
-                            showUsed = showUsed
-                        )
-                    },
-                    balanceText = widgetPrefs.getCachedBalanceText(service)
-                )
+            .flatMap { service ->
+                widgetPrefs.getCachedAccounts(service).map { account ->
+                    ServiceSnapshot(
+                        service = service,
+                        tier = account.tier,
+                        windows = account.windows.map { window ->
+                            WindowSnapshot(
+                                label = window.label,
+                                utilization = window.utilization,
+                                resetsAtEpochSecond = window.resetsAtEpochSecond,
+                                showUsed = showUsed
+                            )
+                        },
+                        balanceText = account.balanceText,
+                        accountLabel = account.accountLabel,
+                        accountNumber = account.accountNumber
+                    )
+                }.ifEmpty {
+                    listOf(ServiceSnapshot(service, tier = null, windows = emptyList(), balanceText = null))
+                }
             }
     }
 }
+
+
+internal fun ServiceSnapshot.accountName(context: Context): String? =
+    accountLabel ?: accountNumber?.let { context.getString(R.string.account_n, it) }
+
+
+internal fun ServiceSnapshot.title(context: Context): String =
+    accountName(context)?.let { "${service.displayName} · $it" } ?: service.displayName

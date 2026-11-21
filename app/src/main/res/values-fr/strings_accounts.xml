@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accounts_empty">Aucun compte pour l\'instant. Ajoutez-en un pour suivre ce service.</string>
+    <string name="accounts_label_placeholder">ex. Perso, Travail</string>
+    <string name="accounts_advanced_toggle">Jetons manuels (alternative)</string>
+    <string name="demo_codex_personal">Codex perso</string>
+    <string name="demo_codex_work">Codex boulot</string>
+    <string name="demo_copilot_personal">Copilot perso</string>
+    <string name="demo_copilot_work">Copilot boulot</string>
+</resources>

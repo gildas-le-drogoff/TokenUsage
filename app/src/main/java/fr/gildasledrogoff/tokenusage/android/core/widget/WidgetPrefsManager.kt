@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,87 +60,68 @@ class WidgetPrefsManager @Inject constructor(
     }
 
 
-    fun cacheQuotaData(service: AiService, label: String, utilization: Double, resetsAtEpochSecond: Long?) {
-        val prefix = "cache_${service.name}"
-        prefs.edit()
-            .putString("${prefix}_labels", getCachedLabels(service).plus(label).joinToString(","))
-            .putFloat("${prefix}_${label}_util", utilization.toFloat())
-            .apply {
-                if (resetsAtEpochSecond != null) {
-                    putLong("${prefix}_${label}_resets", resetsAtEpochSecond)
-                } else {
-                    remove("${prefix}_${label}_resets")
-                }
-            }
-            .apply()
-    }
-
-    fun cacheAllQuotaData(service: AiService, windows: List<Triple<String, Double, Long?>>) {
-        val prefix = "cache_${service.name}"
+    fun cacheAccounts(service: AiService, accounts: List<CachedAccount>) {
+        val prefix = cachePrefix(service)
         val editor = prefs.edit()
         prefs.all.keys.filter { it.startsWith(prefix) }.forEach { editor.remove(it) }
-
-        val labels = windows.map { it.first }
-        editor.putString("${prefix}_labels", labels.joinToString(","))
-        for ((label, utilization, resetsAt) in windows) {
-            editor.putFloat("${prefix}_${label}_util", utilization.toFloat())
-            if (resetsAt != null) {
-                editor.putLong("${prefix}_${label}_resets", resetsAt)
-            }
-        }
-        editor.putLong("${prefix}_updated_at", System.currentTimeMillis())
+        editor.putString("${prefix}accounts", json.encodeToString(accounts))
+        editor.putLong("${prefix}updated_at", System.currentTimeMillis())
         editor.apply()
     }
 
-    fun getCachedLabels(service: AiService): List<String> {
-        val raw = prefs.getString("cache_${service.name}_labels", null) ?: return emptyList()
-        return raw.split(",").filter { it.isNotEmpty() }
-    }
-
-    fun getCachedUtilization(service: AiService, label: String): Float {
-        return prefs.getFloat("cache_${service.name}_${label}_util", 0f)
-    }
-
-    fun getCachedResetsAt(service: AiService, label: String): Long? {
-        val value = prefs.getLong("cache_${service.name}_${label}_resets", -1L)
-        return if (value > 0) value else null
+    fun getCachedAccounts(service: AiService): List<CachedAccount> {
+        val prefix = cachePrefix(service)
+        val raw = prefs.getString("${prefix}accounts", null)
+            ?: return listOfNotNull(legacyCachedAccount(service))
+        return runCatching { json.decodeFromString<List<CachedAccount>>(raw) }.getOrDefault(emptyList())
     }
 
     fun getCachedUpdatedAt(service: AiService): Long {
-        return prefs.getLong("cache_${service.name}_updated_at", 0L)
+        return prefs.getLong("${cachePrefix(service)}updated_at", 0L)
     }
 
-    
-    fun getMaxCachedUtilization(service: AiService): Float {
-        val labels = getCachedLabels(service)
-        if (labels.isEmpty()) return 0f
-        return labels.maxOf { getCachedUtilization(service, it) }
+
+    private fun legacyCachedAccount(service: AiService): CachedAccount? {
+        val prefix = cachePrefix(service)
+        val labels = prefs.getString("${prefix}labels", null)
+            ?.split(",")?.filter { it.isNotEmpty() }
+            .orEmpty()
+        val tier = prefs.getString("${prefix}tier", null)
+        val balanceText = prefs.getString("${prefix}balance_text", null)
+        if (labels.isEmpty() && tier == null && balanceText == null) return null
+        return CachedAccount(
+            tier = tier,
+            balanceText = balanceText,
+            windows = labels.map { label ->
+                CachedWindow(
+                    label = label,
+                    utilization = prefs.getFloat("${prefix}${label}_util", 0f),
+                    resetsAtEpochSecond = prefs.getLong("${prefix}${label}_resets", -1L).takeIf { it > 0 }
+                )
+            }
+        )
     }
 
-    fun cacheTier(service: AiService, tier: String?) {
-        val key = "cache_${service.name}_tier"
-        if (tier != null) {
-            prefs.edit().putString(key, tier).apply()
-        } else {
-            prefs.edit().remove(key).apply()
-        }
-    }
+    private fun cachePrefix(service: AiService) = "cache_${service.name}_"
 
-    fun getCachedTier(service: AiService): String? {
-        return prefs.getString("cache_${service.name}_tier", null)
-    }
-
-    
-    fun cacheBalanceText(service: AiService, text: String?) {
-        val key = "cache_${service.name}_balance_text"
-        if (text != null) {
-            prefs.edit().putString(key, text).apply()
-        } else {
-            prefs.edit().remove(key).apply()
-        }
-    }
-
-    fun getCachedBalanceText(service: AiService): String? {
-        return prefs.getString("cache_${service.name}_balance_text", null)
+    private companion object {
+        val json = Json { ignoreUnknownKeys = true }
     }
 }
+
+
+@Serializable
+data class CachedAccount(
+    val accountLabel: String? = null,
+    val accountNumber: Int? = null,
+    val tier: String? = null,
+    val windows: List<CachedWindow> = emptyList(),
+    val balanceText: String? = null
+)
+
+@Serializable
+data class CachedWindow(
+    val label: String,
+    val utilization: Float,
+    val resetsAtEpochSecond: Long? = null
+)

@@ -37,7 +37,9 @@ object BalanceConsumptionAggregator {
         for (i in 1 until ordered.size) {
             val previous = ordered[i - 1]
             val current = ordered[i]
-            val consumed = (previous.totalBalance - current.totalBalance).coerceAtLeast(0.0)
+            // A currency change makes the two balances incomparable: not a consumption.
+            val consumed = if (previous.currency != current.currency) 0.0
+            else (previous.totalBalance - current.totalBalance).coerceAtLeast(0.0)
             val bucket = bucketOf(current.timestamp)
             consumedByBucket[bucket] = (consumedByBucket[bucket] ?: 0.0) + consumed
         }

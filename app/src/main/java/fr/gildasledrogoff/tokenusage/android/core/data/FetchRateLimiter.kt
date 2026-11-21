@@ -13,7 +13,9 @@ class FetchRateLimiter @Inject constructor(
 
     fun isCoolingDown(lastFetchAt: Instant?): Boolean {
         lastFetchAt ?: return false
-        return Duration.between(lastFetchAt, clock.instant()) < MIN_FETCH_INTERVAL
+        val elapsed = Duration.between(lastFetchAt, clock.instant())
+        // A last fetch far in the future (clock moved back) must not block fetching until the clock catches up.
+        return elapsed < MIN_FETCH_INTERVAL && elapsed > MIN_FETCH_INTERVAL.negated()
     }
 
     companion object {

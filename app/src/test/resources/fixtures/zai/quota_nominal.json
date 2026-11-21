@@ -1,0 +1,13 @@
+{
+  "code": 200,
+  "msg": "Operation successful",
+  "success": true,
+  "data": {
+    "level": "pro",
+    "limits": [
+      {"type": "TOKENS_LIMIT", "unit": 3, "number": 5, "usage": 1000, "currentValue": 400, "remaining": 600, "percentage": 40, "nextResetTime": 1795000000000},
+      {"type": "TIME_LIMIT", "unit": 5, "number": 1, "usage": 1000, "currentValue": 100, "remaining": 900, "percentage": 10, "nextResetTime": 1796000000000,
+       "usageDetails": [{"modelCode": "search-prime", "usage": 60}, {"modelCode": "web-reader", "usage": 40}]}
+    ]
+  }
+}

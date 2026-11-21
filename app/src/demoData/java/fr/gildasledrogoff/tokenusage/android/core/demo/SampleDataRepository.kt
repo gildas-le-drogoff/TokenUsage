@@ -81,12 +81,14 @@ class SampleDataRepository @Inject constructor(
         return listOf(
             DemoQuota(AiService.CLAUDE, context.getString(R.string.demo_claude_personal), Result.Success(claude(now))),
             DemoQuota(AiService.CLAUDE, context.getString(R.string.demo_claude_work), Result.Success(claudeWork(now))),
-            DemoQuota(AiService.CODEX, null, Result.Success(codex(now))),
+            DemoQuota(AiService.CODEX, context.getString(R.string.demo_codex_personal), Result.Success(codex(now))),
+            DemoQuota(AiService.CODEX, context.getString(R.string.demo_codex_work), Result.Success(codexWork(now))),
             DemoQuota(AiService.GEMINI, null, Result.Success(gemini(now))),
-            DemoQuota(AiService.DEEPSEEK, null, Result.Success(deepseek(now))),
+        ) + deepseekQuotas(now) + listOf(
             DemoQuota(AiService.ZAI, context.getString(R.string.demo_zai_personal), Result.Success(zai(now))),
             DemoQuota(AiService.ZAI, context.getString(R.string.demo_zai_work), Result.Success(zaiWork(now))),
-            DemoQuota(AiService.COPILOT, null, Result.Success(copilot(now))),
+            DemoQuota(AiService.COPILOT, context.getString(R.string.demo_copilot_personal), Result.Success(copilot(now))),
+            DemoQuota(AiService.COPILOT, context.getString(R.string.demo_copilot_work), Result.Success(copilotWork(now))),
             DemoQuota(AiService.OPENROUTER, null, Result.Success(openRouter(now))),
             DemoQuota(AiService.OPENAI, null, Result.Success(openAi(now)))
         )
@@ -130,6 +132,17 @@ class SampleDataRepository @Inject constructor(
         fetchedAt = now
     )
 
+    private fun codexWork(now: Instant) = QuotaInfo(
+        service = AiService.CODEX,
+        windows = listOf(
+            UsageWindow("5-Hour", 0.64, now + Duration.ofMinutes(112)),
+            UsageWindow("7-Day", 0.21, now + Duration.ofDays(2).plusHours(9))
+        ),
+        extraUsage = null,
+        tier = "Pro",
+        fetchedAt = now
+    )
+
     private fun gemini(now: Instant) = QuotaInfo(
         service = AiService.GEMINI,
         windows = listOf(
@@ -141,26 +154,22 @@ class SampleDataRepository @Inject constructor(
         fetchedAt = now
     )
 
-    private suspend fun deepseek(now: Instant): QuotaInfo {
-        val balances = localizedSpecs().map { spec ->
-            val account = spec.account
-            when (account.id) {
-                ID_OLD -> AccountBalance(
-                    label = account.label,
-                    balance = null,
-                    error = AppError.AuthError(AiService.DEEPSEEK, isTerminal = true)
-                )
-                ID_NEW -> AccountBalance(
-                    label = account.label,
-                    balance = CreditBalance(spec.currency, 0.0, 0.0, 0.0, isAvailable = false)
-                )
-                else -> {
-                    val total = history.latestSample(AiService.DEEPSEEK, account.id)?.totalBalance
-                        ?: spec.startBalance
-                    val granted = minOf(GRANTED_BONUS, total)
-                    AccountBalance(
-                        label = account.label,
-                        balance = CreditBalance(
+    /** One card per DeepSeek account, like every other service. */
+    private suspend fun deepseekQuotas(now: Instant): List<DemoQuota> = localizedSpecs().map { spec ->
+        val account = spec.account
+        val result: Result<QuotaInfo, AppError> = when (account.id) {
+            ID_OLD -> Result.Failure(AppError.AuthError(AiService.DEEPSEEK, isTerminal = true))
+            ID_NEW -> Result.Success(
+                deepseekQuota(now, account, CreditBalance(spec.currency, 0.0, 0.0, 0.0, isAvailable = false))
+            )
+            else -> {
+                val total = history.latestSample(AiService.DEEPSEEK, account.id)?.totalBalance
+                    ?: spec.startBalance
+                val granted = minOf(GRANTED_BONUS, total)
+                Result.Success(
+                    deepseekQuota(
+                        now, account,
+                        CreditBalance(
                             currency = spec.currency,
                             totalBalance = total,
                             grantedBalance = granted,
@@ -168,17 +177,21 @@ class SampleDataRepository @Inject constructor(
                             isAvailable = true
                         )
                     )
-                }
+                )
             }
         }
-        return QuotaInfo(
-            service = AiService.DEEPSEEK,
-            windows = emptyList(),
-            extraUsage = null,
-            accountBalances = balances,
-            fetchedAt = now
-        )
+        DemoQuota(AiService.DEEPSEEK, account.label, result, accountId = account.id)
     }
+
+    private fun deepseekQuota(now: Instant, account: DeepseekAccount, balance: CreditBalance) = QuotaInfo(
+        service = AiService.DEEPSEEK,
+        windows = emptyList(),
+        extraUsage = null,
+        accountBalances = listOf(AccountBalance(label = account.label, balance = balance)),
+        fetchedAt = now,
+        accountId = account.id,
+        accountLabel = account.label
+    )
 
     private fun zai(now: Instant) = QuotaInfo(
         service = AiService.ZAI,
@@ -214,6 +227,17 @@ class SampleDataRepository @Inject constructor(
         ),
         extraUsage = null,
         tier = "Individual",
+        fetchedAt = now
+    )
+
+    private fun copilotWork(now: Instant) = QuotaInfo(
+        service = AiService.COPILOT,
+        windows = listOf(
+            UsageWindow("Premium requests", 0.23, now + Duration.ofDays(9)),
+            UsageWindow("Chat", 0.05, now + Duration.ofDays(9))
+        ),
+        extraUsage = null,
+        tier = "Business",
         fetchedAt = now
     )
 

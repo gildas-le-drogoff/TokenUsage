@@ -7,38 +7,40 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.SpendAmount
 import fr.gildasledrogoff.tokenusage.core.domain.model.SpendPeriod
-import fr.gildasledrogoff.tokenusage.core.domain.repository.QuotaRepository
 import fr.gildasledrogoff.tokenusage.core.network.openai.OpenAiApiService
 import fr.gildasledrogoff.tokenusage.core.network.openai.OpenAiDto
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
+import fr.gildasledrogoff.tokenusage.core.provider.BaseQuotaProvider
+import fr.gildasledrogoff.tokenusage.core.provider.apiKeyForm
+import fr.gildasledrogoff.tokenusage.core.provider.httpError
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
-import java.io.IOException
+import fr.gildasledrogoff.tokenusage.R
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 
 
+@Singleton
 class OpenAiRepositoryImpl @Inject constructor(
     private val apiService: OpenAiApiService,
-    private val prefsManager: EncryptedPrefsManager,
+    prefsManager: EncryptedPrefsManager,
     private val clock: Clock
-) : QuotaRepository {
+) : BaseQuotaProvider(AiService.OPENAI, prefsManager) {
 
-    override suspend fun fetchQuota(): Result<QuotaInfo, AppError> {
-        val apiKey = (prefsManager.loadCredential(AiService.OPENAI) as? Credential.ApiKeyCredential)
-            ?.accessToken?.takeIf { it.isNotBlank() }
+    override val form = apiKeyForm(
+        labelRes = R.string.field_openai_admin_key,
+        fieldHintRes = R.string.field_openai_admin_key_hint,
+        hintRes = R.string.openai_hint
+    ) { Credential.ApiKeyCredential(accessToken = it) }
+
+    override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
+        val apiKey = account.credential.accessToken.takeIf { it.isNotBlank() }
             ?: return Result.Failure(AppError.CredentialNotFound(AiService.OPENAI))
-        return try {
-            fetchWithKey(apiKey)
-        } catch (e: IOException) {
-            Result.Failure(AppError.NetworkError(e.message ?: "Network error", e))
-        } catch (e: Exception) {
-            Result.Failure(AppError.ParseError("${e::class.simpleName}: ${e.message}", e))
-        }
+        return fetchWithKey(apiKey)
     }
-
-    override suspend fun validateCredential(): Result<Unit, AppError> = fetchQuota().map { }
 
     private suspend fun fetchWithKey(apiKey: String): Result<QuotaInfo, AppError> {
         val now = clock.instant()
@@ -59,12 +61,11 @@ class OpenAiRepositoryImpl @Inject constructor(
             )
             if (!response.isSuccessful) {
                 return Result.Failure(
-                    when (response.code()) {
-                        401, 403 -> AppError.AuthError(AiService.OPENAI, isTerminal = true, message = "Admin API key required")
-                        429 -> AppError.RateLimited
-                        502, 503 -> AppError.ServiceUnavailable
-                        else -> AppError.NetworkError("HTTP ${response.code()}")
-                    }
+                    httpError(
+                        AiService.OPENAI, response.code(),
+                        authCodes = setOf(401, 403), unavailableCodes = setOf(502, 503),
+                        authMessage = "Admin API key required"
+                    )
                 )
             }
             val body = response.body()

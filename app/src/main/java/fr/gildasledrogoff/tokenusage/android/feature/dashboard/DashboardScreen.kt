@@ -52,7 +52,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.gildasledrogoff.tokenusage.R
-import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
 import java.time.Instant
 import java.time.ZoneId
@@ -210,14 +209,14 @@ private fun CardList(
         }
         item(span = StaggeredGridItemSpan.FullLine) { StatusLegend() }
         items(cards) { card ->
-            if (card.service == AiService.DEEPSEEK && card.error == null) {
+            if (card.hasConsumptionHistory && card.error == null) {
                 ServiceCard(
                     cardData = card,
                     expanded = deepseekExpanded,
                     onToggleExpand = onToggleDeepseek
                 ) {
                     ConsumptionPanel(
-                        state = consumptionChart,
+                        state = consumptionChart.forAccount(card.accountId),
                         onSelectAccount = onSelectConsumptionAccount,
                         onOpenHistory = onNavigateToHistory
                     )
@@ -329,4 +328,12 @@ private fun EmptyState() {
             )
         }
     }
+}
+
+
+/** The consumption chart restricted to the account behind a card (all accounts if it has no id). */
+private fun ConsumptionChartUiState.forAccount(accountId: String?): ConsumptionChartUiState {
+    if (accountId == null || this !is ConsumptionChartUiState.Ready) return this
+    val own = accounts.filter { it.accountId == accountId }
+    return if (own.isEmpty()) this else copy(accounts = own, selectedAccountId = accountId)
 }

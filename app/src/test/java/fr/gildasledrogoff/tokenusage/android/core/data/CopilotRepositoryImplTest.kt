@@ -1,5 +1,6 @@
 package fr.gildasledrogoff.tokenusage.core.data
 
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
@@ -39,7 +40,7 @@ class CopilotRepositoryImplTest {
             .build()
             .create(CopilotApiService::class.java)
         prefsManager = mock(EncryptedPrefsManager::class.java)
-        `when`(prefsManager.loadCredential(AiService.COPILOT)).thenReturn(Credential.ApiKeyCredential("gho_token"))
+        `when`(prefsManager.getAccounts(AiService.COPILOT)).thenReturn(listOf(ServiceAccount("id-1", "", Credential.ApiKeyCredential("gho_token"))))
         repository = CopilotRepositoryImpl(api, prefsManager)
     }
 
@@ -187,7 +188,7 @@ class CopilotRepositoryImplTest {
 
     @Test
     fun `missing token is CredentialNotFound`() = runTest {
-        `when`(prefsManager.loadCredential(AiService.COPILOT)).thenReturn(null)
+        `when`(prefsManager.getAccounts(AiService.COPILOT)).thenReturn(emptyList())
 
         val error = (repository.fetchQuota() as Result.Failure).error
 

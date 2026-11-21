@@ -1,0 +1,6 @@
+{
+  "buckets": [
+    {"modelId": "gemini-future", "remainingFraction": 0.5, "resetTime": "2026-11-21T08:00:00Z", "remainingAmount": "123", "unit": "x"}
+  ],
+  "nextPageToken": "abc"
+}

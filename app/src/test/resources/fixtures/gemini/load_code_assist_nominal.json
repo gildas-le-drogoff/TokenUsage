@@ -1,0 +1,6 @@
+{
+  "currentTier": {"id": "standard-tier", "name": "Gemini Code Assist"},
+  "paidTier": {"id": "g1-pro-tier", "name": "Gemini Code Assist in Google One AI Pro"},
+  "cloudaicompanionProject": "example-project-123",
+  "allowedTiers": [{"id": "standard-tier"}]
+}

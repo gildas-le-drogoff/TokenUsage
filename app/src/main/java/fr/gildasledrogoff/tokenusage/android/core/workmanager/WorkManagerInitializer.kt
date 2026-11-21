@@ -11,8 +11,14 @@ import java.util.concurrent.TimeUnit
 
 
 object WorkManagerInitializer {
-    private const val QUOTA_WORK_NAME = "quota_periodic_refresh"
-    private const val TOKEN_WORK_NAME = "token_periodic_refresh"
+    const val QUOTA_WORK_NAME = "quota_periodic_refresh"
+    const val TOKEN_WORK_NAME = "token_periodic_refresh"
+
+    /** Travaux périodiques uniques de l'application (affichés par l'écran de diagnostic). */
+    val UNIQUE_WORK_NAMES = listOf(QUOTA_WORK_NAME, TOKEN_WORK_NAME)
+
+    /** Intervalle minimal imposé par WorkManager pour un travail périodique. */
+    const val MIN_INTERVAL_MINUTES = 15L
 
     fun schedulePeriodicRefresh(context: Context, intervalMinutes: Long) {
         if (intervalMinutes <= 0) {
@@ -20,7 +26,7 @@ object WorkManagerInitializer {
             return
         }
 
-        val effectiveInterval = intervalMinutes.coerceAtLeast(15)
+        val effectiveInterval = intervalMinutes.coerceAtLeast(MIN_INTERVAL_MINUTES)
 
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -50,7 +56,7 @@ object WorkManagerInitializer {
             return
         }
 
-        val effectiveInterval = intervalMinutes.coerceAtLeast(15)
+        val effectiveInterval = intervalMinutes.coerceAtLeast(MIN_INTERVAL_MINUTES)
 
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)

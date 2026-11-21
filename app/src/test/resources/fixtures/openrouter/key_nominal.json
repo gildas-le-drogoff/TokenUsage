@@ -1,0 +1,16 @@
+{
+  "data": {
+    "label": "sk-or-v1-abc...xyz",
+    "is_free_tier": false,
+    "is_management_key": false,
+    "is_provisioning_key": false,
+    "limit": 20.0,
+    "limit_reset": "monthly",
+    "limit_remaining": 14.75,
+    "usage": 5.25,
+    "usage_daily": 0.5,
+    "usage_weekly": 2.0,
+    "usage_monthly": 5.25,
+    "byok_usage": 0
+  }
+}

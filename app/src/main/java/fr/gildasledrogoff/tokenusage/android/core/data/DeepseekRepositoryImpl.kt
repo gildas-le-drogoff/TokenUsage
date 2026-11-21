@@ -4,78 +4,66 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.AccountBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.CreditBalance
-import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
+import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.repository.BalanceHistoryRepository
-import fr.gildasledrogoff.tokenusage.core.domain.repository.MultiAccountQuotaRepository
 import fr.gildasledrogoff.tokenusage.core.network.deepseek.DeepseekApiService
 import fr.gildasledrogoff.tokenusage.core.network.deepseek.DeepseekDto
+import fr.gildasledrogoff.tokenusage.core.provider.BaseQuotaProvider
+import fr.gildasledrogoff.tokenusage.core.provider.apiKeyForm
+import fr.gildasledrogoff.tokenusage.core.provider.httpError
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import fr.gildasledrogoff.tokenusage.R
 import java.io.IOException
 import java.time.Instant
 import javax.inject.Inject
+import javax.inject.Singleton
 
 
+@Singleton
 class DeepseekRepositoryImpl @Inject constructor(
     private val apiService: DeepseekApiService,
-    private val prefsManager: EncryptedPrefsManager,
+    prefsManager: EncryptedPrefsManager,
     private val balanceHistoryRepository: BalanceHistoryRepository
-) : MultiAccountQuotaRepository {
+) : BaseQuotaProvider(AiService.DEEPSEEK, prefsManager) {
 
-    override suspend fun fetchQuota(): Result<QuotaInfo, AppError> {
-        val accounts = prefsManager.getDeepseekAccounts()
-        if (accounts.isEmpty()) {
-            return Result.Failure(AppError.CredentialNotFound(AiService.DEEPSEEK))
-        }
+    override val form = apiKeyForm(
+        labelRes = R.string.field_api_key,
+        fieldHintRes = R.string.field_api_key_format,
+        hintRes = R.string.deepseek_hint,
+        emptyRes = R.string.deepseek_empty
+    ) { Credential.DeepseekCredential(accessToken = it) }
 
-        val balances = coroutineScope {
-            accounts.map { account ->
-                async { fetchAccountBalance(account) }
-            }.awaitAll()
-        }
+    override val tracksBalanceHistory = true
 
+    override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
+        val balance = fetchAccountBalance(account)
+        balance.error?.let { return Result.Failure(it) }
         return Result.Success(
             QuotaInfo(
                 service = AiService.DEEPSEEK,
                 windows = emptyList(),
                 extraUsage = null,
                 tier = null,
-                accountBalances = balances,
+                accountBalances = listOf(balance),
                 fetchedAt = Instant.now()
             )
         )
     }
 
-    override suspend fun validateCredential(): Result<Unit, AppError> {
-        val firstAccount = prefsManager.getDeepseekAccounts().firstOrNull()
-            ?: return Result.Failure(AppError.CredentialNotFound(AiService.DEEPSEEK))
-        return validateAccount(firstAccount.id)
-    }
-
-    override suspend fun validateAccount(accountId: String): Result<Unit, AppError> {
-        val account = prefsManager.getDeepseekAccounts().find { it.id == accountId }
-            ?: return Result.Failure(AppError.CredentialNotFound(AiService.DEEPSEEK))
-
-        val result = fetchAccountBalance(account)
-        result.error?.let { return Result.Failure(it) }
-        return Result.Success(Unit)
-    }
-
-    private suspend fun fetchAccountBalance(account: DeepseekAccount): AccountBalance {
+    private suspend fun fetchAccountBalance(account: ServiceAccount): AccountBalance {
         return try {
             val response = apiService.getUserBalance(
-                authorization = "Bearer ${account.apiKey}"
+                authorization = "Bearer ${account.credential.accessToken}"
             )
 
             if (!response.isSuccessful) {
                 return AccountBalance(
                     label = account.label,
                     balance = null,
-                    error = handleErrorResponse(response.code())
+                    error = httpError(AiService.DEEPSEEK, response.code())
                 )
             }
 
@@ -132,15 +120,6 @@ class DeepseekRepositoryImpl @Inject constructor(
                 balance = null,
                 error = AppError.ParseError("${e::class.simpleName}: ${e.message}", e)
             )
-        }
-    }
-
-    private fun handleErrorResponse(code: Int): AppError {
-        return when (code) {
-            401 -> AppError.AuthError(AiService.DEEPSEEK, isTerminal = true)
-            429 -> AppError.RateLimited
-            503 -> AppError.ServiceUnavailable
-            else -> AppError.NetworkError("HTTP $code")
         }
     }
 }

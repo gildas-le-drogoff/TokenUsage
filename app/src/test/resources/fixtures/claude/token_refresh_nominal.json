@@ -1,0 +1,7 @@
+{
+  "token_type": "Bearer",
+  "access_token": "sk-ant-oat01-EXAMPLE-ACCESS-TOKEN",
+  "expires_in": 28800,
+  "refresh_token": "sk-ant-ort01-EXAMPLE-REFRESH-TOKEN",
+  "scope": "user:inference user:profile"
+}

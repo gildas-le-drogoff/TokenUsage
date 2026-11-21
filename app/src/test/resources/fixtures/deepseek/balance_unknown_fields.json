@@ -1,0 +1,7 @@
+{
+  "is_available": true,
+  "account_tier": "gold",
+  "balance_infos": [
+    {"currency": "USD", "total_balance": "1.50", "granted_balance": null, "topped_up_balance": "1.50", "bonus": "0.00"}
+  ]
+}

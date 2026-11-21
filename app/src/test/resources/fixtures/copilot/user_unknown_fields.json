@@ -1,0 +1,10 @@
+{
+  "login": "example-user",
+  "organization_login_list": ["acme"],
+  "assigned_date": "2025-01-01",
+  "quota_snapshots": {
+    "premium_interactions": {"entitlement": "300", "remaining": "30", "percent_remaining": "10", "unlimited": false, "quota_id": "premium_interactions", "timestamp_utc": "x"},
+    "broken": "not-an-object",
+    "also_broken": null
+  }
+}

@@ -38,6 +38,7 @@ internal data class CachedQuotaResultDto(
     val service: String,
     val accountLabel: String? = null,
     val accountNumber: Int? = null,
+    val accountId: String? = null,
     val quota: QuotaInfoDto? = null,
     val error: AppErrorDto? = null
 )
@@ -52,7 +53,9 @@ internal data class QuotaInfoDto(
     val accountBalances: List<AccountBalanceDto> = emptyList(),
     val weeklyBreakdown: List<UsageBreakdownRowDto> = emptyList(),
     val spending: List<SpendAmountDto> = emptyList(),
-    val fetchedAtEpochMs: Long
+    val fetchedAtEpochMs: Long,
+    val accountId: String? = null,
+    val accountLabel: String? = null
 )
 
 
@@ -148,6 +151,7 @@ private fun CachedQuotaResult.toDto() = CachedQuotaResultDto(
     service = service.name,
     accountLabel = accountLabel,
     accountNumber = accountNumber,
+    accountId = accountId,
     quota = quota?.toDto(),
     error = error?.toDto()
 )
@@ -190,7 +194,9 @@ private fun QuotaInfo.toDto() = QuotaInfoDto(
     },
     weeklyBreakdown = weeklyBreakdown.map { UsageBreakdownRowDto(it.label, it.percent) },
     spending = spending.map { SpendAmountDto(it.period.name, it.amount, it.currency) },
-    fetchedAtEpochMs = fetchedAt.toEpochMilli()
+    fetchedAtEpochMs = fetchedAt.toEpochMilli(),
+    accountId = accountId,
+    accountLabel = accountLabel
 )
 
 
@@ -212,6 +218,7 @@ private fun CachedQuotaResultDto.toDomain(): CachedQuotaResult? {
         service = service,
         accountLabel = accountLabel,
         accountNumber = accountNumber,
+        accountId = accountId,
         quota = quota?.toDomain(service),
         error = error?.toDomain()
     )
@@ -259,7 +266,9 @@ private fun QuotaInfoDto.toDomain(service: AiService) = QuotaInfo(
             SpendAmount(it, spend.amount, spend.currency)
         }
     },
-    fetchedAt = java.time.Instant.ofEpochMilli(fetchedAtEpochMs)
+    fetchedAt = java.time.Instant.ofEpochMilli(fetchedAtEpochMs),
+    accountId = accountId,
+    accountLabel = accountLabel
 )
 
 

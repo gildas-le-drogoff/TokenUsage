@@ -1,0 +1,7 @@
+{
+  "access_token": "EXAMPLE-ACCESS-TOKEN",
+  "refresh_token": "EXAMPLE-REFRESH-TOKEN",
+  "id_token": "EXAMPLE.ID.TOKEN",
+  "expires_in": 3600,
+  "token_type": "Bearer"
+}

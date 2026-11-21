@@ -5,66 +5,58 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageWindow
-import fr.gildasledrogoff.tokenusage.core.domain.model.ZaiAccount
-import fr.gildasledrogoff.tokenusage.core.domain.repository.ZaiRepository
+import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
+import fr.gildasledrogoff.tokenusage.core.provider.BaseQuotaProvider
+import fr.gildasledrogoff.tokenusage.core.provider.ProviderOption
+import fr.gildasledrogoff.tokenusage.core.provider.apiKeyForm
+import fr.gildasledrogoff.tokenusage.core.provider.httpError
+import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.network.zai.ZaiApiService
 import fr.gildasledrogoff.tokenusage.core.network.zai.ZaiDto
 import fr.gildasledrogoff.tokenusage.core.network.zai.ZaiDto.displayName
 import fr.gildasledrogoff.tokenusage.core.network.zai.ZaiDto.isMonthlyTools
 import fr.gildasledrogoff.tokenusage.core.network.zai.ZaiDto.planName
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
-import java.io.IOException
 import java.time.Instant
 import javax.inject.Inject
+import javax.inject.Singleton
 
 
+@Singleton
 class ZaiRepositoryImpl @Inject constructor(
     private val apiService: ZaiApiService,
-    private val prefsManager: EncryptedPrefsManager
-) : ZaiRepository {
+    prefsManager: EncryptedPrefsManager
+) : BaseQuotaProvider(AiService.ZAI, prefsManager) {
 
-    
-    override suspend fun fetchQuota(): Result<QuotaInfo, AppError> {
-        val account = prefsManager.getZaiAccounts().firstOrNull()
-            ?: return Result.Failure(AppError.CredentialNotFound(AiService.ZAI))
-        return fetchQuotaForAccount(account)
+    override val form = apiKeyForm(
+        labelRes = R.string.field_api_key,
+        fieldHintRes = R.string.field_api_key_zai_hint,
+        hintRes = R.string.zai_hint,
+        emptyRes = R.string.zai_empty,
+        options = listOf(
+            ProviderOption(OPTION_HIDE_MONTHLY_TOOLS, R.string.zai_hide_monthly_tools, hintWhenOnRes = R.string.zai_hint_no_tools)
+        )
+    ) { Credential.ZaiCredential(accessToken = it) }
+
+    override fun optionValue(key: String): Boolean =
+        key == OPTION_HIDE_MONTHLY_TOOLS && prefsManager.isZaiMonthlyToolsHidden()
+
+    override fun setOption(key: String, value: Boolean) {
+        if (key == OPTION_HIDE_MONTHLY_TOOLS) prefsManager.setZaiMonthlyToolsHidden(value)
     }
 
-    override suspend fun fetchQuotaForAccount(account: ZaiAccount): Result<QuotaInfo, AppError> {
-        if (account.apiKey.isBlank()) {
+    override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
+        val apiKey = account.credential.accessToken
+        if (apiKey.isBlank()) {
             return Result.Failure(AppError.CredentialNotFound(AiService.ZAI))
         }
-        return try {
-            fetchQuotaWithKey(account)
-        } catch (e: IOException) {
-            Result.Failure(AppError.NetworkError(e.message ?: "Network error", e))
-        } catch (e: Exception) {
-            Result.Failure(AppError.ParseError("${e::class.simpleName}: ${e.message}", e))
-        }
-    }
-
-    override suspend fun validateCredential(): Result<Unit, AppError> {
-        val firstAccount = prefsManager.getZaiAccounts().firstOrNull()
-            ?: return Result.Failure(AppError.CredentialNotFound(AiService.ZAI))
-        return validateAccount(firstAccount.id)
-    }
-
-    override suspend fun validateAccount(accountId: String): Result<Unit, AppError> {
-        val account = prefsManager.getZaiAccounts().find { it.id == accountId }
-            ?: return Result.Failure(AppError.CredentialNotFound(AiService.ZAI))
-        return when (val result = fetchQuotaForAccount(account)) {
-            is Result.Success -> Result.Success(Unit)
-            is Result.Failure -> Result.Failure(result.error)
-        }
-    }
-
-    private suspend fun fetchQuotaWithKey(account: ZaiAccount): Result<QuotaInfo, AppError> {
         val response = apiService.getQuotaLimit(
-            authorization = "Bearer ${account.apiKey}"
+            authorization = "Bearer $apiKey"
         )
 
         if (!response.isSuccessful) {
-            return handleErrorResponse(response.code())
+            return Result.Failure(httpError(AiService.ZAI, response.code()))
         }
 
         val body = response.body()
@@ -103,12 +95,7 @@ class ZaiRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun <T> handleErrorResponse(code: Int): Result<T, AppError> {
-        return when (code) {
-            401 -> Result.Failure(AppError.AuthError(AiService.ZAI, isTerminal = true))
-            429 -> Result.Failure(AppError.RateLimited)
-            503 -> Result.Failure(AppError.ServiceUnavailable)
-            else -> Result.Failure(AppError.NetworkError("HTTP $code"))
-        }
+    companion object {
+        const val OPTION_HIDE_MONTHLY_TOOLS = "hide_monthly_tools"
     }
 }

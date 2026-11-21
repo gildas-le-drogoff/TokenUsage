@@ -217,7 +217,7 @@ internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModif
                     ServiceDot(service.service.brandColor, 8.dp)
                     Spacer(modifier = GlanceModifier.width(6.dp))
                     Text(
-                        text = service.service.displayName,
+                        text = service.title(context),
                         style = TextStyle(
                             color = Palette.title,
                             fontSize = 13.sp,
@@ -363,12 +363,13 @@ internal fun ServiceSection(
             Spacer(modifier = GlanceModifier.width(8.dp))
 
             Text(
-                text = service.displayName,
+                text = snapshot.title(LocalContext.current),
                 style = TextStyle(
                     color = Palette.title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
-                )
+                ),
+                maxLines = 1
             )
 
             if (tier != null) {

@@ -1,5 +1,6 @@
 package fr.gildasledrogoff.tokenusage.core.data
 
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
@@ -45,7 +46,7 @@ class OpenAiRepositoryImplTest {
             .build()
             .create(OpenAiApiService::class.java)
         prefsManager = mock(EncryptedPrefsManager::class.java)
-        `when`(prefsManager.loadCredential(AiService.OPENAI)).thenReturn(Credential.ApiKeyCredential("sk-admin-x"))
+        `when`(prefsManager.getAccounts(AiService.OPENAI)).thenReturn(listOf(ServiceAccount("id-1", "", Credential.ApiKeyCredential("sk-admin-x"))))
         repository = OpenAiRepositoryImpl(api, prefsManager, Clock.fixed(now, ZoneOffset.UTC))
     }
 

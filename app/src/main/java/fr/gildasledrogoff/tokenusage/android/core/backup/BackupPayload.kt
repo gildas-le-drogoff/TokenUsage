@@ -9,6 +9,10 @@ data class BackupPayload(
     val app: String = APP_ID,
     val exportedAtEpochMs: Long,
     
+    /** Every account of every service, keyed by [fr.gildasledrogoff.tokenusage.core.domain.model.AiService] name (v4+). */
+    val accounts: Map<String, List<ServiceAccountBackup>> = emptyMap(),
+
+    // --- Read-only legacy sections (v1–v3 files); no longer written. ---
     val credentials: Map<String, ServiceCredentialBackup> = emptyMap(),
     val deepseekAccounts: List<AccountBackup> = emptyList(),
     val zaiAccounts: List<AccountBackup> = emptyList(),
@@ -36,7 +40,7 @@ data class BackupPayload(
     val balanceHistory: List<BalanceSnapshotBackup> = emptyList()
 ) {
     companion object {
-        const val CURRENT_VERSION = 3
+        const val CURRENT_VERSION = 4
         const val APP_ID = "tokenusage"
     }
 }
@@ -44,6 +48,8 @@ data class BackupPayload(
 
 @Serializable
 data class ServiceCredentialBackup(
+    /** Which credential this is (see [CredentialTypes]); null in files written before v4. */
+    val type: String? = null,
     
     val authMode: String? = null,
     val accessToken: String,
@@ -60,6 +66,27 @@ data class ServiceCredentialBackup(
     val oauthClientId: String? = null,
     val oauthClientSecret: String? = null
 )
+
+
+/** One account of any service (v4+). */
+@Serializable
+data class ServiceAccountBackup(
+    val id: String,
+    val label: String,
+    val credential: ServiceCredentialBackup,
+    /** Cached Claude organisation of a web-session account. */
+    val orgId: String? = null
+)
+
+
+/** Values of [ServiceCredentialBackup.type]. */
+object CredentialTypes {
+    const val CLAUDE_OAUTH = "claude_oauth"
+    const val CLAUDE_WEB = "claude_web"
+    const val CODEX = "codex"
+    const val GEMINI = "gemini"
+    const val API_KEY = "api_key"
+}
 
 
 @Serializable

@@ -11,7 +11,9 @@ data class CachedQuotaResult(
     val accountLabel: String? = null,
     val accountNumber: Int? = null,
     val quota: QuotaInfo?,
-    val error: AppError?
+    val error: AppError?,
+    /** Stable id of the account (appended last so positional callers keep working). */
+    val accountId: String? = null
 )
 
 

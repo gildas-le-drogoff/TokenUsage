@@ -4,20 +4,16 @@ import android.util.Base64
 import fr.gildasledrogoff.tokenusage.core.database.BalanceSnapshotDao
 import fr.gildasledrogoff.tokenusage.core.database.BalanceSnapshotEntity
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
-import fr.gildasledrogoff.tokenusage.core.domain.model.ClaudeAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
-import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.DisplayCurrency
 import fr.gildasledrogoff.tokenusage.core.domain.model.FxRateSource
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
 import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
-import fr.gildasledrogoff.tokenusage.core.domain.model.ZaiAccount
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
-import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
@@ -34,12 +30,19 @@ class ConfigBackupManager @Inject constructor(
 
 
     private suspend fun buildPayload(includeHistory: Boolean): BackupPayload {
-        val credentials = AiService.entries
-            .filter { it !in MULTI_ACCOUNT_SERVICES }
-            .mapNotNull { service ->
-                prefs.loadCredential(service)?.let { service.name to it.toBackup() }
+        val accounts = AiService.entries
+            .associate { service ->
+                service.name to prefs.getAccounts(service).map { account ->
+                    ServiceAccountBackup(
+                        id = account.id,
+                        label = account.label,
+                        credential = BackupCodec.toBackup(account.credential),
+                        orgId = (account.credential as? Credential.ClaudeWebCredential)
+                            ?.let { prefs.getClaudeOrgId(account.id) }
+                    )
+                }
             }
-            .toMap()
+            .filterValues { it.isNotEmpty() }
 
         val history = if (includeHistory) {
             balanceSnapshotDao.allSnapshots().map { it.toBackup() }
@@ -49,21 +52,7 @@ class ConfigBackupManager @Inject constructor(
 
         return BackupPayload(
             exportedAtEpochMs = System.currentTimeMillis(),
-            credentials = credentials,
-            deepseekAccounts = prefs.getDeepseekAccounts().map {
-                AccountBackup(id = it.id, label = it.label, apiKey = it.apiKey)
-            },
-            zaiAccounts = prefs.getZaiAccounts().map {
-                AccountBackup(id = it.id, label = it.label, apiKey = it.apiKey)
-            },
-            claudeAccounts = prefs.getClaudeAccounts().map {
-                ClaudeAccountBackup(
-                    id = it.id,
-                    label = it.label,
-                    credential = it.credential.toBackup(),
-                    orgId = prefs.getClaudeOrgId(it.id)
-                )
-            },
+            accounts = accounts,
             refreshIntervalMinutes = prefs.getRefreshInterval(),
             notificationsEnabled = prefs.isNotificationsEnabled(),
             eurRateSource = prefs.getFxRateSource().name,
@@ -121,35 +110,7 @@ class ConfigBackupManager @Inject constructor(
 
 
     suspend fun restore(payload: BackupPayload): ImportSummary {
-        val restoredServices = mutableListOf<AiService>()
-        for ((serviceName, backup) in payload.credentials) {
-            val service = AiService.entries.firstOrNull { it.name == serviceName } ?: continue
-            if (service in MULTI_ACCOUNT_SERVICES) continue
-            val credential = BackupCodec.toCredential(service, backup) ?: continue
-            prefs.deleteCredential(service)
-            prefs.saveCredential(service, credential)
-            restoredServices += service
-        }
-
-        val claude = restoreClaudeAccounts(payload)
-
-        val deepseek = payload.deepseekAccounts.filter { it.apiKey.isNotBlank() }
-        if (deepseek.isNotEmpty()) {
-            val merged = BackupCodec.mergeAccounts(
-                existing = prefs.getDeepseekAccounts().map { AccountBackup(it.id, it.label, it.apiKey) },
-                imported = deepseek
-            )
-            prefs.saveDeepseekAccounts(merged.map { DeepseekAccount(it.id, it.label, it.apiKey) })
-        }
-
-        val zai = payload.zaiAccounts.filter { it.apiKey.isNotBlank() }
-        if (zai.isNotEmpty()) {
-            val merged = BackupCodec.mergeAccounts(
-                existing = prefs.getZaiAccounts().map { AccountBackup(it.id, it.label, it.apiKey) },
-                imported = zai
-            )
-            prefs.saveZaiAccounts(merged.map { ZaiAccount(it.id, it.label, it.apiKey) })
-        }
+        val restored = restoreAccounts(payload)
 
         payload.refreshIntervalMinutes?.let { prefs.setRefreshInterval(it) }
         payload.notificationsEnabled?.let { prefs.setNotificationsEnabled(it) }
@@ -187,70 +148,29 @@ class ConfigBackupManager @Inject constructor(
             }
         }
 
-        return ImportSummary(
-            services = restoredServices,
-            claudeAccounts = claude,
-            deepseekAccounts = deepseek.size,
-            zaiAccounts = zai.size,
-            historyEntries = historyAdded
-        )
+        return ImportSummary(accounts = restored, historyEntries = historyAdded)
     }
 
 
-    private fun restoreClaudeAccounts(payload: BackupPayload): Int {
-        val imported: List<Pair<ClaudeAccount, String?>> = payload.claudeAccounts
-            .mapNotNull { backup ->
-                BackupCodec.toCredential(AiService.CLAUDE, backup.credential)
-                    ?.let { ClaudeAccount(backup.id, backup.label, it) to backup.orgId }
-            }
-            .ifEmpty {
-                listOfNotNull(
-                    payload.credentials[AiService.CLAUDE.name]
-                        ?.let { BackupCodec.toCredential(AiService.CLAUDE, it) }
-                        ?.let { ClaudeAccount(UUID.randomUUID().toString(), "", it) to payload.claudeOrgId }
+    /** Merges every account found in [payload] into the stored ones; returns how many per service. */
+    private fun restoreAccounts(payload: BackupPayload): Map<AiService, Int> {
+        val restored = LinkedHashMap<AiService, Int>()
+        for ((service, imported) in BackupCodec.importedAccounts(payload)) {
+            prefs.saveAccounts(
+                service,
+                BackupCodec.mergeAccounts(
+                    existing = prefs.getAccounts(service),
+                    imported = imported.map { it.account }
                 )
+            )
+            for ((account, orgId) in imported) {
+                if (account.credential is Credential.ClaudeWebCredential && !orgId.isNullOrBlank()) {
+                    prefs.saveClaudeOrgId(account.id, orgId)
+                }
             }
-        if (imported.isEmpty()) return 0
-
-        prefs.saveClaudeAccounts(
-            BackupCodec.mergeClaudeAccounts(existing = prefs.getClaudeAccounts(), imported = imported.map { it.first })
-        )
-        for ((account, orgId) in imported) {
-            if (account.credential is Credential.ClaudeWebCredential && !orgId.isNullOrBlank()) {
-                prefs.saveClaudeOrgId(account.id, orgId)
-            }
+            restored[service] = imported.map { it.account.credential.accessToken.trim() }.distinct().size
         }
-        return imported.size
-    }
-
-    private fun Credential.toBackup(): ServiceCredentialBackup = when (this) {
-        is Credential.ClaudeCredential -> ServiceCredentialBackup(
-            authMode = AUTH_MODE_OAUTH,
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            expiresAtEpochSecond = expiresAt?.epochSecond,
-            scopes = scopes,
-            rateLimitTier = rateLimitTier
-        )
-        is Credential.ClaudeWebCredential -> ServiceCredentialBackup(
-            authMode = AUTH_MODE_WEB_SESSION,
-            accessToken = accessToken
-        )
-        is Credential.CodexCredential -> ServiceCredentialBackup(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            accountId = accountId
-        )
-        is Credential.GeminiCredential -> ServiceCredentialBackup(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            expiresAtMs = expiresAtMs,
-            oauthClientId = oauthClientId,
-            oauthClientSecret = oauthClientSecret
-        )
-        is Credential.DeepseekCredential -> ServiceCredentialBackup(accessToken = accessToken)
-        is Credential.ZaiCredential -> ServiceCredentialBackup(accessToken = accessToken)
-        is Credential.ApiKeyCredential -> ServiceCredentialBackup(accessToken = accessToken)
+        return restored
     }
 
     private fun BalanceSnapshotEntity.toBackup() =
@@ -274,21 +194,18 @@ class ConfigBackupManager @Inject constructor(
         internal const val AUTH_MODE_OAUTH = "oauth"
         internal const val AUTH_MODE_WEB_SESSION = "web_session"
 
-
-        private val MULTI_ACCOUNT_SERVICES = setOf(AiService.CLAUDE, AiService.DEEPSEEK, AiService.ZAI)
     }
 }
 
 
 data class ImportSummary(
-    val services: List<AiService>,
-    val claudeAccounts: Int,
-    val deepseekAccounts: Int,
-    val zaiAccounts: Int,
+    /** Accounts imported, per service. */
+    val accounts: Map<AiService, Int>,
     val historyEntries: Int
 ) {
+    val services: List<AiService> get() = accounts.keys.toList()
 
-    val credentialCount: Int get() = services.size + claudeAccounts + deepseekAccounts + zaiAccounts
+    val credentialCount: Int get() = accounts.values.sum()
 }
 
 

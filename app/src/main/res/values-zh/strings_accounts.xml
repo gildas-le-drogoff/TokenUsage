@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accounts_empty">暂无账户。添加一个账户以开始跟踪此服务。</string>
+    <string name="accounts_label_placeholder">例如：个人、工作</string>
+    <string name="accounts_advanced_toggle">手动令牌（备选）</string>
+    <string name="demo_codex_personal">Codex 个人</string>
+    <string name="demo_codex_work">Codex 工作</string>
+    <string name="demo_copilot_personal">Copilot 个人</string>
+    <string name="demo_copilot_work">Copilot 工作</string>
+</resources>

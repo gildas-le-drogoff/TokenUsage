@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel_alerts">配额警报</string>
+    <string name="notif_channel_alerts_desc">当配额或余额达到您设定的阈值或即将耗尽时提醒您</string>
+    <string name="notif_public_alert">触发了配额警报</string>
+    <string name="notif_alert_quota_title">%1$s：配额已达 %2$d%%</string>
+    <string name="notif_alert_quota_body">%1$s：已使用 %2$d%%（阈值 %3$d%%）。</string>
+    <string name="notif_alert_balance_title">%1$s：余额不足</string>
+    <string name="notif_alert_balance_body">剩余余额 %1$s（阈值 %2$s）。</string>
+    <string name="notif_alert_depletion_title">%1$s：预计耗尽</string>
+    <string name="notif_alert_depletion_body">%1$s预计将在 %2$s 左右耗尽。</string>
+    <string name="notif_alert_depletion_suffix">预计耗尽时间：%1$s。</string>
+    <string name="notif_alert_subject_balance">余额</string>
+    <string name="settings_menu_alerts">警报</string>
+    <string name="settings_menu_alerts_summary">配额与余额阈值、耗尽预测</string>
+    <string name="alerts_title">警报</string>
+    <string name="alerts_intro">当配额或余额达到阈值或即将耗尽时收到通知。每个警报只显示一次，只有在回落到阈值以下或配额重置后才会再次提醒。</string>
+    <string name="alerts_notifications_off">通知已关闭：不会显示警报。请在刷新设置中开启通知。</string>
+    <string name="alerts_no_accounts">尚未配置任何账户。添加账户后即可设置其警报。</string>
+    <string name="alerts_default_rule">所有账户的默认设置</string>
+    <string name="alerts_account_n">账户 %1$d</string>
+    <string name="alerts_account_custom">使用独立警报规则</string>
+    <string name="alerts_account_uses_default">使用默认规则</string>
+    <string name="alerts_enabled">启用警报</string>
+    <string name="alerts_quota_threshold">配额阈值</string>
+    <string name="alerts_quota_threshold_value">配额阈值：%1$d%%</string>
+    <string name="alerts_window_filter">适用于</string>
+    <string name="alerts_window_all">所有窗口</string>
+    <string name="alerts_balance_threshold">余额不足</string>
+    <string name="alerts_balance_field">余额小于或等于以下数值时提醒</string>
+    <string name="alerts_balance_hint">使用账户的货币</string>
+    <string name="alerts_depletion">预计耗尽</string>
+    <string name="alerts_depletion_hint">预计配额或余额将在以下时间内耗尽时提醒：</string>
+    <string name="alerts_horizon_hours">%1$d 小时</string>
+    <string name="alerts_horizon_days">%1$d 天</string>
+    <string name="history_depletion_estimate">预计耗尽时间：%1$s</string>
+    <string name="history_depletion_unknown">无法估算耗尽时间（消耗数据不足）</string>
+    <string name="settings_menu_accounts">账户</string>
+    <string name="settings_menu_accounts_summary">各 AI 服务的凭据和账户</string>
+    <string name="settings_menu_display_summary">主题、配额显示、锁屏、货币</string>
+    <string name="settings_menu_refresh">刷新</string>
+    <string name="settings_menu_refresh_summary">间隔、通知、后台刷新</string>
+    <string name="settings_menu_backup_summary">导出和导入您的配置</string>
+    <string name="settings_menu_security_summary">应用锁、示例数据、删除所有数据</string>
+    <string name="settings_menu_diagnostics">诊断</string>
+    <string name="settings_menu_diagnostics_summary">各服务的最新状态、数据时效和最近一次错误</string>
+</resources>

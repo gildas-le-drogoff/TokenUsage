@@ -4,6 +4,7 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionGranularity
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionPoint
 import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.FxRate
+import java.time.Instant
 
 data class BalanceHistoryUiState(
     val accounts: List<DeepseekAccount> = emptyList(),
@@ -15,5 +16,9 @@ data class BalanceHistoryUiState(
     val currency: String = "",
     
     val fxRate: FxRate? = null,
+    /** Estimated date the balance reaches zero; `null` if it cannot be estimated. */
+    val depletionAt: Instant? = null,
+    /** `false` when no estimate is attempted (sample data), so the screen shows nothing about it. */
+    val depletionEstimated: Boolean = false,
     val isLoading: Boolean = true
 )

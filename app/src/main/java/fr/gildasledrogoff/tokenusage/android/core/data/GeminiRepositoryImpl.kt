@@ -6,39 +6,86 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageWindow
-import fr.gildasledrogoff.tokenusage.core.domain.repository.QuotaRepository
 import fr.gildasledrogoff.tokenusage.core.network.gemini.GeminiApiService
 import fr.gildasledrogoff.tokenusage.core.network.gemini.GeminiDto
 import fr.gildasledrogoff.tokenusage.core.network.gemini.GeminiProjectsService
 import fr.gildasledrogoff.tokenusage.core.network.gemini.GeminiTokenRefreshService
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
+import fr.gildasledrogoff.tokenusage.core.provider.BaseQuotaProvider
+import fr.gildasledrogoff.tokenusage.core.provider.CredentialField
+import fr.gildasledrogoff.tokenusage.core.provider.CredentialForm
+import fr.gildasledrogoff.tokenusage.core.provider.httpError
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
+import fr.gildasledrogoff.tokenusage.R
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.io.IOException
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class GeminiRepositoryImpl @Inject constructor(
     private val apiService: GeminiApiService,
     private val projectsService: GeminiProjectsService,
     private val tokenRefreshService: GeminiTokenRefreshService,
-    private val prefsManager: EncryptedPrefsManager
-) : QuotaRepository {
+    prefsManager: EncryptedPrefsManager
+) : BaseQuotaProvider(AiService.GEMINI, prefsManager) {
 
-    override suspend fun fetchQuota(): Result<QuotaInfo, AppError> {
-        val credential = prefsManager.loadCredential(AiService.GEMINI)
-            as? Credential.GeminiCredential
+    override val form = CredentialForm(
+        fields = listOf(
+            CredentialField(KEY_ACCESS_TOKEN, R.string.field_access_token, hintRes = R.string.field_secret_replace_hint),
+            CredentialField(KEY_REFRESH_TOKEN, R.string.field_refresh_token),
+            CredentialField(
+                KEY_CLIENT_ID, R.string.field_oauth_client_id,
+                hintRes = R.string.field_oauth_client_id_hint, secret = false
+            ),
+            CredentialField(KEY_CLIENT_SECRET, R.string.field_oauth_client_secret),
+            CredentialField(KEY_EXPIRES_AT, R.string.field_token_expiry, secret = false, readOnly = true)
+        ),
+        assemble = { values, previous ->
+            val stored = previous as? Credential.GeminiCredential
+            val accessToken = values[KEY_ACCESS_TOKEN].orEmpty().trim().ifBlank { stored?.accessToken.orEmpty() }
+            val refreshToken = values[KEY_REFRESH_TOKEN].orEmpty().trim().ifBlank { stored?.refreshToken.orEmpty() }
+            val clientId = values[KEY_CLIENT_ID].orEmpty().trim().ifBlank { stored?.oauthClientId.orEmpty() }
+            val clientSecret = values[KEY_CLIENT_SECRET].orEmpty().trim().ifBlank { stored?.oauthClientSecret.orEmpty() }
+            if (accessToken.isBlank() || refreshToken.isBlank() || clientId.isBlank() || clientSecret.isBlank()) {
+                null
+            } else {
+                Credential.GeminiCredential(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken,
+                    expiresAtMs = System.currentTimeMillis() + 3600_000,
+                    oauthClientId = clientId,
+                    oauthClientSecret = clientSecret,
+                    hostedDomain = stored?.hostedDomain?.takeIf { refreshToken == stored.refreshToken }
+                )
+            }
+        },
+        prefill = { credential ->
+            val gemini = credential as? Credential.GeminiCredential
+            mapOf(
+                KEY_CLIENT_ID to gemini?.oauthClientId.orEmpty(),
+                KEY_EXPIRES_AT to (gemini?.let { formatExpiry(it.expiresAtMs) }.orEmpty())
+            )
+        }
+    )
+
+    override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
+        val credential = account.credential as? Credential.GeminiCredential
             ?: return Result.Failure(AppError.CredentialNotFound(AiService.GEMINI))
 
-        val workingCredential = ensureValidToken(credential)
+        val workingCredential = ensureValidToken(account, credential)
             ?: return Result.Failure(AppError.AuthError(AiService.GEMINI, isTerminal = true))
 
-        return try {
+        return run {
             val result = fetchQuotaWithToken(workingCredential)
             val error = (result as? Result.Failure)?.error
             when {
                 error is AppError.AuthError -> {
-                    val refreshed = refreshToken(workingCredential)
+                    val refreshed = refreshToken(account, workingCredential)
                     if (refreshed != null) {
                         fetchQuotaWithToken(refreshed)
                     } else {
@@ -46,23 +93,20 @@ class GeminiRepositoryImpl @Inject constructor(
                     }
                 }
                 error is AppError.ClientUnsupported && workingCredential.hostedDomain == null ->
-                    recheckWithHostedDomain(workingCredential) ?: result
+                    recheckWithHostedDomain(account, workingCredential) ?: result
                 else -> result
             }
-        } catch (e: IOException) {
-            Result.Failure(AppError.NetworkError(e.message ?: "Network error", e))
-        } catch (e: Exception) {
-            Result.Failure(AppError.ParseError("${e::class.simpleName}: ${e.message}", e))
         }
     }
 
     
     private suspend fun recheckWithHostedDomain(
+        account: ServiceAccount,
         credential: Credential.GeminiCredential
     ): Result<QuotaInfo, AppError>? {
-        val refreshed = refreshToken(credential) ?: return null
+        val refreshed = refreshToken(account, credential) ?: return null
         if (refreshed.hostedDomain == null) {
-            prefsManager.saveCredential(AiService.GEMINI, refreshed.copy(hostedDomain = ""))
+            saveRefreshed(account, refreshed.copy(hostedDomain = ""))
             return null
         }
         if (refreshed.hostedDomain.isEmpty()) return null
@@ -106,13 +150,6 @@ class GeminiRepositoryImpl @Inject constructor(
         }
 
         return Result.Success(mapToQuotaInfo(quotaBody, resolvePlan(status, hostedDomain)))
-    }
-
-    override suspend fun validateCredential(): Result<Unit, AppError> {
-        return when (val result = fetchQuota()) {
-            is Result.Success -> Result.Success(Unit)
-            is Result.Failure -> Result.Failure(result.error)
-        }
     }
 
     
@@ -242,14 +279,26 @@ class GeminiRepositoryImpl @Inject constructor(
         )
     }
 
-    private suspend fun ensureValidToken(credential: Credential.GeminiCredential): Credential.GeminiCredential? {
+    private suspend fun ensureValidToken(
+        account: ServiceAccount,
+        credential: Credential.GeminiCredential
+    ): Credential.GeminiCredential? {
         if (System.currentTimeMillis() < credential.expiresAtMs - 60_000) {
             return credential
         }
-        return refreshToken(credential)
+        return refreshToken(account, credential)
     }
 
-    private suspend fun refreshToken(credential: Credential.GeminiCredential): Credential.GeminiCredential? {
+    private suspend fun refreshToken(
+        account: ServiceAccount,
+        credential: Credential.GeminiCredential
+    ): Credential.GeminiCredential? =
+        refreshSerialized(account.id, credential) { exchangeRefreshToken(credential, account) }
+
+    private suspend fun exchangeRefreshToken(
+        credential: Credential.GeminiCredential,
+        account: ServiceAccount
+    ): Credential.GeminiCredential? {
         return try {
             val response = tokenRefreshService.refreshToken(
                 refreshToken = credential.refreshToken,
@@ -267,7 +316,7 @@ class GeminiRepositoryImpl @Inject constructor(
                     oauthClientSecret = credential.oauthClientSecret,
                     hostedDomain = GeminiDto.refreshedHostedDomain(body.idToken, credential.hostedDomain)
                 )
-                prefsManager.saveCredential(AiService.GEMINI, newCredential)
+                saveRefreshed(account, newCredential)
                 newCredential
             } else {
                 null
@@ -277,13 +326,15 @@ class GeminiRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun <T> handleErrorResponse(code: Int): Result<T, AppError> {
-        return when (code) {
-            401 -> Result.Failure(AppError.AuthError(AiService.GEMINI, isTerminal = false))
-            429 -> Result.Failure(AppError.RateLimited)
-            503 -> Result.Failure(AppError.ServiceUnavailable)
-            else -> Result.Failure(AppError.NetworkError("HTTP $code"))
-        }
+    private fun <T> handleErrorResponse(code: Int): Result<T, AppError> =
+        Result.Failure(httpError(AiService.GEMINI, code, authIsTerminal = false))
+
+    private fun formatExpiry(expiresAtMs: Long): String = try {
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+            .withZone(ZoneId.systemDefault())
+            .format(Instant.ofEpochMilli(expiresAtMs))
+    } catch (_: Exception) {
+        "—"
     }
 
     private fun parseInstant(isoString: String): Instant? {
@@ -294,16 +345,22 @@ class GeminiRepositoryImpl @Inject constructor(
         }
     }
 
-    private companion object {
-        const val FAMILY_PRO = "Pro"
-        const val FAMILY_FLASH = "Flash"
-        const val FAMILY_FLASH_LITE = "Flash Lite"
+    companion object {
+        const val KEY_ACCESS_TOKEN = "accessToken"
+        const val KEY_REFRESH_TOKEN = "refreshToken"
+        const val KEY_CLIENT_ID = "oauthClientId"
+        const val KEY_CLIENT_SECRET = "oauthClientSecret"
+        const val KEY_EXPIRES_AT = "expiresAt"
 
-        const val TIER_FREE = "free-tier"
-        const val TIER_STANDARD = "standard-tier"
-        const val TIER_LEGACY = "legacy-tier"
+        private const val FAMILY_PRO = "Pro"
+        private const val FAMILY_FLASH = "Flash"
+        private const val FAMILY_FLASH_LITE = "Flash Lite"
 
-        const val GEMINI_PROJECT_PREFIX = "gen-lang-client"
-        const val GEMINI_PROJECT_LABEL = "generative-language"
+        private const val TIER_FREE = "free-tier"
+        private const val TIER_STANDARD = "standard-tier"
+        private const val TIER_LEGACY = "legacy-tier"
+
+        private const val GEMINI_PROJECT_PREFIX = "gen-lang-client"
+        private const val GEMINI_PROJECT_LABEL = "generative-language"
     }
 }

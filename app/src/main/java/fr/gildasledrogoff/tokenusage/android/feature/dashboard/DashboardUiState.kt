@@ -39,6 +39,10 @@ data class ServiceCardData(
     val accountLabel: String? = null,
     
     val accountNumber: Int? = null,
+    /** Stable id of the account behind this card (null for demo/legacy data). */
+    val accountId: String? = null,
+    /** The service records its balances: the card can expand to a consumption chart. */
+    val hasConsumptionHistory: Boolean = false,
     val isLoading: Boolean = false,
     val error: AppError? = null
 )

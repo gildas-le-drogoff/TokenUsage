@@ -40,6 +40,17 @@ jobs:
       - name: Lint, unit tests and debug APK
         run: ./gradlew --console=plain lintDebug testDebugUnitTest assembleDebug
 
+      # Kover only instruments unit tests of the debug variant: release / F-Droid APKs are untouched.
+      - name: Coverage report (Kover)
+        run: ./gradlew --console=plain koverXmlReportDebug koverHtmlReportDebug
+
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f app/build/reports/kover/reportDebug.xml ]; then
+            python3 .github/scripts/kover_summary.py app/build/reports/kover/reportDebug.xml >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Upload reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -1,5 +1,6 @@
 package fr.gildasledrogoff.tokenusage.core.data
 
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
@@ -73,7 +74,7 @@ class GeminiRepositoryImplTest {
             .create(GeminiProjectsService::class.java)
 
         prefsManager = mock(EncryptedPrefsManager::class.java)
-        `when`(prefsManager.loadCredential(AiService.GEMINI)).thenReturn(testCredential)
+        `when`(prefsManager.getAccounts(AiService.GEMINI)).thenReturn(listOf(ServiceAccount("id-1", "", testCredential)))
 
         repository = GeminiRepositoryImpl(apiService, projectsService, tokenRefreshService, prefsManager)
     }
@@ -193,7 +194,7 @@ class GeminiRepositoryImplTest {
     @Test
     fun `expired token is refreshed with a form-urlencoded request`() = runTest {
         val expired = testCredential.copy(expiresAtMs = System.currentTimeMillis() - 60_000)
-        `when`(prefsManager.loadCredential(AiService.GEMINI)).thenReturn(expired)
+        `when`(prefsManager.getAccounts(AiService.GEMINI)).thenReturn(listOf(ServiceAccount("id-1", "", expired)))
         mockWebServer.enqueue(
             MockResponse().setResponseCode(200).setBody("""{"access_token":"new-access","expires_in":3600}""")
         )
@@ -351,7 +352,7 @@ class GeminiRepositoryImplTest {
 
     @Test
     fun `consumer shutdown answer is reported as unsupported client`() = runTest {
-        `when`(prefsManager.loadCredential(AiService.GEMINI)).thenReturn(testCredential.copy(hostedDomain = ""))
+        `when`(prefsManager.getAccounts(AiService.GEMINI)).thenReturn(listOf(ServiceAccount("id-1", "", testCredential.copy(hostedDomain = ""))))
         enqueue(shutdownLoadResponse)
 
         val result = repository.fetchQuota()
@@ -362,7 +363,7 @@ class GeminiRepositoryImplTest {
 
     @Test
     fun `shutdown wording in an error body is reported as unsupported client`() = runTest {
-        `when`(prefsManager.loadCredential(AiService.GEMINI)).thenReturn(testCredential.copy(hostedDomain = ""))
+        `when`(prefsManager.getAccounts(AiService.GEMINI)).thenReturn(listOf(ServiceAccount("id-1", "", testCredential.copy(hostedDomain = ""))))
         enqueue("""{"currentTier": {"id": "free-tier"}, "cloudaicompanionProject": "p"}""")
         enqueue("""{"error":{"message":"IneligibleTierError: please migrate"}}""", code = 403)
 
@@ -397,8 +398,8 @@ class GeminiRepositoryImplTest {
 
     @Test
     fun `free tier on a Workspace domain is the Workspace plan`() = runTest {
-        `when`(prefsManager.loadCredential(AiService.GEMINI))
-            .thenReturn(testCredential.copy(hostedDomain = "example.com"))
+        `when`(prefsManager.getAccounts(AiService.GEMINI))
+            .thenReturn(listOf(ServiceAccount("id-1", "", testCredential.copy(hostedDomain = "example.com"))))
         enqueue("""{"cloudaicompanionProject": "proj", "currentTier": {"id": "free-tier"}}""")
         enqueue(oneBucket)
 
@@ -453,7 +454,7 @@ class GeminiRepositoryImplTest {
 
     @Test
     fun `fetchQuota returns CredentialNotFound when no credential`() = runTest {
-        `when`(prefsManager.loadCredential(AiService.GEMINI)).thenReturn(null)
+        `when`(prefsManager.getAccounts(AiService.GEMINI)).thenReturn(emptyList())
 
         val result = repository.fetchQuota()
 
