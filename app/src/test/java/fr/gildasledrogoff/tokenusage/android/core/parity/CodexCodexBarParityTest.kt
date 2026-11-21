@@ -162,7 +162,6 @@ class CodexCodexBarParityTest {
     }
 
     @Test
-    @Ignore("Divergence CodexBar : Android conserve l'ordre de l'API (hebdo avant la fenêtre courte) ; CodexBar remet la fenêtre courte en premier.")
     fun `reversed weekly and unknown windows are ordered short first`() = runTest {
         val q = quota(
             """
@@ -247,7 +246,6 @@ class CodexCodexBarParityTest {
         assertEquals(false, response.credits?.unlimited)
     }
 
-    @Ignore("Divergence CodexBar : le solde de crédits Codex (credits.balance) est décodé mais jamais exposé dans QuotaInfo.")
     @Test
     fun `credits only payload exposes the credit balance`() = runTest {
         val q = quota(

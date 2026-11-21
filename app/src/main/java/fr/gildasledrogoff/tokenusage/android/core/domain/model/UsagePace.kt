@@ -20,10 +20,7 @@ data class UsagePace(
     companion object {
         private val DEFICIT_STAGES = setOf(Stage.SLIGHTLY_AHEAD, Stage.AHEAD, Stage.FAR_AHEAD)
 
-        /**
-         * @param utilization part consommée entre 0.0 et 1.0
-         * @return null si la fenêtre ou la réinitialisation est inconnue ou incohérente
-         */
+        
         fun compute(
             utilization: Double,
             resetsAt: Instant?,

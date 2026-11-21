@@ -22,7 +22,7 @@ class IncidentFeedParserTest {
     private fun deepSeekItem(title: String, status: String, pubDate: String) = """
         <item>
           <title>$title</title>
-          <description>&lt;p&gt;&lt;strong&gt;Status:&lt;/strong&gt; $status&lt;/p&gt;&lt;p&gt;本次问题已解决。&#xA;&#xA;Text.&lt;/p&gt;</description>
+          <description>&lt;p&gt;&lt;strong&gt;Status:&lt;/strong&gt; $status&lt;/p&gt;&lt;p&gt;本次问题已解决。&lt;/p&gt;</description>
           <guid>urn:flashduty:change:1</guid>
           <pubDate>$pubDate</pubDate>
         </item>"""

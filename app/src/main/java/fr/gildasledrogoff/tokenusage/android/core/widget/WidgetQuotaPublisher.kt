@@ -20,12 +20,7 @@ class WidgetQuotaPublisher @Inject constructor(
     private val widgetPrefsManager: WidgetPrefsManager,
     private val exchangeRates: ExchangeRateRepository
 ) {
-    /**
-     * Met à jour le cache des widgets. Un compte en échec garde ses dernières données, marquées
-     * hors ligne ou en échec et datées, au lieu de disparaître ou de rester figé sans explication.
-     *
-     * @param offline l'appareil n'a pas de réseau
-     */
+    
     suspend fun publish(entries: List<WidgetAccountQuota>, offline: Boolean = false) {
         if (entries.isEmpty()) return
         for ((service, accounts) in entries.groupBy { it.service }) {

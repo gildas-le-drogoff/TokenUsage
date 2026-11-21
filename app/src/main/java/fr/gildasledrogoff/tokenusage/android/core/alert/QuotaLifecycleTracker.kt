@@ -22,11 +22,7 @@ class QuotaLifecycleTracker @Inject constructor(
 ) {
     private val mutex = Mutex()
 
-    /**
-     * @param notify post the resulting notifications (general notification switch); the memory is
-     *   updated either way so that turning notifications back on does not replay stale transitions.
-     * @param silent post them without sound nor heads-up (refresh started from the dashboard).
-     */
+    
     suspend fun process(quotas: List<QuotaInfo>, notify: Boolean = true, silent: Boolean = false) {
         if (quotas.isEmpty()) return
         try {

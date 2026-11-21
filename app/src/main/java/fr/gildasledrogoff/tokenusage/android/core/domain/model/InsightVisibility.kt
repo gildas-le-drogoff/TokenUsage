@@ -18,7 +18,7 @@ data class InsightVisibility(val hiddenKeys: Set<String> = emptySet()) {
         isShownForService(insight, service) &&
             (accountId == null || isShownForAccount(insight, service, accountId))
 
-    /** @param accountId null pour régler le fournisseur entier. */
+    
     fun with(
         insight: DashboardInsight,
         service: AiService,

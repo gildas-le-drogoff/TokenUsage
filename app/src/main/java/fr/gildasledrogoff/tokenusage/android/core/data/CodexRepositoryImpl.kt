@@ -1,8 +1,10 @@
 package fr.gildasledrogoff.tokenusage.core.data
 
 import fr.gildasledrogoff.tokenusage.R
+import fr.gildasledrogoff.tokenusage.core.domain.model.AccountBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
+import fr.gildasledrogoff.tokenusage.core.domain.model.CreditBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
@@ -146,18 +148,31 @@ class CodexRepositoryImpl @Inject constructor(
     }
 
     private fun mapToQuotaInfo(response: CodexDto.UsageResponse): QuotaInfo {
-        val windows = buildList {
-            response.rateLimit?.primaryWindow?.let { window ->
-                add(mapRateLimitWindow("primary", window))
+        val windows = listOfNotNull(
+            response.rateLimit?.primaryWindow?.let { "primary" to it },
+            response.rateLimit?.secondaryWindow?.let { "secondary" to it }
+        )
+            .sortedBy { (_, window) -> window.limitWindowSeconds?.takeIf { it > 0 } ?: Long.MAX_VALUE }
+            .map { (type, window) -> mapRateLimitWindow(type, window) }
+        val creditBalance = response.credits
+            ?.let { parseBalance(it.balance) }
+            ?.let { amount ->
+                AccountBalance(
+                    label = "",
+                    balance = CreditBalance(
+                        currency = "credits",
+                        totalBalance = amount,
+                        grantedBalance = null,
+                        toppedUpBalance = null,
+                        isAvailable = amount > 0.0
+                    )
+                )
             }
-            response.rateLimit?.secondaryWindow?.let { window ->
-                add(mapRateLimitWindow("secondary", window))
-            }
-        }
         return QuotaInfo(
             service = AiService.CODEX,
             windows = windows,
             extraUsage = null,
+            accountBalances = listOfNotNull(creditBalance),
             tier = response.planType?.replaceFirstChar { it.uppercase() },
             fetchedAt = Instant.now()
         )

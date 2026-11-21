@@ -204,7 +204,7 @@ class OpenRouterCodexBarParityTest {
         assertEquals(0.25, q.keyWindow!!.utilization, 1e-9)
     }
 
-    // --- `deprecated key rate limit is ignored without degrading the section` (rate_limit objet ou chaîne)
+    
     @Test
     fun `deprecated rate limit field is ignored`() = runTest {
         for (rateLimit in listOf("""{"requests":120,"interval":"10s"}""", """"unlimited"""", "null")) {

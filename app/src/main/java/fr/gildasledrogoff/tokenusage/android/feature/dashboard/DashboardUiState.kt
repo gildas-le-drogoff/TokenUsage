@@ -25,10 +25,7 @@ sealed class DashboardUiState {
         val lastUpdated: Instant
     ) : DashboardUiState()
 
-    /**
-     * Aucun réseau : les cartes montrent les dernières données reçues.
-     * @param lastUpdated date des données les plus récentes affichées
-     */
+    
     data class Offline(
         val cards: List<ServiceCardData>,
         val lastUpdated: Instant

@@ -280,7 +280,7 @@ class GeminiCodexBarParityTest {
         assertTrue(result is Result.Failure && result.error is AppError.ClientUnsupported)
     }
 
-    // --- GeminiConsumerTierMigrationTests › `keeps licensed tier accounts despite ineligible free tier listing`
+    
     @Test
     fun `licensed tier is kept despite ineligible free tier listing`() = runTest {
         useCredential(hostedDomain = "example.com")
@@ -295,7 +295,7 @@ class GeminiCodexBarParityTest {
         assertEquals("HTTP 403", ((result as Result.Failure).error as AppError.NetworkError).message)
     }
 
-    // --- GeminiConsumerTierMigrationTests › `keeps http 403 for licensed tier despite unsupported client listing`
+    
     @Test
     fun `403 for licensed tier stays an http error`() = runTest {
         useCredential(hostedDomain = "example.com")

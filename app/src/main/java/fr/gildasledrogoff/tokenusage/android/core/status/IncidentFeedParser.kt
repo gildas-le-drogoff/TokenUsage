@@ -5,18 +5,7 @@ import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-/**
- * Derives a current status from an RSS incident history, for pages without a status endpoint:
- * - OpenRouter (`history.rss`, Statuspage style): `<category>` incident / maintenance, and each
- *   update in the description as `<strong>Resolved</strong> - …`, newest first.
- * - DeepSeek (`feed.rss`, Flashduty): `<strong>Status:</strong> resolved` in the description,
- *   severity only in the title ("Degraded Performance", "Partially Unavailable"…).
- *
- * An item is open while its latest update is not a closing one; open items older than
- * [STALE_AFTER] are ignored so that a forgotten incident does not stick forever.
- * Parsed with regular expressions on purpose: the feeds are flat, and no XML parser means no
- * entity expansion from a remote document.
- */
+
 internal object IncidentFeedParser {
     val STALE_AFTER: Duration = Duration.ofDays(3)
 

@@ -20,11 +20,7 @@ object HistoricalUsagePace {
     fun lookbackStart(resetsAt: Instant, windowMinutes: Int): Instant =
         resetsAt.minus(Duration.ofMinutes(windowMinutes.toLong() * (MAX_CYCLES + 1)))
 
-    /**
-     * @param utilization part consommée de la fenêtre courante, entre 0.0 et 1.0
-     * @param samples relevés d'utilisation en pourcentage (0–100)
-     * @return null si l'historique compte moins de [MIN_COMPLETE_CYCLES] cycles complets
-     */
+    
     fun compute(
         utilization: Double,
         resetsAt: Instant?,

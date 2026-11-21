@@ -11,13 +11,7 @@ internal sealed interface WidgetEntrySource {
     data class Placeholder(val status: WidgetDataStatus) : WidgetEntrySource
 }
 
-/**
- * Choisit quoi afficher pour ce compte. En cas d'échec, on garde les dernières données reçues (les
- * plus récentes entre [WidgetAccountQuota.fallback] et le cache des widgets) en les marquant
- * hors ligne ou en échec, plutôt que d'effacer le compte du widget.
- *
- * @param offline l'appareil n'a pas de réseau : tous les échecs sont dus à son absence
- */
+
 internal fun WidgetAccountQuota.resolveSource(
     previous: List<CachedAccount>,
     accountCount: Int,

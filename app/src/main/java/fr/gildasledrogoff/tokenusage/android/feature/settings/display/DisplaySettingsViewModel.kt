@@ -87,7 +87,7 @@ class DisplaySettingsViewModel @Inject constructor(
                 )
             }
 
-    /** @param accountId null pour régler le fournisseur et tous ses comptes. */
+    
     fun setInsightVisible(
         insight: DashboardInsight,
         service: AiService,
