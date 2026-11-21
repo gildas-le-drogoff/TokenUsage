@@ -6,7 +6,6 @@ import androidx.room.Query
 
 @Dao
 interface BalanceSnapshotDao {
-
     @Insert
     suspend fun insert(snapshot: BalanceSnapshotEntity): Long
 

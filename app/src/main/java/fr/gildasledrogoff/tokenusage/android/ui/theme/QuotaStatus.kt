@@ -7,16 +7,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageSeverity
 
-
 enum class QuotaStatus { HEALTHY, LOW, CRITICAL }
 
-
 const val LOW_REMAINING_THRESHOLD = 0.40
-
-
 const val CRITICAL_REMAINING_THRESHOLD = 0.15
-
-
 fun quotaStatusOf(remaining: Double, severity: UsageSeverity = UsageSeverity.NORMAL): QuotaStatus {
     val fromRemaining = when {
         remaining <= CRITICAL_REMAINING_THRESHOLD -> QuotaStatus.CRITICAL
@@ -30,7 +24,6 @@ fun quotaStatusOf(remaining: Double, severity: UsageSeverity = UsageSeverity.NOR
     }
     return maxOf(fromRemaining, fromSeverity)
 }
-
 
 @Immutable
 data class StatusColorPair(val main: Color, val container: Color, val onContainer: Color)
@@ -53,16 +46,12 @@ internal val LightStatusColors = StatusColors(
     low = StatusColorPair(Color(0xFF9A5B00), Color(0xFFFFE2B8), Color(0xFF3D2300)),
     critical = StatusColorPair(Color(0xFFBA1A1A), Color(0xFFFFDAD6), Color(0xFF410002))
 )
-
 internal val DarkStatusColors = StatusColors(
     healthy = StatusColorPair(Color(0xFF7BD893), Color(0xFF0E4A24), Color(0xFFCDEFD6)),
     low = StatusColorPair(Color(0xFFFFB955), Color(0xFF5A3600), Color(0xFFFFE2B8)),
     critical = StatusColorPair(Color(0xFFFFB4AB), Color(0xFF93000A), Color(0xFFFFDAD6))
 )
-
 val LocalStatusColors = staticCompositionLocalOf { LightStatusColors }
-
-
 val QuotaStatus.colors: StatusColorPair
     @Composable
     @ReadOnlyComposable

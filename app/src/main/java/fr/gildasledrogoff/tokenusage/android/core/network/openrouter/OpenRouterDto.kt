@@ -3,9 +3,7 @@ package fr.gildasledrogoff.tokenusage.core.network.openrouter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
 object OpenRouterDto {
-
     @Serializable
     data class KeyResponse(val data: KeyData? = null)
 
@@ -14,9 +12,7 @@ object OpenRouterDto {
         val label: String = "",
         @SerialName("is_free_tier") val isFreeTier: Boolean = false,
         @SerialName("is_management_key") val isManagementKey: Boolean = false,
-        
         val limit: Double? = null,
-        
         @SerialName("limit_reset") val limitReset: String? = null,
         @SerialName("limit_remaining") val limitRemaining: Double? = null,
         val usage: Double? = null,
@@ -37,10 +33,6 @@ object OpenRouterDto {
     const val RESET_DAILY = "daily"
     const val RESET_WEEKLY = "weekly"
     const val RESET_MONTHLY = "monthly"
-
-    
     const val CURRENCY = "USD"
-
-    
     const val APP_TITLE = "TokenUsage"
 }

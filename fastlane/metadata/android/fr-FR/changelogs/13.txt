@@ -1,0 +1,5 @@
+- Plusieurs comptes pour tous les services, et plus seulement Claude et Z.ai
+- Alertes configurables (seuil de quota, solde bas) avec prévision d'épuisement
+- Nouvel écran de diagnostic du rafraîchissement (batterie, Doze, tâches planifiées)
+- Réglages découpés en sous-écrans dédiés
+- Rafraîchissement en arrière-plan plus fiable, requêtes du tableau de bord limitées

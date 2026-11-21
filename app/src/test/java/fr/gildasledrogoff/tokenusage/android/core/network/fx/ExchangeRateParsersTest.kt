@@ -1,15 +1,11 @@
 package fr.gildasledrogoff.tokenusage.core.network.fx
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
-
 class ExchangeRateParsersTest {
-
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
-
     @Test
     fun `frankfurter rate is parsed`() {
         val parsed = ExchangeRateParsers.parseFrankfurter(
@@ -19,7 +15,6 @@ class ExchangeRateParsersTest {
         assertEquals(0.90285, parsed!!.rate, 1e-9)
         assertEquals("2026-11-15", parsed.date)
     }
-
     @Test
     fun `frankfurter rejects another base, quote or a non-positive rate`() {
         assertNull(ExchangeRateParsers.parseFrankfurter("""{"base":"CNY","quote":"EUR","rate":0.13}""", "USD", json))
@@ -28,7 +23,6 @@ class ExchangeRateParsersTest {
         assertNull(ExchangeRateParsers.parseFrankfurter("""{"message":"not found"}""", "USD", json))
         assertNull(ExchangeRateParsers.parseFrankfurter("<html>", "USD", json))
     }
-
     @Test
     fun `ecb rates are inverted to EUR per unit`() {
         val parsed = ExchangeRateParsers.parseEcb(ECB_SAMPLE)
@@ -39,7 +33,6 @@ class ExchangeRateParsersTest {
         assertEquals(1.0 / 7.3738, rates.getValue("CNY"), 1e-9)
         assertEquals(3, rates.size)
     }
-
     @Test
     fun `ecb accepts double quotes and rejects empty documents`() {
         val parsed = ExchangeRateParsers.parseEcb("""<Cube time="2026-01-02"><Cube currency="USD" rate="1.25"/></Cube>""")
@@ -47,7 +40,6 @@ class ExchangeRateParsersTest {
         assertEquals("2026-01-02", parsed.second)
         assertNull(ExchangeRateParsers.parseEcb("<gesmes:Envelope/>"))
     }
-
     companion object {
         val ECB_SAMPLE = """
             <?xml version="1.0" encoding="UTF-8"?>

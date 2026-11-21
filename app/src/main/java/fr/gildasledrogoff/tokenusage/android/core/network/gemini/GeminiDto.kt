@@ -9,7 +9,6 @@ import kotlinx.serialization.json.JsonElement
 import java.util.Base64
 
 object GeminiDto {
-
     @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class LoadCodeAssistRequest(
@@ -83,27 +82,27 @@ object GeminiDto {
     @Serializable
     private data class IdTokenClaims(val hd: String? = null)
 
-    private val claimsJson = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
+    private val claimsJson =
+        Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
 
-    
     fun hostedDomainOf(idToken: String?): String? {
         val payload = idToken?.split('.')?.getOrNull(1)?.takeIf { it.isNotEmpty() } ?: return null
         return runCatching {
-            val decoded = Base64.getUrlDecoder().decode(payload.trimEnd('=')).toString(Charsets.UTF_8)
-            claimsJson.decodeFromString<IdTokenClaims>(decoded).hd?.trim()?.takeIf { it.isNotEmpty() }
+            val decoded =
+                Base64.getUrlDecoder().decode(payload.trimEnd('=')).toString(Charsets.UTF_8)
+            claimsJson.decodeFromString<IdTokenClaims>(decoded).hd?.trim()
+                ?.takeIf { it.isNotEmpty() }
         }.getOrNull()
     }
 
-    
     fun refreshedHostedDomain(idToken: String?, previous: String?): String? =
         if (idToken.isNullOrBlank()) previous else hostedDomainOf(idToken).orEmpty()
 
-    
     fun isConsumerTierDeprecationSignal(text: String): Boolean {
         val normalized = text.lowercase()
         return "unsupported_client" in normalized ||
-            "ineligibletiererror" in normalized ||
-            ("no longer supported" in normalized && "gemini code assist" in normalized) ||
-            ("migrate" in normalized && "antigravity" in normalized && "gemini" in normalized)
+                "ineligibletiererror" in normalized ||
+                ("no longer supported" in normalized && "gemini code assist" in normalized) ||
+                ("migrate" in normalized && "antigravity" in normalized && "gemini" in normalized)
     }
 }

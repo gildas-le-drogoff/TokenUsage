@@ -2,36 +2,37 @@ package fr.gildasledrogoff.tokenusage.core.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import dagger.hilt.android.qualifiers.ApplicationContext
+import fr.gildasledrogoff.tokenusage.core.domain.model.InsightVisibility
 import fr.gildasledrogoff.tokenusage.core.domain.model.LockScreenVisibility
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
 import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
 import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
 @Singleton
 class DisplayPreferencesRepositoryImpl @Inject constructor(
     @ApplicationContext context: Context
 ) : DisplayPreferencesRepository {
-
     private val prefs: SharedPreferences = prefsOf(context)
-
-    private val _themeMode = MutableStateFlow(ThemeMode.fromName(prefs.getString(KEY_THEME_MODE, null)))
+    private val _themeMode =
+        MutableStateFlow(ThemeMode.fromName(prefs.getString(KEY_THEME_MODE, null)))
     override val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
-
     private val _quotaDisplayMode = MutableStateFlow(readQuotaDisplayMode(prefs))
     override val quotaDisplayMode: StateFlow<QuotaDisplayMode> = _quotaDisplayMode.asStateFlow()
-
     private val _lockScreenVisibility = MutableStateFlow(
         LockScreenVisibility.fromName(prefs.getString(KEY_LOCK_SCREEN_VISIBILITY, null))
     )
-    override val lockScreenVisibility: StateFlow<LockScreenVisibility> = _lockScreenVisibility.asStateFlow()
-
+    override val lockScreenVisibility: StateFlow<LockScreenVisibility> =
+        _lockScreenVisibility.asStateFlow()
+    private val _insightVisibility = MutableStateFlow(
+        InsightVisibility(prefs.getStringSet(KEY_HIDDEN_INSIGHTS, null).orEmpty().toSet())
+    )
+    override val insightVisibility: StateFlow<InsightVisibility> = _insightVisibility.asStateFlow()
     override val batteryPromptAnswered: Boolean
         get() = prefs.getBoolean(KEY_BATTERY_PROMPT_ANSWERED, false)
 
@@ -50,6 +51,11 @@ class DisplayPreferencesRepositoryImpl @Inject constructor(
         _lockScreenVisibility.value = visibility
     }
 
+    override fun setInsightVisibility(visibility: InsightVisibility) {
+        prefs.edit().putStringSet(KEY_HIDDEN_INSIGHTS, visibility.hiddenKeys.toSet()).apply()
+        _insightVisibility.value = visibility
+    }
+
     override fun markBatteryPromptAnswered() {
         prefs.edit().putBoolean(KEY_BATTERY_PROMPT_ANSWERED, true).apply()
     }
@@ -60,17 +66,16 @@ class DisplayPreferencesRepositoryImpl @Inject constructor(
         private const val KEY_QUOTA_DISPLAY_MODE = "quota_display_mode"
         private const val KEY_LOCK_SCREEN_VISIBILITY = "lock_screen_visibility"
         private const val KEY_BATTERY_PROMPT_ANSWERED = "battery_prompt_answered"
-
+        private const val KEY_HIDDEN_INSIGHTS = "hidden_insights"
         private fun prefsOf(context: Context): SharedPreferences =
             context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         private fun readQuotaDisplayMode(prefs: SharedPreferences): QuotaDisplayMode =
             QuotaDisplayMode.fromName(prefs.getString(KEY_QUOTA_DISPLAY_MODE, null))
 
-        
-        fun quotaDisplayMode(context: Context): QuotaDisplayMode = readQuotaDisplayMode(prefsOf(context))
+        fun quotaDisplayMode(context: Context): QuotaDisplayMode =
+            readQuotaDisplayMode(prefsOf(context))
 
-        
         fun themeMode(context: Context): ThemeMode =
             ThemeMode.fromName(prefsOf(context).getString(KEY_THEME_MODE, null))
     }

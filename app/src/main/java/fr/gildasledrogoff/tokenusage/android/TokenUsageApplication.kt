@@ -11,11 +11,11 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import dagger.hilt.android.HiltAndroidApp
 import fr.gildasledrogoff.tokenusage.core.security.IntegrityGuard
 import fr.gildasledrogoff.tokenusage.core.widget.WidgetRegistry
 import fr.gildasledrogoff.tokenusage.core.workmanager.RefreshScheduler
 import fr.gildasledrogoff.tokenusage.core.workmanager.WorkManagerInitializer
-import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,7 +24,6 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class TokenUsageApplication : Application(), Configuration.Provider {
-
     @Inject
     lateinit var integrityGuard: IntegrityGuard
 
@@ -33,14 +32,11 @@ class TokenUsageApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var refreshScheduler: RefreshScheduler
-
     override fun onCreate() {
         super.onCreate()
-        
         if (!BuildConfig.IS_DEBUG) {
             registerActivityLifecycleCallbacks(SecureWindowPolicy)
         }
-        
         integrityGuard.establishBaseline()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             runCatching { refreshScheduler.applySaved() }
@@ -49,7 +45,6 @@ class TokenUsageApplication : Application(), Configuration.Provider {
         registerWidgetThemeSync()
     }
 
-    
     private fun registerWidgetThemeSync() {
         registerReceiver(
             object : BroadcastReceiver() {
@@ -63,13 +58,11 @@ class TokenUsageApplication : Application(), Configuration.Provider {
         )
     }
 
-    
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
 
-    
     private object SecureWindowPolicy : ActivityLifecycleCallbacks {
         override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
             activity.window.setFlags(

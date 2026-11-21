@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="notif_alert_exhausted_title">%1$s：配额已用尽</string>
+  <string name="notif_alert_exhausted_body">%1$s：已使用 100%%。</string>
+  <string name="notif_alert_restored_title">%1$s：配额已恢复</string>
+  <string name="notif_alert_restored_body"
+    >%1$s：配额已恢复可用（剩余 %2$d%%）。</string
+  >
+  <string name="notif_alert_upcoming_title">%1$s：%2$s 即将重置</string>
+  <string name="notif_alert_upcoming_body"
+    >仍有 %1$d%% 的配额未使用。%2$s。未使用的配额将会丢失。</string
+  >
+  <string name="provider_status_operational">运行正常</string>
+  <string name="provider_status_minor">性能下降</string>
+  <string name="provider_status_major">部分中断</string>
+  <string name="provider_status_critical">严重中断</string>
+  <string name="provider_status_maintenance">维护中</string>
+  <string name="provider_status_unknown">状态未知</string>
+  <string name="provider_status_cd">服务商状态：%1$s</string>
+  <string name="celebration_reset_title">每周配额已重置</string>
+  <string name="celebration_reset_body"
+    >%1$s：7 天窗口已重新开始。点按即可关闭。</string
+  >
+</resources>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="notif_channel_alerts">Alertes de quota</string>
+  <string name="notif_channel_alerts_desc"
+    >Prévient quand un quota ou un solde atteint vos seuils, ou va bientôt être
+    épuisé</string
+  >
+  <string name="notif_public_alert"
+    >Une alerte de quota a été déclenchée</string
+  >
+  <string name="notif_alert_quota_title">%1$s : quota à %2$d\u00A0%%</string>
+  <string name="notif_alert_quota_body"
+    >%1$s : %2$d\u00A0%% utilisé (seuil %3$d\u00A0%%).</string
+  >
+  <string name="notif_alert_balance_title">%1$s : solde bas</string>
+  <string name="notif_alert_balance_body"
+    >Solde restant %1$s (seuil %2$s).</string
+  >
+  <string name="notif_alert_depletion_title">%1$s : épuisement prévu</string>
+  <string name="notif_alert_depletion_body"
+    >%1$s devrait être épuisé vers %2$s.</string
+  >
+  <string name="notif_alert_depletion_suffix"
+    >\u0020Épuisement prévu : %1$s.</string
+  >
+  <string name="notif_alert_subject_balance">Le solde</string>
+  <string name="settings_menu_alerts">Alertes</string>
+  <string name="settings_menu_alerts_summary"
+    >Seuils de quota et de solde, prévision d’épuisement</string
+  >
+  <string name="alerts_title">Alertes</string>
+  <string name="alerts_intro"
+    >Recevez une notification quand un quota ou un solde atteint un seuil, ou va
+    bientôt être épuisé. Chaque alerte n’est affichée qu’une fois, puis de
+    nouveau seulement après être repassé sous le seuil ou après une
+    réinitialisation du quota.</string
+  >
+  <string name="alerts_notifications_off"
+    >Les notifications sont désactivées : les alertes ne seront pas affichées.
+    Activez-les dans les paramètres de rafraîchissement.</string
+  >
+  <string name="alerts_no_accounts"
+    >Aucun compte configuré pour l’instant. Ajoutez un compte pour régler ses
+    alertes.</string
+  >
+  <string name="alerts_default_rule">Par défaut pour tous les comptes</string>
+  <string name="alerts_account_n">Compte %1$d</string>
+  <string name="alerts_account_custom">Règle d’alerte propre</string>
+  <string name="alerts_account_uses_default"
+    >Utilise la règle par défaut</string
+  >
+  <string name="alerts_enabled">Alertes activées</string>
+  <string name="alerts_quota_threshold">Seuil de quota</string>
+  <string name="alerts_quota_threshold_value"
+    >Seuil de quota : %1$d\u00A0%%</string
+  >
+  <string name="alerts_window_filter">S’applique à</string>
+  <string name="alerts_window_all">Toutes les fenêtres</string>
+  <string name="alerts_balance_threshold">Solde bas</string>
+  <string name="alerts_balance_field"
+    >Alerter quand le solde est inférieur ou égal à</string
+  >
+  <string name="alerts_balance_hint">Dans la devise du compte</string>
+  <string name="alerts_depletion">Épuisement prévu</string>
+  <string name="alerts_depletion_hint"
+    >Alerter quand le quota ou le solde devrait être épuisé dans les :</string
+  >
+  <string name="alerts_horizon_hours">%1$d h</string>
+  <string name="alerts_horizon_days">%1$d j</string>
+  <string name="history_depletion_estimate">Épuisement estimé : %1$s</string>
+  <string name="history_depletion_unknown"
+    >Estimation d’épuisement indisponible (pas assez de données de
+    consommation)</string
+  >
+  <string name="settings_menu_accounts">Comptes</string>
+  <string name="settings_menu_accounts_summary"
+    >Identifiants et comptes de chaque service d’IA</string
+  >
+  <string name="settings_menu_display_summary"
+    >Thème, affichage des quotas, écran verrouillé, devise</string
+  >
+  <string name="settings_menu_refresh">Rafraîchissement</string>
+  <string name="settings_menu_refresh_summary"
+    >Intervalle, notifications, arrière-plan, statut des fournisseurs</string
+  >
+  <string name="settings_menu_backup_summary"
+    >Exporter et importer votre configuration</string
+  >
+  <string name="settings_menu_security_summary"
+    >Verrouillage de l’app, données de démo, suppression des données</string
+  >
+  <string name="settings_menu_diagnostics">Diagnostic</string>
+  <string name="settings_menu_diagnostics_summary"
+    >Dernier statut, âge des données et dernière erreur par service</string
+  >
+  <string name="alerts_warn_before_reset"
+    >Avertir avant la réinitialisation hebdomadaire</string
+  >
+  <string name="alerts_warn_before_reset_summary" formatted="false"
+    >24 h puis 1 h avant la réinitialisation de la fenêtre 7 jours, s’il reste
+    au moins 10\u00A0% du quota inutilisé</string
+  >
+  <string name="alerts_celebrate_resets"
+    >Fêter les réinitialisations hebdomadaires</string
+  >
+  <string name="alerts_celebrate_resets_summary"
+    >Des confettis sur le tableau de bord quand la fenêtre 7 jours repart à zéro
+    (version fixe si les animations sont désactivées)</string
+  >
+</resources>

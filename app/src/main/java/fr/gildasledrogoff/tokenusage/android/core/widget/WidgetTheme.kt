@@ -31,8 +31,8 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
-import androidx.glance.text.TextAlign
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import fr.gildasledrogoff.tokenusage.MainActivity
@@ -43,9 +43,7 @@ import fr.gildasledrogoff.tokenusage.ui.i18n.localizedWindowLabel
 import fr.gildasledrogoff.tokenusage.ui.i18n.resetsInText
 import java.time.Instant
 
-
 internal object Palette {
-
     private class PaletteSet(
         base: Color,
         title: Color,
@@ -57,7 +55,6 @@ internal object Palette {
         iconTint: Color
     ) {
         val isDark: Boolean = base.red < 0.5f
-
         val base = ColorProvider(base)
         val title = ColorProvider(title)
         val secondary = ColorProvider(secondary)
@@ -66,8 +63,6 @@ internal object Palette {
         val track = ColorProvider(track)
         val divider = ColorProvider(divider)
         val iconTint = ColorProvider(iconTint)
-
-        
         val danger = ColorProvider(if (isDark) Color(0xFFEF5350) else Color(0xFFC62828))
         val warning = ColorProvider(if (isDark) Color(0xFFFFB74D) else Color(0xFFE65100))
         val safe = ColorProvider(if (isDark) Color(0xFF81C784) else Color(0xFF2E7D32))
@@ -93,10 +88,7 @@ internal object Palette {
         divider = Color.White.copy(alpha = 0.12f),
         iconTint = Color.White.copy(alpha = 0.50f)
     )
-
     private var current: PaletteSet = dark
-
-    
     fun use(dark: Boolean) {
         current = if (dark) this.dark else light
     }
@@ -115,17 +107,18 @@ internal object Palette {
     val safe get() = current.safe
 }
 
-
 internal fun isDarkWidgetTheme(context: Context): Boolean {
     val resolved = when (DisplayPreferencesRepositoryImpl.themeMode(context)) {
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
         ThemeMode.SYSTEM -> (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
-    android.util.Log.w("TokenUsageWidget", "isDarkWidgetTheme: ${DisplayPreferencesRepositoryImpl.themeMode(context)} -> $resolved")
+    android.util.Log.w(
+        "TokenUsageWidget",
+        "isDarkWidgetTheme: ${DisplayPreferencesRepositoryImpl.themeMode(context)} -> $resolved"
+    )
     return resolved
 }
-
 
 internal fun utilizationColor(utilization: Float): ColorProvider {
     return when {
@@ -134,7 +127,6 @@ internal fun utilizationColor(utilization: Float): ColorProvider {
         else -> Palette.safe
     }
 }
-
 
 internal fun gaugeText(context: Context, window: WindowSnapshot): String {
     val usedPct = (window.utilization.coerceIn(0f, 1f) * 100).toInt()
@@ -145,31 +137,34 @@ internal fun gaugeText(context: Context, window: WindowSnapshot): String {
     }
 }
 
-
 internal fun resetLine(context: Context, window: WindowSnapshot): String {
     val resetsAt = window.resetsAtEpochSecond?.let { Instant.ofEpochSecond(it) }
     return context.resetsInText(resetsAt) ?: ""
 }
 
-
 internal fun resetCountdownText(context: Context, epochSecond: Long): String {
-    val duration = fr.gildasledrogoff.tokenusage.ui.i18n.resetDuration(Instant.ofEpochSecond(epochSecond))
-        ?: return context.getString(R.string.widget_waiting_for_data)
+    val duration =
+        fr.gildasledrogoff.tokenusage.ui.i18n.resetDuration(Instant.ofEpochSecond(epochSecond))
+            ?: return context.getString(R.string.widget_waiting_for_data)
     return when {
         duration.days >= 1 ->
             context.getString(R.string.duration_days_hours, duration.days, duration.hours % 24)
+
         duration.hours >= 1 ->
-            context.getString(R.string.duration_hours_minutes, duration.hours, duration.minutes % 60)
+            context.getString(
+                R.string.duration_hours_minutes,
+                duration.hours,
+                duration.minutes % 60
+            )
+
         else -> context.getString(R.string.duration_minutes, duration.minutes)
     }
 }
-
 
 internal fun barProgress(window: WindowSnapshot): Float {
     val utilization = window.utilization.coerceIn(0f, 1f)
     return if (window.showUsed) utilization else 1f - utilization
 }
-
 
 @Composable
 internal fun WidgetSurface(content: @Composable () -> Unit) {
@@ -192,9 +187,11 @@ internal fun WidgetSurface(content: @Composable () -> Unit) {
     }
 }
 
-
 @Composable
-internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModifier = GlanceModifier) {
+internal fun CompactTile(
+    snapshots: List<ServiceSnapshot>,
+    modifier: GlanceModifier = GlanceModifier
+) {
     val context = LocalContext.current
     val service = snapshots.firstOrNull()
     Box(
@@ -217,7 +214,7 @@ internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModif
                     ServiceDot(service.service.brandColor, 8.dp)
                     Spacer(modifier = GlanceModifier.width(6.dp))
                     Text(
-                        text = service.service.displayName,
+                        text = service.title(context),
                         style = TextStyle(
                             color = Palette.title,
                             fontSize = 13.sp,
@@ -233,19 +230,29 @@ internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModif
                         )
                     }
                 }
-
                 val window = service.windows.firstOrNull()
                 Spacer(modifier = GlanceModifier.height(8.dp))
+                val staleText = service.staleText(context)
                 if (window == null) {
                     Text(
-                        text = service.balanceText ?: context.getString(R.string.widget_waiting_for_data),
+                        text = service.balanceText
+                            ?: staleText
+                            ?: context.getString(R.string.widget_waiting_for_data),
                         style = TextStyle(
-                            color = Palette.secondary,
+                            color = if (service.balanceText == null && staleText != null) {
+                                Palette.warning
+                            } else {
+                                Palette.secondary
+                            },
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center
                         ),
                         maxLines = 3
                     )
+                    if (service.balanceText != null && staleText != null) {
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                        StaleLine(staleText, fontSize = 9.sp, centered = true)
+                    }
                 } else {
                     Text(
                         text = gaugeText(context, window),
@@ -270,12 +277,15 @@ internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModif
                             style = TextStyle(color = Palette.tertiary, fontSize = 9.sp)
                         )
                     }
+                    if (staleText != null) {
+                        Spacer(modifier = GlanceModifier.height(2.dp))
+                        StaleLine(staleText, fontSize = 9.sp, centered = true)
+                    }
                 }
             }
         }
     }
 }
-
 
 @Composable
 internal fun ServiceDot(brandColor: Long, diameter: Dp) {
@@ -300,7 +310,6 @@ internal fun EmptyState() {
     }
 }
 
-
 @Composable
 internal fun NoDataState(messageRes: Int) {
     Box(
@@ -315,6 +324,34 @@ internal fun NoDataState(messageRes: Int) {
 }
 
 @Composable
+internal fun StaleLine(
+    text: String,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    centered: Boolean = false
+) {
+    Text(
+        text = text,
+        style = TextStyle(
+            color = Palette.warning,
+            fontSize = fontSize,
+            fontWeight = FontWeight.Medium,
+            textAlign = if (centered) TextAlign.Center else TextAlign.Start
+        ),
+        maxLines = 1
+    )
+}
+
+@Composable
+internal fun StaleIcon(description: String, size: Dp = 12.dp) {
+    Image(
+        provider = ImageProvider(R.drawable.ic_warning_rounded),
+        contentDescription = description,
+        modifier = GlanceModifier.size(size),
+        colorFilter = ColorFilter.tint(Palette.warning)
+    )
+}
+
+@Composable
 internal fun Divider() {
     Box(
         modifier = GlanceModifier
@@ -323,7 +360,6 @@ internal fun Divider() {
             .background(Palette.divider)
     ) {}
 }
-
 
 @Composable
 private fun ActionButton(
@@ -353,7 +389,6 @@ internal fun ServiceSection(
 ) {
     val service = snapshot.service
     val tier = snapshot.tier
-
     Column(modifier = GlanceModifier.fillMaxWidth()) {
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
@@ -361,16 +396,15 @@ internal fun ServiceSection(
         ) {
             ServiceDot(service.brandColor, 10.dp)
             Spacer(modifier = GlanceModifier.width(8.dp))
-
             Text(
-                text = service.displayName,
+                text = snapshot.title(LocalContext.current),
                 style = TextStyle(
                     color = Palette.title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
-                )
+                ),
+                maxLines = 1
             )
-
             if (tier != null) {
                 Spacer(modifier = GlanceModifier.width(8.dp))
                 Box(
@@ -385,9 +419,7 @@ internal fun ServiceSection(
                     )
                 }
             }
-
             Spacer(modifier = GlanceModifier.defaultWeight())
-
             if (showRefresh) {
                 ActionButton(
                     R.drawable.ic_contrast_rounded,
@@ -403,13 +435,15 @@ internal fun ServiceSection(
                 Spacer(modifier = GlanceModifier.width(4.dp))
             }
         }
-
         Spacer(modifier = GlanceModifier.height(8.dp))
-
+        val staleText = snapshot.staleText(LocalContext.current)
+        if (staleText != null) {
+            StaleLine(staleText, fontSize = 11.sp)
+            Spacer(modifier = GlanceModifier.height(4.dp))
+        }
         for ((index, window) in snapshot.windows.withIndex()) {
             WindowRow(window, topPadding = if (index > 0) 6.dp else 0.dp)
         }
-
         if (snapshot.windows.isEmpty()) {
             val balanceText = snapshot.balanceText
             if (balanceText != null) {
@@ -418,7 +452,7 @@ internal fun ServiceSection(
                     style = TextStyle(color = Palette.secondary, fontSize = 12.sp),
                     maxLines = 3
                 )
-            } else {
+            } else if (staleText == null) {
                 Text(
                     text = LocalContext.current.getString(R.string.widget_waiting_for_data),
                     style = TextStyle(color = Palette.tertiary, fontSize = 12.sp)
@@ -433,7 +467,6 @@ internal fun WindowRow(window: WindowSnapshot, topPadding: Dp) {
     val context = LocalContext.current
     val utilization = window.utilization.coerceIn(0f, 1f)
     val resetText = resetLine(context, window)
-
     Column(modifier = GlanceModifier.fillMaxWidth().padding(top = topPadding)) {
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
@@ -453,11 +486,8 @@ internal fun WindowRow(window: WindowSnapshot, topPadding: Dp) {
                 )
             )
         }
-
         Spacer(modifier = GlanceModifier.height(3.dp))
-
         UsageProgressBar(window)
-
         if (resetText.isNotEmpty()) {
             Spacer(modifier = GlanceModifier.height(2.dp))
             Row(modifier = GlanceModifier.fillMaxWidth()) {

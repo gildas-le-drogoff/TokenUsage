@@ -14,25 +14,20 @@ import java.nio.ByteBuffer
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 
-
 internal class LegacyEncryptedPrefsMigrator(private val context: Context) {
-
     fun migrateInto(target: SharedPreferences) {
         val legacyFile = File(context.dataDir, "shared_prefs/$LEGACY_FILE.xml")
         if (!legacyFile.exists()) return
-
         val legacy = context.getSharedPreferences(LEGACY_FILE, Context.MODE_PRIVATE)
         if (!legacy.contains(KEY_KEYSET_ALIAS) || !legacy.contains(VALUE_KEYSET_ALIAS)) {
             purgeLegacy()
             return
         }
-
         try {
             val daead = legacyKeyset(KEY_KEYSET_ALIAS)
                 .getPrimitive(RegistryConfiguration.get(), DeterministicAead::class.java)
             val aead = legacyKeyset(VALUE_KEYSET_ALIAS)
                 .getPrimitive(RegistryConfiguration.get(), Aead::class.java)
-
             val editor = target.edit()
             legacy.all.forEach { (encryptedKey, raw) ->
                 if (encryptedKey == KEY_KEYSET_ALIAS || encryptedKey == VALUE_KEYSET_ALIAS) return@forEach
@@ -48,7 +43,6 @@ internal class LegacyEncryptedPrefsMigrator(private val context: Context) {
                     )
                     key to LegacyValueDecoder.decode(plain)
                 }.getOrNull() ?: return@forEach
-
                 val (key, value) = entry
                 if (key == LEGACY_NULL_VALUE) return@forEach
                 when (value) {
@@ -78,7 +72,8 @@ internal class LegacyEncryptedPrefsMigrator(private val context: Context) {
     private fun purgeLegacy() {
         context.deleteSharedPreferences(LEGACY_FILE)
         runCatching {
-            KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.deleteEntry(LEGACY_MASTER_KEY_ALIAS)
+            KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+                .deleteEntry(LEGACY_MASTER_KEY_ALIAS)
         }
     }
 
@@ -86,23 +81,21 @@ internal class LegacyEncryptedPrefsMigrator(private val context: Context) {
         const val LEGACY_FILE = "tokenusage_secure_prefs"
         private const val LEGACY_MASTER_KEY_ALIAS = "_androidx_security_master_key_"
         private const val LEGACY_MASTER_KEY_URI = "android-keystore://$LEGACY_MASTER_KEY_ALIAS"
-        private const val KEY_KEYSET_ALIAS = "__androidx_security_crypto_encrypted_prefs_key_keyset__"
-        private const val VALUE_KEYSET_ALIAS = "__androidx_security_crypto_encrypted_prefs_value_keyset__"
+        private const val KEY_KEYSET_ALIAS =
+            "__androidx_security_crypto_encrypted_prefs_key_keyset__"
+        private const val VALUE_KEYSET_ALIAS =
+            "__androidx_security_crypto_encrypted_prefs_value_keyset__"
         internal const val LEGACY_NULL_VALUE = "__NULL__"
     }
 }
 
-
 internal object LegacyValueDecoder {
-
     private const val STRING = 0
     private const val STRING_SET = 1
     private const val INT = 2
     private const val LONG = 3
     private const val FLOAT = 4
     private const val BOOLEAN = 5
-
-    
     fun decode(plain: ByteArray): Any? = try {
         val buffer = ByteBuffer.wrap(plain)
         when (val type = buffer.getInt()) {
@@ -110,6 +103,7 @@ internal object LegacyValueDecoder {
             STRING_SET -> buildSet {
                 while (buffer.hasRemaining()) add(readString(buffer))
             }.takeUnless { it == setOf(LegacyEncryptedPrefsMigrator.LEGACY_NULL_VALUE) }
+
             INT -> buffer.getInt()
             LONG -> buffer.getLong()
             FLOAT -> buffer.getFloat()

@@ -45,7 +45,6 @@
 /*/local.properties
 /*/out
 /out/
-CodexBar/
 REQUIREMENTS.md
 atlassian-ide-plugin.xml
 bin/
@@ -53,7 +52,6 @@ build/
 captures/
 com_crashlytics_export_strings.xml
 cookies.claude.json
-keystore.properties
 crashlytics-build.properties
 crashlytics.properties
 deploymentTargetDropDown.xml
@@ -63,6 +61,7 @@ gen/
 google-services.json
 gradle-app.setting
 hs_err_pid*
+keystore.properties
 local.properties
 misc.xml
 obj/

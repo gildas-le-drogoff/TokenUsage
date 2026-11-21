@@ -6,8 +6,9 @@ import android.content.Intent
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
-            WorkManagerInitializer.scheduleTokenRefresh(context)
+        when (intent?.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED -> WorkManagerInitializer.scheduleTokenRefresh(context)
         }
     }
 }

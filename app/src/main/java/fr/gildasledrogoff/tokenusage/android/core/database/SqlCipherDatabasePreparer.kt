@@ -4,18 +4,15 @@ import android.content.Context
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import java.io.File
 
-
 internal object SqlCipherDatabasePreparer {
-
     private val SQLITE_PLAINTEXT_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
-
     fun prepare(context: Context, name: String, key: DatabaseKeyProvider.DatabaseKey) {
         val dbFile = context.getDatabasePath(name)
         if (!dbFile.exists()) return
-
         when {
             isPlaintext(dbFile) -> runCatching { encrypt(context, dbFile, key.rawKey) }
                 .onFailure { context.deleteDatabase(name) }
+
             key.isNew -> context.deleteDatabase(name)
         }
     }
@@ -29,7 +26,6 @@ internal object SqlCipherDatabasePreparer {
     private fun encrypt(context: Context, dbFile: File, rawKey: ByteArray) {
         val encrypted = File(dbFile.parentFile, "${dbFile.name}.encrypting")
         context.deleteDatabase(encrypted.name)
-
         val plain = SQLiteDatabase.openDatabase(
             dbFile.path,
             "",
@@ -54,14 +50,17 @@ internal object SqlCipherDatabasePreparer {
         } finally {
             plain.close()
         }
-
         verifyEncryptedCopy(encrypted, rawKey, version, schemaObjects)
-
         context.deleteDatabase(dbFile.name)
         check(encrypted.renameTo(dbFile)) { "Unable to install the encrypted database" }
     }
 
-    private fun verifyEncryptedCopy(file: File, rawKey: ByteArray, version: Int, schemaObjects: Long) {
+    private fun verifyEncryptedCopy(
+        file: File,
+        rawKey: ByteArray,
+        version: Int,
+        schemaObjects: Long
+    ) {
         check(file.exists() && file.length() > 0) { "Encrypted copy missing" }
         check(!isPlaintext(file)) { "Copy is not encrypted" }
         val copy = SQLiteDatabase.openDatabase(

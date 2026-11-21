@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="widget_status_offline">Offline</string>
+  <string name="widget_status_failed">Refresh failed</string>
+  <string name="widget_status_with_date">%1$s · %2$s</string>
+  <string name="reconnect_refresh_title"
+    >Refresh when the connection returns</string
+  >
+  <string name="reconnect_refresh_subtitle_on"
+    >On: widgets and notifications are refreshed in the background as soon as
+    the network is back, even with the app closed.</string
+  >
+  <string name="reconnect_refresh_subtitle_off"
+    >Off: with the app open, the dashboard still refreshes on its own when the
+    network returns. Widgets wait for the next scheduled refresh.</string
+  >
+  <string name="reconnect_refresh_dialog_title"
+    >Refresh in the background when the network returns?</string
+  >
+  <string name="reconnect_refresh_dialog_text"
+    >When a refresh fails for lack of network, TokenUsage will ask Android to
+    run it again in the background as soon as the connection returns, even if
+    the app is closed, to update widgets and notifications.\n\n• No new
+    permission is requested.\n• One refresh per network return, with up to 3
+    retries if the connection is not usable yet.\n• Android decides the exact
+    moment (battery saver, Doze).\n• You can turn this off at any time
+    here.</string
+  >
+  <string name="reconnect_refresh_dialog_accept">Allow</string>
+  <string name="reconnect_refresh_dialog_decline">Not now</string>
+</resources>

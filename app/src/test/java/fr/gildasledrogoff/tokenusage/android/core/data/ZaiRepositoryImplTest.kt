@@ -1,5 +1,5 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
+import fr.gildasledrogoff.tokenusage.core.domain.model.toServiceAccount
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
@@ -24,17 +24,13 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import retrofit2.Retrofit
 import java.time.Instant
-
 class ZaiRepositoryImplTest {
-
     private lateinit var mockWebServer: MockWebServer
     private lateinit var apiService: ZaiApiService
     private lateinit var prefsManager: EncryptedPrefsManager
     private lateinit var repository: ZaiRepositoryImpl
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true; isLenient = true }
-
     private val account = ZaiAccount(id = "id-1", label = "Personal", apiKey = "zai-key-1")
-
     private fun quotaBody(
         level: String = "pro",
         percentage: Int = 42,
@@ -54,9 +50,7 @@ class ZaiRepositoryImplTest {
                         "unit": 3,
                         "number": 5,
                         "percentage": $percentage,
-                        "nextResetTime": 1773600000000,
-                        "usage": 42,
-                        "remaining": 58
+                        "nextResetTime": 1773600000000
                     },
                     {
                         "type": "TIME_LIMIT",
@@ -77,45 +71,35 @@ class ZaiRepositoryImplTest {
         }
         """.trimIndent()
     }
-
     @Before
     fun setup() {
         mockWebServer = MockWebServer()
         mockWebServer.start()
-
         val client = OkHttpClient.Builder().build()
         val contentType = "application/json".toMediaType()
-
         apiService = Retrofit.Builder()
             .baseUrl(mockWebServer.url("/"))
             .client(client)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
             .create(ZaiApiService::class.java)
-
         prefsManager = mock(EncryptedPrefsManager::class.java)
-        `when`(prefsManager.getZaiAccounts()).thenReturn(listOf(account))
-
+        `when`(prefsManager.getAccounts(AiService.ZAI)).thenReturn(listOf(account.toServiceAccount()))
         repository = ZaiRepositoryImpl(apiService, prefsManager)
     }
-
     @After
     fun tearDown() {
         mockWebServer.shutdown()
     }
-
     @Test
     fun `fetchQuotaForAccount parses session tools and quota windows`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(quotaBody()))
-
-        val result = repository.fetchQuotaForAccount(account)
-
+        val result = repository.fetchQuota(account.toServiceAccount())
         assertTrue(result is Result.Success)
         val quotaInfo = (result as Result.Success).value
         assertEquals(AiService.ZAI, quotaInfo.service)
         assertEquals("Pro", quotaInfo.tier)
         assertNull(quotaInfo.extraUsage)
-
         val windows = quotaInfo.windows
         assertEquals(3, windows.size)
         assertEquals("Session (5h)", windows[0].label)
@@ -126,146 +110,117 @@ class ZaiRepositoryImplTest {
         assertEquals("Monthly Quota", windows[2].label)
         assertEquals(0.07, windows[2].utilization, 0.0001)
     }
-
+    @Test
+    fun `monthly windows get the calendar month ending at reset as duration`() = runTest {
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(quotaBody()))
+        val windows = (repository.fetchQuota(account.toServiceAccount()) as Result.Success).value.windows
+        assertEquals(5 * 60, windows[0].windowMinutes)
+        assertEquals(31 * 24 * 60, windows[1].windowMinutes)
+        assertEquals(31 * 24 * 60, windows[2].windowMinutes)
+    }
     @Test
     fun `fetchQuotaForAccount drops Monthly Tools when hidden in settings`() = runTest {
         `when`(prefsManager.isZaiMonthlyToolsHidden()).thenReturn(true)
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(quotaBody()))
-
-        val result = repository.fetchQuotaForAccount(account)
-
+        val result = repository.fetchQuota(account.toServiceAccount())
         assertTrue(result is Result.Success)
         val labels = (result as Result.Success).value.windows.map { it.label }
         assertEquals(listOf("Session (5h)", "Monthly Quota"), labels)
     }
-
     @Test
     fun `fetchQuotaForAccount sends bearer token and accept language header`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(quotaBody()))
-
-        repository.fetchQuotaForAccount(account)
-
+        repository.fetchQuota(account.toServiceAccount())
         val request = mockWebServer.takeRequest()
         assertEquals("/api/monitor/usage/quota/limit", request.path)
         assertEquals("Bearer zai-key-1", request.getHeader("Authorization"))
         assertEquals("en-US,en", request.getHeader("Accept-Language"))
     }
-
     @Test
     fun `fetchQuotaForAccount maps utilization above 100 percent to full`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(quotaBody(percentage = 120)))
-
-        val result = repository.fetchQuotaForAccount(account)
-
+        val result = repository.fetchQuota(account.toServiceAccount())
         assertTrue(result is Result.Success)
         val window = (result as Result.Success).value.windows.first()
         assertEquals(1.0, window.utilization, 0.0001)
     }
-
     @Test
     fun `fetchQuotaForAccount returns terminal AuthError on code 1001`() = runTest {
         mockWebServer.enqueue(
             MockResponse().setResponseCode(200).setBody(quotaBody(code = 1001, success = false))
         )
-
-        val result = repository.fetchQuotaForAccount(account)
-
+        val result = repository.fetchQuota(account.toServiceAccount())
         assertTrue(result is Result.Failure)
         val error = (result as Result.Failure).error
         assertTrue(error is AppError.AuthError)
         assertTrue((error as AppError.AuthError).isTerminal)
     }
-
     @Test
     fun `fetchQuotaForAccount returns terminal AuthError on http 401`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(401))
-
-        val result = repository.fetchQuotaForAccount(account)
-
+        val result = repository.fetchQuota(account.toServiceAccount())
         assertTrue(result is Result.Failure)
         val error = (result as Result.Failure).error
         assertTrue(error is AppError.AuthError)
         assertTrue((error as AppError.AuthError).isTerminal)
     }
-
     @Test
     fun `fetchQuotaForAccount returns RateLimited on 429`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(429))
-
-        val result = repository.fetchQuotaForAccount(account)
-
+        val result = repository.fetchQuota(account.toServiceAccount())
         assertTrue(result is Result.Failure)
         assertTrue((result as Result.Failure).error is AppError.RateLimited)
     }
-
     @Test
     fun `fetchQuotaForAccount returns ParseError when success flag is false`() = runTest {
         mockWebServer.enqueue(
             MockResponse().setResponseCode(200).setBody(quotaBody(success = false))
         )
-
-        val result = repository.fetchQuotaForAccount(account)
-
+        val result = repository.fetchQuota(account.toServiceAccount())
         assertTrue(result is Result.Failure)
         assertTrue((result as Result.Failure).error is AppError.ParseError)
     }
-
     @Test
     fun `fetchQuotaForAccount returns CredentialNotFound when api key is blank`() = runTest {
-        val result = repository.fetchQuotaForAccount(account.copy(apiKey = " "))
-
+        val result = repository.fetchQuota(account.copy(apiKey = " ").toServiceAccount())
         assertTrue(result is Result.Failure)
         assertTrue((result as Result.Failure).error is AppError.CredentialNotFound)
     }
-
     @Test
     fun `fetchQuota uses the first configured account`() = runTest {
         val second = ZaiAccount(id = "id-2", label = "Work", apiKey = "zai-key-2")
-        `when`(prefsManager.getZaiAccounts()).thenReturn(listOf(account, second))
+        `when`(prefsManager.getAccounts(AiService.ZAI)).thenReturn(listOf(account, second).map { it.toServiceAccount() })
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(quotaBody()))
-
         val result = repository.fetchQuota()
-
         assertTrue(result is Result.Success)
         val request = mockWebServer.takeRequest()
         assertEquals("Bearer zai-key-1", request.getHeader("Authorization"))
     }
-
     @Test
     fun `fetchQuota returns CredentialNotFound when no account configured`() = runTest {
-        `when`(prefsManager.getZaiAccounts()).thenReturn(emptyList())
-
+        `when`(prefsManager.getAccounts(AiService.ZAI)).thenReturn(emptyList())
         val result = repository.fetchQuota()
-
         assertTrue(result is Result.Failure)
         assertTrue((result as Result.Failure).error is AppError.CredentialNotFound)
     }
-
     @Test
     fun `validateAccount returns Success on valid key`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(quotaBody()))
-
         val result = repository.validateAccount("id-1")
-
         assertTrue(result is Result.Success)
     }
-
     @Test
     fun `validateAccount returns AuthError on invalid key`() = runTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(401))
-
         val result = repository.validateAccount("id-1")
-
         assertTrue(result is Result.Failure)
         val error = (result as Result.Failure).error
         assertTrue(error is AppError.AuthError)
         assertTrue((error as AppError.AuthError).isTerminal)
     }
-
     @Test
     fun `validateAccount returns CredentialNotFound for unknown account id`() = runTest {
         val result = repository.validateAccount("unknown-id")
-
         assertTrue(result is Result.Failure)
         assertTrue((result as Result.Failure).error is AppError.CredentialNotFound)
     }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="widget_status_offline">Hors ligne</string>
+  <string name="widget_status_failed">Échec de l\'actualisation</string>
+  <string name="widget_status_with_date">%1$s · %2$s</string>
+  <string name="reconnect_refresh_title"
+    >Actualiser au retour de la connexion</string
+  >
+  <string name="reconnect_refresh_subtitle_on"
+    >Activé : les widgets et les notifications sont actualisés en arrière-plan
+    dès le retour du réseau, même app fermée.</string
+  >
+  <string name="reconnect_refresh_subtitle_off"
+    >Désactivé : app ouverte, le tableau de bord s\'actualise quand même de
+    lui-même au retour du réseau. Les widgets attendent la prochaine
+    actualisation programmée.</string
+  >
+  <string name="reconnect_refresh_dialog_title"
+    >Actualiser en arrière-plan au retour du réseau ?</string
+  >
+  <string name="reconnect_refresh_dialog_text"
+    >Quand une actualisation échoue faute de réseau, TokenUsage demandera à
+    Android de la relancer en arrière-plan dès le retour de la connexion, même
+    si l\'app est fermée, pour mettre à jour les widgets et les
+    notifications.\n\n• Aucune nouvelle permission n\'est demandée.\n• Une
+    actualisation par retour du réseau, avec jusqu\'à 3 nouvelles tentatives si
+    la connexion n\'est pas encore utilisable.\n• Android choisit le moment
+    exact (économiseur de batterie, mise en veille).\n• Vous pouvez désactiver
+    cette option à tout moment ici.</string
+  >
+  <string name="reconnect_refresh_dialog_accept">Autoriser</string>
+  <string name="reconnect_refresh_dialog_decline">Pas maintenant</string>
+</resources>

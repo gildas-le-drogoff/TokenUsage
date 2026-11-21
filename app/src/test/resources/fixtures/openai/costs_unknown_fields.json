@@ -1,0 +1,5 @@
+{
+  "data": [{"start_time": 1794873600, "end_time": 1794960000, "results": [{"amount": {"value": 2, "currency": "eur", "extra": 1}, "quantity": 5}], "foo": "bar"}],
+  "has_more": false,
+  "usage_note": "new"
+}

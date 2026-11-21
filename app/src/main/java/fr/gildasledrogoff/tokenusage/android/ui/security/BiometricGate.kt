@@ -6,14 +6,11 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
-
 object BiometricGate {
-
     private const val AUTHENTICATORS =
         BiometricManager.Authenticators.BIOMETRIC_WEAK or
-            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
-    
     enum class Availability { READY, NO_HARDWARE, NONE_ENROLLED, UNAVAILABLE }
 
     fun availability(context: Context): Availability =
@@ -21,11 +18,11 @@ object BiometricGate {
             BiometricManager.BIOMETRIC_SUCCESS -> Availability.READY
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
             BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> Availability.NO_HARDWARE
+
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> Availability.NONE_ENROLLED
             else -> Availability.UNAVAILABLE
         }
 
-    
     fun authenticate(
         activity: FragmentActivity,
         title: String,

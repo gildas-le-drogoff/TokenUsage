@@ -8,13 +8,17 @@ data class QuotaInfo(
     val extraUsage: ExtraUsage? = null,
     val tier: String? = null,
     val accountBalances: List<AccountBalance> = emptyList(),
-    
     val weeklyBreakdown: List<UsageBreakdownRow> = emptyList(),
-    
     val spending: List<SpendAmount> = emptyList(),
-    val fetchedAt: Instant = Instant.now()
-)
+    val fetchedAt: Instant = Instant.now(),
 
+    val accountId: String? = null,
+
+    val accountLabel: String? = null
+) {
+
+    val accountKey: String get() = "${service.name}:${accountId ?: "default"}"
+}
 
 data class CreditBalance(
     val currency: String,
@@ -24,23 +28,20 @@ data class CreditBalance(
     val isAvailable: Boolean
 )
 
-
 data class AccountBalance(
     val label: String,
     val balance: CreditBalance?,
     val error: AppError? = null
 )
 
-
 enum class UsageSeverity { NORMAL, WARNING, CRITICAL }
-
 data class UsageWindow(
     val label: String,
     val utilization: Double,
     val resetsAt: Instant?,
-    val severity: UsageSeverity = UsageSeverity.NORMAL
+    val severity: UsageSeverity = UsageSeverity.NORMAL,
+    val windowMinutes: Int? = null
 )
-
 
 data class UsageBreakdownRow(
     val label: String,
@@ -55,10 +56,7 @@ data class ExtraUsage(
     val currency: String
 )
 
-
 enum class SpendPeriod { TODAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_30_DAYS }
-
-
 data class SpendAmount(
     val period: SpendPeriod,
     val amount: Double,

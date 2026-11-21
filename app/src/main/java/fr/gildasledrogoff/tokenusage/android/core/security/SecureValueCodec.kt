@@ -5,18 +5,14 @@ import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
 
-
 internal object SecureValueCodec {
-
     private const val FORMAT_VERSION: Int = 1
-
     private const val TYPE_STRING: Int = 1
     private const val TYPE_INT: Int = 2
     private const val TYPE_LONG: Int = 3
     private const val TYPE_FLOAT: Int = 4
     private const val TYPE_BOOLEAN: Int = 5
     private const val TYPE_STRING_SET: Int = 6
-
     fun encode(value: Any): ByteArray {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
@@ -26,34 +22,39 @@ internal object SecureValueCodec {
                     out.writeByte(TYPE_STRING)
                     out.writeUtf8(value)
                 }
+
                 is Int -> {
                     out.writeByte(TYPE_INT)
                     out.writeInt(value)
                 }
+
                 is Long -> {
                     out.writeByte(TYPE_LONG)
                     out.writeLong(value)
                 }
+
                 is Float -> {
                     out.writeByte(TYPE_FLOAT)
                     out.writeFloat(value)
                 }
+
                 is Boolean -> {
                     out.writeByte(TYPE_BOOLEAN)
                     out.writeBoolean(value)
                 }
+
                 is Set<*> -> {
                     out.writeByte(TYPE_STRING_SET)
                     out.writeInt(value.size)
                     value.forEach { out.writeUtf8(it as String) }
                 }
+
                 else -> throw IllegalArgumentException("Unsupported preference type: ${value::class}")
             }
         }
         return bytes.toByteArray()
     }
 
-    
     fun decode(bytes: ByteArray): Any {
         DataInputStream(bytes.inputStream()).use { input ->
             val version = input.readUnsignedByte()
@@ -69,6 +70,7 @@ internal object SecureValueCodec {
                     if (count < 0) throw IOException("Negative set size")
                     buildSet(count) { repeat(count) { add(input.readUtf8()) } }
                 }
+
                 else -> throw IOException("Unknown value type $type")
             }
             if (input.available() != 0) throw IOException("Trailing bytes in value")

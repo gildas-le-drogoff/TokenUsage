@@ -27,9 +27,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import fr.gildasledrogoff.tokenusage.R
 import androidx.fragment.app.FragmentActivity
-
+import fr.gildasledrogoff.tokenusage.R
 
 @Composable
 fun AppLockScreen(
@@ -43,7 +42,6 @@ fun AppLockScreen(
     val unavailableText = stringResource(R.string.app_lock_unavailable)
     val unlockTitle = stringResource(R.string.unlock_title)
     val unlockSubtitle = stringResource(R.string.unlock_subtitle)
-
     val promptUnlock: () -> Unit = {
         errorText = null
         if (activity == null) {
@@ -57,16 +55,16 @@ fun AppLockScreen(
                     onSuccess = onUnlock,
                     onError = { errorText = it.toString() }
                 )
+
                 BiometricGate.Availability.NO_HARDWARE,
                 BiometricGate.Availability.NONE_ENROLLED -> noAuthenticator = true
+
                 BiometricGate.Availability.UNAVAILABLE ->
                     errorText = unavailableText
             }
         }
     }
-
     LaunchedEffect(Unit) { promptUnlock() }
-
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -94,7 +92,6 @@ fun AppLockScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth()
             )
-
             if (errorText != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -104,7 +101,6 @@ fun AppLockScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
             Spacer(modifier = Modifier.height(24.dp))
             if (noAuthenticator) {
                 Text(

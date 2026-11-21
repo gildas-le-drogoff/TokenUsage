@@ -1,8 +1,8 @@
 package fr.gildasledrogoff.tokenusage
 
 import android.Manifest
-import android.os.Build
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -25,37 +25,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
-import fr.gildasledrogoff.tokenusage.feature.credits.CreditsScreen
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import fr.gildasledrogoff.tokenusage.R
-import fr.gildasledrogoff.tokenusage.core.security.AppLockManager
-import fr.gildasledrogoff.tokenusage.core.security.IntegrityGuard
-import fr.gildasledrogoff.tokenusage.ui.security.AppLockScreen
-import fr.gildasledrogoff.tokenusage.ui.security.CompromisedDeviceScreen
-import fr.gildasledrogoff.tokenusage.core.util.BatteryOptimizationHelper
-import fr.gildasledrogoff.tokenusage.core.workmanager.RefreshScheduler
-import fr.gildasledrogoff.tokenusage.core.workmanager.WorkManagerInitializer
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import fr.gildasledrogoff.tokenusage.feature.dashboard.DashboardScreen
-import fr.gildasledrogoff.tokenusage.feature.history.BalanceHistoryScreen
-import fr.gildasledrogoff.tokenusage.feature.settings.SettingsScreen
-import fr.gildasledrogoff.tokenusage.ui.theme.TokenUsageTheme
-import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
+import fr.gildasledrogoff.tokenusage.core.security.AppLockManager
+import fr.gildasledrogoff.tokenusage.core.security.IntegrityGuard
+import fr.gildasledrogoff.tokenusage.core.util.BatteryOptimizationHelper
+import fr.gildasledrogoff.tokenusage.core.workmanager.RefreshScheduler
+import fr.gildasledrogoff.tokenusage.core.workmanager.WorkManagerInitializer
+import fr.gildasledrogoff.tokenusage.feature.credits.CreditsScreen
+import fr.gildasledrogoff.tokenusage.feature.dashboard.DashboardScreen
+import fr.gildasledrogoff.tokenusage.feature.diagnostics.DiagnosticsScreen
+import fr.gildasledrogoff.tokenusage.feature.history.BalanceHistoryScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.SettingsAccountsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.SettingsDestination
+import fr.gildasledrogoff.tokenusage.feature.settings.SettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.alerts.AlertsSettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.backup.BackupSettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.display.DisplaySettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.refresh.RefreshSettingsScreen
+import fr.gildasledrogoff.tokenusage.feature.settings.security.SecuritySettingsScreen
+import fr.gildasledrogoff.tokenusage.ui.security.AppLockScreen
+import fr.gildasledrogoff.tokenusage.ui.security.CompromisedDeviceScreen
+import fr.gildasledrogoff.tokenusage.ui.theme.TokenUsageTheme
 import javax.inject.Inject
-
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
-
     @Inject
     lateinit var integrityGuard: IntegrityGuard
 
@@ -67,7 +71,6 @@ class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var appLock: AppLockManager
-
     private val batteryOptLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -75,7 +78,6 @@ class MainActivity : FragmentActivity() {
         refreshScheduler.applySaved()
     }
 
-    
     private fun acceptRiskAndRestart() {
         integrityGuard.acceptRisk()
         val launch = packageManager.getLaunchIntentForPackage(packageName) ?: return
@@ -87,13 +89,11 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 appLock.onAppHidden()
             }
         })
-
         if (integrityGuard.isVaultLocked) {
             setContent {
                 AppTheme {
@@ -106,11 +106,9 @@ class MainActivity : FragmentActivity() {
             }
             return
         }
-
         setContent {
             AppTheme {
                 val locked by appLock.isLocked.collectAsStateWithLifecycle()
-
                 if (locked) {
                     AppLockScreen(
                         onUnlock = appLock::unlock,
@@ -118,8 +116,6 @@ class MainActivity : FragmentActivity() {
                     )
                     return@AppTheme
                 }
-
-                
                 if (BuildConfig.IS_DEBUG) {
                     LaunchedEffect(locked) {
                         if (locked) {
@@ -129,29 +125,24 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 }
-
                 val navController = rememberNavController()
                 val snackbarHostState = remember { SnackbarHostState() }
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    val permissionState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+                    val permissionState =
+                        rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
                     val permissionMessage = stringResource(R.string.notif_permission_required)
-
                     LaunchedEffect(permissionState.status.isGranted) {
                         if (!permissionState.status.isGranted) {
                             permissionState.launchPermissionRequest()
                         }
                     }
-
                     LaunchedEffect(permissionState.status) {
                         if (!permissionState.status.isGranted) {
                             snackbarHostState.showSnackbar(permissionMessage)
                         }
                     }
                 }
-
                 var showBatteryDialog by remember { mutableStateOf(false) }
-
                 LaunchedEffect(Unit) {
                     if (!displayPreferences.batteryPromptAnswered &&
                         !BatteryOptimizationHelper.isIgnoringBatteryOptimizations(this@MainActivity)
@@ -159,7 +150,6 @@ class MainActivity : FragmentActivity() {
                         showBatteryDialog = true
                     }
                 }
-
                 if (showBatteryDialog) {
                     AlertDialog(
                         onDismissRequest = { showBatteryDialog = false },
@@ -196,7 +186,6 @@ class MainActivity : FragmentActivity() {
                         }
                     )
                 }
-
                 Scaffold(
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     contentWindowInsets = WindowInsets(0)
@@ -221,10 +210,33 @@ class MainActivity : FragmentActivity() {
                                 onNavigateBack = {
                                     navController.popBackStack()
                                 },
+                                onNavigateTo = { navController.navigate(it.route) },
                                 onNavigateToCredits = {
                                     navController.navigate("credits")
-                                }
+                                },
+                                showDiagnostics = SETTINGS_DIAGNOSTICS_ROUTE_READY
                             )
+                        }
+                        composable(SettingsDestination.ACCOUNTS.route) {
+                            SettingsAccountsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.DISPLAY.route) {
+                            DisplaySettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.ALERTS.route) {
+                            AlertsSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.REFRESH.route) {
+                            RefreshSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.BACKUP.route) {
+                            BackupSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable(SettingsDestination.SECURITY.route) {
+                            SecuritySettingsScreen(onNavigateBack = { navController.popBackStack() })
+                        }
+                        composable("diagnostics") {
+                            DiagnosticsScreen(onNavigateBack = { navController.popBackStack() })
                         }
                         composable("credits") {
                             CreditsScreen(
@@ -246,11 +258,16 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    
     @Composable
     private fun AppTheme(content: @Composable () -> Unit) {
         val themeMode by displayPreferences.themeMode.collectAsStateWithLifecycle()
         val quotaDisplayMode by displayPreferences.quotaDisplayMode.collectAsStateWithLifecycle()
-        TokenUsageTheme(themeMode = themeMode, quotaDisplayMode = quotaDisplayMode, content = content)
+        TokenUsageTheme(
+            themeMode = themeMode,
+            quotaDisplayMode = quotaDisplayMode,
+            content = content
+        )
     }
 }
+
+private const val SETTINGS_DIAGNOSTICS_ROUTE_READY = true

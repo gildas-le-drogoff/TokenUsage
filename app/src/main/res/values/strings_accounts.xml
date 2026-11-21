@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accounts_empty">No account yet. Add one to start tracking this service.</string>
+    <string name="accounts_label_placeholder">e.g. Personal, Work</string>
+    <string name="accounts_advanced_toggle">Manual tokens (alternative)</string>
+    <string name="demo_codex_personal">Codex personal</string>
+    <string name="demo_codex_work">Codex work</string>
+    <string name="demo_copilot_personal">Copilot personal</string>
+    <string name="demo_copilot_work">Copilot work</string>
+</resources>

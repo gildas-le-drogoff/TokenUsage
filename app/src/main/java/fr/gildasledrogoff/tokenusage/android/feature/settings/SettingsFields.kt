@@ -12,11 +12,8 @@ import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.ui.theme.WidthClass
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
 
-
 private val FieldGap = 6.dp
-
 private val FieldGapColumns = 12.dp
-
 
 @Composable
 internal fun SettingsFields(vararg fields: @Composable (Modifier) -> Unit) {

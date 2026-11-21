@@ -1,0 +1,13 @@
+[
+  {
+    "uuid": "00000000-0000-4000-8000-000000000001",
+    "name": "Example Org",
+    "capabilities": ["chat", "claude_pro"],
+    "settings": {"anything": true}
+  },
+  {
+    "id": "legacy-org-id",
+    "name": null,
+    "capabilities": null
+  }
+]

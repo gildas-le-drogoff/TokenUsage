@@ -6,8 +6,6 @@ import retrofit2.http.Header
 import retrofit2.http.Headers
 
 interface CopilotApiService {
-
-    
     @Headers(
         "Accept: application/json",
         "Editor-Version: vscode/1.96.2",

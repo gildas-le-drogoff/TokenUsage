@@ -18,8 +18,8 @@ import androidx.compose.ui.res.stringResource
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionGranularity
 import fr.gildasledrogoff.tokenusage.feature.history.ConsumptionBarChart
+import fr.gildasledrogoff.tokenusage.feature.history.DailyConsumptionList
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
-
 
 @Composable
 fun ConsumptionPanel(
@@ -28,13 +28,11 @@ fun ConsumptionPanel(
     onOpenHistory: () -> Unit
 ) {
     val dimens = MaterialTheme.dimens
-
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     Text(
         text = stringResource(R.string.history_daily_title),
         style = MaterialTheme.typography.titleSmall
     )
-
     when (state) {
         ConsumptionChartUiState.Idle, ConsumptionChartUiState.Loading -> {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -53,13 +51,17 @@ fun ConsumptionPanel(
                             selected = account.accountId == state.selectedAccountId,
                             onClick = { onSelectAccount(account.accountId) },
                             label = {
-                                Text(account.label.ifBlank { stringResource(R.string.account_n, index + 1) })
+                                Text(account.label.ifBlank {
+                                    stringResource(
+                                        R.string.account_n,
+                                        index + 1
+                                    )
+                                })
                             }
                         )
                     }
                 }
             }
-
             val selected = state.selected
             if (selected == null || selected.points.isEmpty()) {
                 Text(
@@ -84,10 +86,10 @@ fun ConsumptionPanel(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                DailyConsumptionList(points = selected.points, currency = selected.currency)
             }
         }
     }
-
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onOpenHistory, modifier = Modifier.align(Alignment.CenterVertically)) {
             Text(stringResource(R.string.dashboard_open_history))

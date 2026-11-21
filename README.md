@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-  <b>All your AI quotas and API balances, one glance away.</b><br/>
+  <b>AI quotas and API balances in one place.</b><br/>
   DeepSeek · OpenRouter · Z.ai · OpenAI · Claude · Codex · Gemini · GitHub Copilot
 </p>
 
 <p align="center">
-  <a href="https://github.com/gildas-le-drogoff/TokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/gildas-le-drogoff/TokenUsage?label=download&style=for-the-badge" alt="Download" /></a>
-  <img src="https://img.shields.io/badge/Android-10%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 10+" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0" /></a>
+  <a href="https://github.com/gildas-le-drogoff/TokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/gildas-le-drogoff/TokenUsage?label=download" alt="Download" /></a>
+  <img src="https://img.shields.io/badge/Android-10%2B-3DDC84&logo=android&logoColor=white" alt="Android 10+" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0" /></a>
 </p>
 
 <p align="center">
@@ -24,11 +24,12 @@
 
 ---
 
-## ⚡ Paste your API key. That's it.
+## Getting started
 
 | Service | What you need | Setup |
 |---|---|---|
 | **Claude** | claude.ai account | Tap **Sign in with Claude** |
+| **Claude API** | platform.claude.com session cookie | Paste it → API credit balance + monthly spend |
 | **DeepSeek** | API key | Paste it → balance + daily/monthly consumption charts |
 | **OpenRouter** | API key | Paste it → credits left + spend |
 | **Z.ai** | API key | Paste it → quota windows + reset times |
@@ -38,19 +39,19 @@
 
 Open **Settings**, fill in the services you use, and your dashboard is ready. No account, no server, no sign-up.
 
-## ✨ Why you'll like it
+## ✨ Features
 
-- 🎯 **Everything in one dashboard**: quotas, prepaid balances and spend from 8 providers
-- 🚦 **Instant reading**: green, amber, red, with the reset time of every quota window
-- 👥 **Multiple accounts** for Claude, Z.ai and DeepSeek
-- 📈 **Consumption history** for DeepSeek, day by day and month by month
-- 💱 **Your currency**: keep each provider's currency or convert everything to USD, EUR or CNY
-- 📱 **Home screen widgets** and a **Quick Settings tile**
-- 🔔 **Notifications** when a quota resets
-- 🔒 **App lock** (biometrics), **encrypted storage**, **encrypted backup** (ZIP or QR code)
-- 🌗 Material 3, light & dark themes, phones and tablets — in English, French and Chinese
+- **One dashboard**: quotas, prepaid balances and spend from 8 providers
+- **Instant reading**: green, amber, red, with the reset time of every quota window
+- **Multiple accounts** for every service
+- **Consumption history** for DeepSeek, day by day and month by month
+- **Your currency**: keep each provider's currency or convert everything to USD, EUR or CNY
+- **Home screen widgets** and a **Quick Settings tile**
+- **Notifications** when a quota resets, and **configurable alerts** (quota threshold, low balance, depletion forecast)
+- **App lock** (biometrics), **encrypted storage**, **encrypted backup** (ZIP or QR code)
+- Material 3, light & dark themes, phones and tablets — in English, French and Chinese
 
-## 🛡️ Private by design
+## 🛡️ Privacy
 
 No backend. No analytics. No tracking. Your keys are encrypted on the device (Android Keystore) and only ever sent to the provider they belong to. The only other request is for exchange rates (Frankfurter or ECB), and only if you choose one.
 

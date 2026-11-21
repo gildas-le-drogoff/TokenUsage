@@ -15,19 +15,18 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-
 internal class KeystoreMasterKey(
     private val context: Context,
     private val alias: String = DEFAULT_ALIAS
 ) : Aead {
-
     private val key: SecretKey by lazy { loadOrCreate() }
-
     override fun encrypt(plaintext: ByteArray, associatedData: ByteArray?): ByteArray =
         try {
             val cipher = Cipher.getInstance(TRANSFORMATION)
             cipher.init(Cipher.ENCRYPT_MODE, key)
-            if (associatedData != null && associatedData.isNotEmpty()) cipher.updateAAD(associatedData)
+            if (associatedData != null && associatedData.isNotEmpty()) cipher.updateAAD(
+                associatedData
+            )
             val ciphertext = cipher.doFinal(plaintext)
             val iv = cipher.iv
             if (iv.size != IV_LENGTH) throw GeneralSecurityException("Unexpected IV length ${iv.size}")
@@ -47,14 +46,15 @@ internal class KeystoreMasterKey(
                 key,
                 GCMParameterSpec(TAG_LENGTH_BYTES * 8, ciphertext, 0, IV_LENGTH)
             )
-            if (associatedData != null && associatedData.isNotEmpty()) cipher.updateAAD(associatedData)
+            if (associatedData != null && associatedData.isNotEmpty()) cipher.updateAAD(
+                associatedData
+            )
             cipher.doFinal(ciphertext, IV_LENGTH, ciphertext.size - IV_LENGTH)
         } catch (e: ProviderException) {
             throw GeneralSecurityException("Keystore decryption failed", e)
         }
     }
 
-    
     fun destroy() {
         runCatching { keyStore().deleteEntry(alias) }
     }
@@ -62,7 +62,6 @@ internal class KeystoreMasterKey(
     private fun loadOrCreate(): SecretKey {
         val keyStore = keyStore()
         (keyStore.getKey(alias, null) as? SecretKey)?.let { return it }
-
         val wantsStrongBox =
             context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
         if (wantsStrongBox) {
@@ -71,11 +70,9 @@ internal class KeystoreMasterKey(
                 if (selfTest(strongBoxKey)) return strongBoxKey
             } catch (_: StrongBoxUnavailableException) {
             } catch (_: ProviderException) {
-                
             }
             keyStore.deleteEntry(alias)
         }
-
         val teeKey = generate(strongBox = false)
         if (!selfTest(teeKey)) {
             keyStore.deleteEntry(alias)
@@ -100,7 +97,6 @@ internal class KeystoreMasterKey(
             .generateKey()
     }
 
-    
     private fun selfTest(candidate: SecretKey): Boolean = try {
         val message = ByteArray(32).also { SecureRandom().nextBytes(it) }
         val aad = SELF_TEST_AAD

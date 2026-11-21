@@ -1,6 +1,5 @@
 package fr.gildasledrogoff.tokenusage.core.domain.model
 
-
 data class ClaudeAccount(
     val id: String,
     val label: String,

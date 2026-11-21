@@ -1,0 +1,7 @@
+{
+  "five_hour": {"utilization": null, "resets_at": null, "locked_reason": "rate_limited"},
+  "seven_day": null,
+  "extra_usage": null,
+  "limits": null,
+  "seven_day_breakdown": {"as_of": null, "window_started_at": null, "rows": null}
+}

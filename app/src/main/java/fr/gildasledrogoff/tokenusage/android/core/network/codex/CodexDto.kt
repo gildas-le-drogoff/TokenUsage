@@ -4,10 +4,15 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 
 object CodexDto {
-
     @Serializable
     data class UsageResponse(
         @SerialName("plan_type") val planType: String? = null,
@@ -17,8 +22,12 @@ object CodexDto {
 
     @Serializable
     data class RateLimit(
-        @SerialName("primary_window") val primaryWindow: RateLimitWindow? = null,
-        @SerialName("secondary_window") val secondaryWindow: RateLimitWindow? = null
+        @SerialName("primary_window")
+        @Serializable(with = TolerantWindowSerializer::class)
+        val primaryWindow: RateLimitWindow? = null,
+        @SerialName("secondary_window")
+        @Serializable(with = TolerantWindowSerializer::class)
+        val secondaryWindow: RateLimitWindow? = null
     )
 
     @Serializable
@@ -27,6 +36,24 @@ object CodexDto {
         @SerialName("reset_at") val resetAt: Long? = null,
         @SerialName("limit_window_seconds") val limitWindowSeconds: Long? = null
     )
+
+    object TolerantWindowSerializer : KSerializer<RateLimitWindow?> {
+        private val delegate = RateLimitWindow.serializer().nullable
+        override val descriptor: SerialDescriptor = delegate.descriptor
+
+        override fun deserialize(decoder: Decoder): RateLimitWindow? {
+            val jsonDecoder = decoder as? JsonDecoder ?: return delegate.deserialize(decoder)
+            val element = jsonDecoder.decodeJsonElement()
+            return try {
+                jsonDecoder.json.decodeFromJsonElement(delegate, element)
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+        override fun serialize(encoder: Encoder, value: RateLimitWindow?) =
+            delegate.serialize(encoder, value)
+    }
 
     @Serializable
     data class Credits(
@@ -59,7 +86,6 @@ object CodexDto {
     )
 
     const val CODEX_CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
-
     val TERMINAL_ERROR_CODES = setOf(
         "refresh_token_expired",
         "refresh_token_reused",

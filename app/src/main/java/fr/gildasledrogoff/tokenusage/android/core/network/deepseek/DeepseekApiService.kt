@@ -5,8 +5,6 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 
 interface DeepseekApiService {
-
-    
     @GET("user/balance")
     suspend fun getUserBalance(
         @Header("Authorization") authorization: String

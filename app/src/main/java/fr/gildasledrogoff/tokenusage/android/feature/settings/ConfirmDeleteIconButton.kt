@@ -21,7 +21,6 @@ internal fun ConfirmDeleteIconButton(
     onConfirmed: () -> Unit
 ) {
     var showWarning by rememberSaveable { mutableStateOf(false) }
-
     IconButton(onClick = { showWarning = true }) {
         Icon(
             painter = painterResource(R.drawable.ic_delete_rounded),
@@ -29,7 +28,6 @@ internal fun ConfirmDeleteIconButton(
             tint = MaterialTheme.colorScheme.error
         )
     }
-
     if (showWarning) {
         AlertDialog(
             onDismissRequest = { showWarning = false },
@@ -39,7 +37,10 @@ internal fun ConfirmDeleteIconButton(
                     showWarning = false
                     onConfirmed()
                 }) {
-                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                    Text(
+                        stringResource(R.string.action_delete),
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             },
             dismissButton = {

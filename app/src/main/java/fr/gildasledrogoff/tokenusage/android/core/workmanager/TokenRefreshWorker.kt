@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import fr.gildasledrogoff.tokenusage.core.diagnostics.DiagnosticsStore
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
-import fr.gildasledrogoff.tokenusage.core.domain.model.ClaudeAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
+import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeTokenRefreshService
 import fr.gildasledrogoff.tokenusage.core.network.codex.CodexDto
 import fr.gildasledrogoff.tokenusage.core.network.codex.CodexTokenRefreshService
@@ -15,8 +18,6 @@ import fr.gildasledrogoff.tokenusage.core.network.gemini.GeminiTokenRefreshServi
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
 import fr.gildasledrogoff.tokenusage.core.widget.WidgetPrefsManager
 import fr.gildasledrogoff.tokenusage.core.widget.WidgetQuotaPublisher
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -31,52 +32,53 @@ class TokenRefreshWorker @AssistedInject constructor(
     private val geminiTokenRefreshService: GeminiTokenRefreshService,
     private val prefsManager: EncryptedPrefsManager,
     private val widgetPrefs: WidgetPrefsManager,
-    private val widgetQuotaPublisher: WidgetQuotaPublisher
+    private val widgetQuotaPublisher: WidgetQuotaPublisher,
+    private val diagnosticsStore: DiagnosticsStore
 ) : CoroutineWorker(context, workerParams) {
-
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = TokenRefreshLock.withLock {
         val results = coroutineScope {
-            val services = AiService.entries
-                .filter { it != AiService.CLAUDE && prefsManager.hasCredential(it) }
-                .map { service -> async { refreshIfNeeded(service) } }
-            val claudeAccounts = prefsManager.getClaudeAccounts()
-                .map { account -> async { refreshClaudeAccount(account) } }
-            (services + claudeAccounts).awaitAll()
+            AiService.entries
+                .flatMap { service -> prefsManager.getAccounts(service).map { service to it } }
+                .map { (service, account) -> async { refreshIfNeeded(service, account) } }
+                .awaitAll()
         }
-
-        return if (results.all { it }) Result.success() else Result.retry()
+        val decision = WorkRetryPolicy.decide(
+            allSucceeded = results.all { it },
+            runAttemptCount = runAttemptCount
+        )
+        diagnosticsStore.recordWorkerRun(
+            WorkManagerInitializer.TOKEN_WORK_NAME,
+            decision.label,
+            runAttemptCount
+        )
+        if (decision == WorkRetryPolicy.Decision.RETRY) Result.retry() else Result.success()
     }
 
-    
-    private suspend fun refreshIfNeeded(service: AiService): Boolean {
-        val credential = prefsManager.loadCredential(service) ?: return true
-
-        return when (credential) {
-            is Credential.ClaudeCredential, is Credential.ClaudeWebCredential -> true
-            is Credential.CodexCredential -> refreshCodex(credential)
-            is Credential.GeminiCredential -> refreshGemini(credential)
-            is Credential.DeepseekCredential -> true
-            is Credential.ZaiCredential -> true
+    private suspend fun refreshIfNeeded(service: AiService, account: ServiceAccount): Boolean =
+        when (val credential = account.credential) {
+            is Credential.ClaudeCredential -> refreshClaude(service, account.id, credential)
+            is Credential.CodexCredential -> refreshCodex(service, account.id, credential)
+            is Credential.GeminiCredential -> refreshGemini(service, account.id, credential)
+            is Credential.ClaudeWebCredential,
+            is Credential.DeepseekCredential,
+            is Credential.ZaiCredential,
             is Credential.ApiKeyCredential -> true
         }
-    }
 
-    private suspend fun refreshClaudeAccount(account: ClaudeAccount): Boolean =
-        when (val credential = account.credential) {
-            is Credential.ClaudeCredential -> refreshClaude(account.id, credential)
-            else -> true
-        }
-
-    private suspend fun refreshClaude(accountId: String, credential: Credential.ClaudeCredential): Boolean {
+    private suspend fun refreshClaude(
+        service: AiService,
+        accountId: String,
+        credential: Credential.ClaudeCredential
+    ): Boolean {
         val expiresAt = credential.expiresAt ?: return true
         if (Instant.now().isBefore(expiresAt.minusSeconds(REFRESH_BUFFER_SECONDS))) return true
-
         val refreshToken = credential.refreshToken ?: return false
         return try {
             val response = claudeTokenRefreshService.refreshToken(refreshToken = refreshToken)
             if (response.isSuccessful) {
                 val body = response.body() ?: return false
-                prefsManager.updateClaudeAccountCredential(
+                prefsManager.updateAccountCredential(
+                    service,
                     accountId,
                     Credential.ClaudeCredential(
                         accessToken = body.accessToken,
@@ -95,14 +97,19 @@ class TokenRefreshWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun refreshCodex(credential: Credential.CodexCredential): Boolean {
+    private suspend fun refreshCodex(
+        service: AiService,
+        accountId: String,
+        credential: Credential.CodexCredential
+    ): Boolean {
         return try {
             val request = CodexDto.TokenRefreshRequest(refreshToken = credential.refreshToken)
             val response = codexTokenRefreshService.refreshToken(request)
             if (response.isSuccessful) {
                 val body = response.body() ?: return false
-                prefsManager.saveCredential(
-                    AiService.CODEX,
+                prefsManager.updateAccountCredential(
+                    service,
+                    accountId,
                     Credential.CodexCredential(
                         accessToken = body.accessToken,
                         refreshToken = body.refreshToken ?: credential.refreshToken,
@@ -113,10 +120,12 @@ class TokenRefreshWorker @AssistedInject constructor(
             } else {
                 val errorBody = response.errorBody()?.string() ?: ""
                 val isTerminal = response.code() == 401 ||
-                    CodexDto.TERMINAL_ERROR_CODES.any { errorBody.contains(it) }
+                        CodexDto.TERMINAL_ERROR_CODES.any { errorBody.contains(it) }
                 if (isTerminal) {
-                    prefsManager.deleteCredential(AiService.CODEX)
-                    widgetPrefs.removeServiceEverywhere(AiService.CODEX)
+                    prefsManager.deleteAccount(service, accountId)
+                    if (!prefsManager.hasCredential(service)) widgetPrefs.removeServiceEverywhere(
+                        service
+                    )
                     widgetQuotaPublisher.refreshWidgets()
                 }
                 false
@@ -126,10 +135,12 @@ class TokenRefreshWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun refreshGemini(credential: Credential.GeminiCredential): Boolean {
-        if (System.currentTimeMillis() < credential.expiresAtMs - REFRESH_BUFFER_SECONDS * 1000) return true
-
-        return try {
+    private suspend fun refreshGemini(
+        service: AiService,
+        accountId: String,
+        credential: Credential.GeminiCredential
+    ): Boolean {
+        return System.currentTimeMillis() < credential.expiresAtMs - REFRESH_BUFFER_SECONDS * 1000 || try {
             val response = geminiTokenRefreshService.refreshToken(
                 refreshToken = credential.refreshToken,
                 clientId = credential.oauthClientId,
@@ -138,15 +149,19 @@ class TokenRefreshWorker @AssistedInject constructor(
             if (response.isSuccessful) {
                 val body = response.body() ?: return false
                 val expiresIn = body.expiresIn ?: 3600
-                prefsManager.saveCredential(
-                    AiService.GEMINI,
+                prefsManager.updateAccountCredential(
+                    service,
+                    accountId,
                     Credential.GeminiCredential(
                         accessToken = body.accessToken,
                         refreshToken = body.refreshToken ?: credential.refreshToken,
                         expiresAtMs = System.currentTimeMillis() + (expiresIn * 1000L),
                         oauthClientId = credential.oauthClientId,
                         oauthClientSecret = credential.oauthClientSecret,
-                        hostedDomain = GeminiDto.refreshedHostedDomain(body.idToken, credential.hostedDomain)
+                        hostedDomain = GeminiDto.refreshedHostedDomain(
+                            body.idToken,
+                            credential.hostedDomain
+                        )
                     )
                 )
                 true
@@ -159,7 +174,6 @@ class TokenRefreshWorker @AssistedInject constructor(
     }
 
     companion object {
-        
         const val REFRESH_BUFFER_SECONDS = 600L
     }
 }

@@ -12,10 +12,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
@@ -44,16 +46,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
+import fr.gildasledrogoff.tokenusage.core.status.ProviderStatus
 import fr.gildasledrogoff.tokenusage.core.util.ServiceIcon
 import fr.gildasledrogoff.tokenusage.core.util.iconRes
+import fr.gildasledrogoff.tokenusage.ui.i18n.ResetDuration
 import fr.gildasledrogoff.tokenusage.ui.i18n.appErrorMessage
+import fr.gildasledrogoff.tokenusage.ui.i18n.durationLabel
 import fr.gildasledrogoff.tokenusage.ui.i18n.fxRateNote
 import fr.gildasledrogoff.tokenusage.ui.i18n.spendPeriodLabelRes
 import fr.gildasledrogoff.tokenusage.ui.theme.QuotaStatus
 import fr.gildasledrogoff.tokenusage.ui.theme.colors
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
 import fr.gildasledrogoff.tokenusage.ui.theme.quotaStatusOf
-
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun ServiceCard(
@@ -61,11 +69,13 @@ fun ServiceCard(
     modifier: Modifier = Modifier,
     expanded: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
+    providerStatus: ProviderStatus? = null,
     expandedContent: @Composable ColumnScope.() -> Unit = {}
 ) {
     val dimens = MaterialTheme.dimens
     val shape = RoundedCornerShape(dimens.cardCorner)
-    val colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    val colors =
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     val body: @Composable ColumnScope.() -> Unit = {
         Column(
@@ -74,7 +84,12 @@ fun ServiceCard(
                 .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(dimens.spaceM)
         ) {
-            CardHeader(cardData, expandable = onToggleExpand != null, expanded = expanded)
+            CardHeader(
+                cardData,
+                expandable = onToggleExpand != null,
+                expanded = expanded,
+                providerStatus = providerStatus
+            )
             CardContent(cardData)
             if (onToggleExpand != null) {
                 AnimatedVisibility(
@@ -82,12 +97,14 @@ fun ServiceCard(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceS), content = expandedContent)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(dimens.spaceS),
+                        content = expandedContent
+                    )
                 }
             }
         }
     }
-
     if (onToggleExpand != null) {
         Card(
             onClick = onToggleExpand,
@@ -110,7 +127,12 @@ fun ServiceCard(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded: Boolean) {
+private fun CardHeader(
+    cardData: ServiceCardData,
+    expandable: Boolean,
+    expanded: Boolean,
+    providerStatus: ProviderStatus?
+) {
     val dimens = MaterialTheme.dimens
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -133,6 +155,7 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
+                providerStatus?.let { ProviderStatusBadge(it) }
                 cardData.tier?.let { tier ->
                     Surface(
                         shape = RoundedCornerShape(dimens.spaceXs),
@@ -143,7 +166,10 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
                             maxLines = 1,
                             softWrap = false,
                             style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = dimens.spaceS, vertical = dimens.spaceXs / 2),
+                            modifier = Modifier.padding(
+                                horizontal = dimens.spaceS,
+                                vertical = dimens.spaceXs / 2
+                            ),
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
@@ -161,12 +187,11 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
                 )
             }
         }
-
         cardStatus(cardData)?.let { StatusPill(it) }
-
         if (expandable) {
             val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "chevron")
-            val stateText = stringResource(if (expanded) R.string.cd_collapse else R.string.cd_expand)
+            val stateText =
+                stringResource(if (expanded) R.string.cd_collapse else R.string.cd_expand)
             Icon(
                 painter = painterResource(R.drawable.ic_expand_more_rounded),
                 contentDescription = stateText,
@@ -179,9 +204,8 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
     }
 }
 
-
 private fun cardStatus(cardData: ServiceCardData): QuotaStatus? {
-    if (cardData.error != null) return QuotaStatus.CRITICAL
+    if (!cardData.hasData) return QuotaStatus.CRITICAL
     if (cardData.windows.isEmpty()) return null
     return cardData.windows.maxOf { quotaStatusOf(1.0 - it.utilization, it.severity) }
 }
@@ -222,8 +246,9 @@ fun StatusDot(status: QuotaStatus, modifier: Modifier = Modifier) {
 @Composable
 private fun CardContent(cardData: ServiceCardData) {
     val dimens = MaterialTheme.dimens
-
-    if (cardData.error != null) {
+    if (cardData.staleSince != null) {
+        StaleDataNotice(cardData.staleSince, cardData.error)
+    } else if (cardData.error != null) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceS)
@@ -242,7 +267,6 @@ private fun CardContent(cardData: ServiceCardData) {
         }
         return
     }
-
     if (cardData.windows.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceM)) {
             cardData.windows.forEach { window ->
@@ -250,12 +274,14 @@ private fun CardContent(cardData: ServiceCardData) {
                     utilization = window.utilization,
                     label = window.label,
                     resetsAt = window.resetsAt,
-                    severity = window.severity
+                    severity = window.severity,
+                    windowMinutes = window.windowMinutes,
+                    historicalPace = window.historicalPace,
+                    showPace = cardData.showPace
                 )
             }
         }
     }
-
     cardData.extraUsage?.let { extra ->
         QuotaGaugeBar(
             utilization = extra.utilization,
@@ -267,15 +293,18 @@ private fun CardContent(cardData: ServiceCardData) {
                     rate.convert(extra.monthlyLimit),
                     rate.to
                 )
-            } ?: stringResource(R.string.card_credits, extra.usedCredits, extra.monthlyLimit, extra.currency)
+            } ?: stringResource(
+                R.string.card_credits,
+                extra.usedCredits,
+                extra.monthlyLimit,
+                extra.currency
+            )
         )
     }
-
     val breakdownRows = cardData.weeklyBreakdown.filter { it.percent >= 1.0 }
     if (breakdownRows.isNotEmpty()) {
         WeeklyBreakdown(breakdownRows)
     }
-
     if (cardData.accountBalances.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceXs)) {
             Text(
@@ -284,13 +313,14 @@ private fun CardContent(cardData: ServiceCardData) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceM)) {
+                val named = cardData.accountLabel != null || cardData.accountNumber != null
+                val showLabel = !(named && cardData.accountBalances.size == 1)
                 cardData.accountBalances.forEach { account ->
-                    AccountBalanceRow(account)
+                    AccountBalanceRow(account, showLabel, showPace = cardData.showPace)
                 }
             }
         }
     }
-
     if (cardData.spending.isNotEmpty()) {
         SpendSection(
             rows = cardData.spending,
@@ -299,6 +329,47 @@ private fun CardContent(cardData: ServiceCardData) {
     }
 }
 
+@Composable
+private fun StaleDataNotice(staleSince: Instant, error: AppError?) {
+    val dimens = MaterialTheme.dimens
+    val pair = QuotaStatus.LOW.colors
+    val date = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+        .withLocale(LocalConfiguration.current.locales[0])
+        .format(staleSince.atZone(ZoneId.systemDefault()))
+    Surface(
+        shape = RoundedCornerShape(dimens.spaceS),
+        color = pair.container,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceS),
+            modifier = Modifier.padding(horizontal = dimens.spaceS, vertical = dimens.spaceXs)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_warning_rounded),
+                contentDescription = null,
+                tint = pair.onContainer,
+                modifier = Modifier.size(dimens.inlineIcon + dimens.spaceXs)
+            )
+            Column {
+                if (error != null) {
+                    Text(
+                        text = stringResource(R.string.card_fetch_failed, appErrorMessage(error)),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = pair.onContainer
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.card_stale_since, date),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = pair.onContainer
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun SpendSection(rows: List<SpendRowUi>, showRateNote: Boolean) {
@@ -322,14 +393,26 @@ private fun SpendSection(rows: List<SpendRowUi>, showRateNote: Boolean) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = row.rate?.let { rate ->
-                            stringResource(R.string.fx_converted_value, rate.convert(row.amount), rate.to)
-                        } ?: stringResource(R.string.history_balance_value, row.amount, row.currency),
+                            stringResource(
+                                R.string.fx_converted_value,
+                                rate.convert(row.amount),
+                                rate.to
+                            )
+                        } ?: stringResource(
+                            R.string.history_balance_value,
+                            row.amount,
+                            row.currency
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     if (row.rate != null) {
                         Text(
-                            text = stringResource(R.string.history_balance_value, row.amount, row.currency),
+                            text = stringResource(
+                                R.string.history_balance_value,
+                                row.amount,
+                                row.currency
+                            ),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -347,7 +430,6 @@ private fun SpendSection(rows: List<SpendRowUi>, showRateNote: Boolean) {
         }
     }
 }
-
 
 @Composable
 private fun WeeklyBreakdown(rows: List<UsageBreakdownRowUi>) {
@@ -399,9 +481,12 @@ private fun WeeklyBreakdown(rows: List<UsageBreakdownRowUi>) {
     }
 }
 
-
 @Composable
-private fun AccountBalanceRow(account: AccountBalanceUi) {
+private fun AccountBalanceRow(
+    account: AccountBalanceUi,
+    showLabel: Boolean = true,
+    showPace: Boolean = true
+) {
     val dimens = MaterialTheme.dimens
     val status = if (account.error != null || !account.isAvailable || account.totalBalance <= 0.0) {
         QuotaStatus.CRITICAL
@@ -409,21 +494,24 @@ private fun AccountBalanceRow(account: AccountBalanceUi) {
         QuotaStatus.HEALTHY
     }
     val statusColor = status.colors.main
-
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceS)
         ) {
             StatusDot(status)
-            Text(
-                text = account.label.ifBlank { stringResource(R.string.account_default) },
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
+            if (showLabel) {
+                Text(
+                    text = account.label.ifBlank { stringResource(R.string.account_default) },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
             if (account.error == null) {
                 Text(
                     text = if (account.rate != null) {
@@ -433,7 +521,11 @@ private fun AccountBalanceRow(account: AccountBalanceUi) {
                             account.rate.to
                         )
                     } else {
-                        stringResource(R.string.history_balance_value, account.totalBalance, account.currency)
+                        stringResource(
+                            R.string.history_balance_value,
+                            account.totalBalance,
+                            account.currency
+                        )
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
@@ -450,23 +542,52 @@ private fun AccountBalanceRow(account: AccountBalanceUi) {
                 modifier = Modifier.padding(start = dimens.spaceS + dimens.spaceS)
             )
         }
-
         val captions = buildList {
             if (account.error == null && account.rate != null) {
                 add(
-                    stringResource(R.string.history_balance_value, account.totalBalance, account.currency) +
-                        " · " + fxRateNote(account.rate)
+                    stringResource(
+                        R.string.history_balance_value,
+                        account.totalBalance,
+                        account.currency
+                    ) +
+                            " · " + fxRateNote(account.rate)
                 )
             }
             if (account.error == null && account.grantedBalance != null && account.grantedBalance > 0.0) {
                 add(
                     if (account.rate != null) {
-                        stringResource(R.string.card_granted, account.rate.convert(account.grantedBalance), account.rate.to)
+                        stringResource(
+                            R.string.card_granted,
+                            account.rate.convert(account.grantedBalance),
+                            account.rate.to
+                        )
                     } else {
-                        stringResource(R.string.card_granted, account.grantedBalance, account.currency)
+                        stringResource(
+                            R.string.card_granted,
+                            account.grantedBalance,
+                            account.currency
+                        )
                     }
                 )
             }
+        }
+        account.pace?.takeIf { account.error == null && showPace }?.let { pace ->
+            val rate = account.rate
+            val perDay = if (rate != null) rate.convert(pace.dailyRate) else pace.dailyRate
+            val unit = rate?.to ?: account.currency
+            val eta = pace.timeToDepletion?.let {
+                durationLabel(ResetDuration(it.toDays(), it.toHours(), it.toMinutes()))
+            }
+            val text = stringResource(R.string.pace_balance_rate, perDay, unit) +
+                (eta?.let { " · " + stringResource(R.string.pace_runs_out_in, it) } ?: "") +
+                (if (pace.isAccelerating) " · " + stringResource(R.string.pace_accelerating) else "")
+            Text(
+                text = stringResource(R.string.pace_label, text),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (pace.isAccelerating) QuotaStatus.LOW.colors.main
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = dimens.spaceS + dimens.spaceS)
+            )
         }
         captions.forEach { caption ->
             Text(
@@ -487,13 +608,11 @@ private fun AccountBalanceRow(account: AccountBalanceUi) {
     }
 }
 
-
 @Composable
 private fun accountErrorText(error: AppError): String = when (error) {
     is AppError.AuthError ->
         if (error.isTerminal) stringResource(R.string.error_invalid_api_key)
         else stringResource(R.string.error_auth)
+
     else -> appErrorMessage(error)
 }
-
-

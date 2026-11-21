@@ -1,0 +1,7 @@
+{
+  "projects": [
+    {"projectId": "example-project-1", "projectNumber": "111", "labels": {"generative-language": "enabled"}},
+    {"projectId": "example-project-2", "labels": null},
+    {"projectNumber": "333"}
+  ]
+}

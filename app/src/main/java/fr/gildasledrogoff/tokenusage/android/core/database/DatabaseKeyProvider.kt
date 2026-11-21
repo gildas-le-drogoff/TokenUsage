@@ -5,7 +5,6 @@ import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
 @Singleton
 class DatabaseKeyProvider @Inject constructor(
     private val storageFactory: SecureStorageFactory
@@ -18,11 +17,12 @@ class DatabaseKeyProvider @Inject constructor(
         store.getString(KEY_NAME, null)
             ?.takeIf { it.length == KEY_BYTES * 2 }
             ?.let { return DatabaseKey(rawKey(it), isNew = false) }
-
         val hex = ByteArray(KEY_BYTES)
             .also { SecureRandom().nextBytes(it) }
             .joinToString("") { "%02x".format(it) }
-        check(store.edit().putString(KEY_NAME, hex).commit()) { "Unable to persist the database key" }
+        check(
+            store.edit().putString(KEY_NAME, hex).commit()
+        ) { "Unable to persist the database key" }
         return DatabaseKey(rawKey(hex), isNew = true)
     }
 

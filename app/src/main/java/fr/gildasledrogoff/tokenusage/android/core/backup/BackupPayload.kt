@@ -2,65 +2,70 @@ package fr.gildasledrogoff.tokenusage.core.backup
 
 import kotlinx.serialization.Serializable
 
-
 @Serializable
 data class BackupPayload(
     val version: Int = CURRENT_VERSION,
     val app: String = APP_ID,
     val exportedAtEpochMs: Long,
-    
+
+    val accounts: Map<String, List<ServiceAccountBackup>> = emptyMap(),
     val credentials: Map<String, ServiceCredentialBackup> = emptyMap(),
     val deepseekAccounts: List<AccountBackup> = emptyList(),
     val zaiAccounts: List<AccountBackup> = emptyList(),
-    
     val claudeAccounts: List<ClaudeAccountBackup> = emptyList(),
-    
     val claudeOrgId: String? = null,
     val refreshIntervalMinutes: Long? = null,
     val notificationsEnabled: Boolean? = null,
-    
     val eurRateSource: String? = null,
-    
     val manualUsdEurRate: Double? = null,
-    
     val manualUsdCnyRate: Double? = null,
-    
     val displayCurrency: String? = null,
-    
     val zaiHideMonthlyTools: Boolean? = null,
-    
     val themeMode: String? = null,
-    
     val quotaDisplayMode: String? = null,
-    
+    val hiddenInsights: List<String>? = null,
+    val statusCheckAllProviders: Boolean? = null,
+    val statusCheckProviders: List<String>? = null,
     val balanceHistory: List<BalanceSnapshotBackup> = emptyList()
 ) {
     companion object {
-        const val CURRENT_VERSION = 3
+        const val CURRENT_VERSION = 4
         const val APP_ID = "tokenusage"
     }
 }
 
-
 @Serializable
 data class ServiceCredentialBackup(
-    
+
+    val type: String? = null,
     val authMode: String? = null,
     val accessToken: String,
     val refreshToken: String? = null,
-    
     val expiresAtEpochSecond: Long? = null,
-    
     val expiresAtMs: Long? = null,
     val scopes: String? = null,
     val rateLimitTier: String? = null,
-    
     val accountId: String? = null,
-    
     val oauthClientId: String? = null,
     val oauthClientSecret: String? = null
 )
 
+@Serializable
+data class ServiceAccountBackup(
+    val id: String,
+    val label: String,
+    val credential: ServiceCredentialBackup,
+
+    val orgId: String? = null
+)
+
+object CredentialTypes {
+    const val CLAUDE_OAUTH = "claude_oauth"
+    const val CLAUDE_WEB = "claude_web"
+    const val CODEX = "codex"
+    const val GEMINI = "gemini"
+    const val API_KEY = "api_key"
+}
 
 @Serializable
 data class ClaudeAccountBackup(
@@ -70,7 +75,6 @@ data class ClaudeAccountBackup(
     val orgId: String? = null
 )
 
-
 @Serializable
 data class AccountBackup(
     val id: String,
@@ -78,10 +82,8 @@ data class AccountBackup(
     val apiKey: String
 )
 
-
 @Serializable
 data class BalanceSnapshotBackup(
-    
     val service: String,
     val accountId: String,
     val accountLabel: String,

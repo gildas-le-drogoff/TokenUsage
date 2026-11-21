@@ -6,7 +6,6 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface GeminiApiService {
-
     @POST("./v1internal:loadCodeAssist")
     suspend fun loadCodeAssist(
         @Header("Authorization") authorization: String,

@@ -2,7 +2,6 @@ package fr.gildasledrogoff.tokenusage.core.domain.model
 
 import java.time.Instant
 
-
 data class BalanceSample(
     val accountId: String,
     val accountLabel: String,
@@ -10,7 +9,6 @@ data class BalanceSample(
     val totalBalance: Double,
     val timestamp: Instant
 )
-
 
 data class ConsumptionPoint(
     val periodKey: String,

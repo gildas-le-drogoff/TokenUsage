@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="notif_alert_exhausted_title">%1$s : quota épuisé</string>
+  <string name="notif_alert_exhausted_body">%1$s : 100 %% utilisé.</string>
+  <string name="notif_alert_restored_title"
+    >%1$s : quota de nouveau disponible</string
+  >
+  <string name="notif_alert_restored_body"
+    >%1$s : le quota est de nouveau disponible (%2$d %% restant).</string
+  >
+  <string name="notif_alert_upcoming_title"
+    >%1$s : réinitialisation de %2$s imminente</string
+  >
+  <string name="notif_alert_upcoming_body"
+    >%1$d %% du quota reste inutilisé. %2$s. Le quota non utilisé sera
+    perdu.</string
+  >
+  <string name="provider_status_operational">Opérationnel</string>
+  <string name="provider_status_minor">Dégradé</string>
+  <string name="provider_status_major">Panne partielle</string>
+  <string name="provider_status_critical">Panne majeure</string>
+  <string name="provider_status_maintenance">Maintenance</string>
+  <string name="provider_status_unknown">Statut inconnu</string>
+  <string name="provider_status_cd">Statut du fournisseur : %1$s</string>
+  <string name="celebration_reset_title"
+    >Quota hebdomadaire réinitialisé</string
+  >
+  <string name="celebration_reset_body"
+    >%1$s : la fenêtre 7 jours repart à zéro. Touchez pour fermer.</string
+  >
+</resources>

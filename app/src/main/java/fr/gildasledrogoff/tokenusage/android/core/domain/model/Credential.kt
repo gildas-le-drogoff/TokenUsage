@@ -14,19 +14,15 @@ sealed class Credential {
         val rateLimitTier: String? = null
     ) : Credential()
 
-    
     data class ClaudeWebCredential(
         override val accessToken: String
     ) : Credential() {
         override val refreshToken: String? = null
-
         val isValidSessionKey: Boolean
             get() = isSessionKey(accessToken)
 
         companion object {
-            
             private val SESSION_KEY_REGEX = Regex("""sk-ant-sid\d+-\S+""")
-
             fun isSessionKey(token: String): Boolean = SESSION_KEY_REGEX.matches(token)
         }
     }
@@ -43,32 +39,27 @@ sealed class Credential {
         val expiresAtMs: Long,
         val oauthClientId: String,
         val oauthClientSecret: String,
-        
         val hostedDomain: String? = null
     ) : Credential()
 
-    
     data class DeepseekCredential(
         override val accessToken: String
     ) : Credential() {
         override val refreshToken: String? = null
     }
 
-    
     data class ZaiCredential(
         override val accessToken: String
     ) : Credential() {
         override val refreshToken: String? = null
     }
 
-    
     data class ApiKeyCredential(
         override val accessToken: String
     ) : Credential() {
         override val refreshToken: String? = null
     }
 }
-
 
 data class DeepseekAccount(
     val id: String,

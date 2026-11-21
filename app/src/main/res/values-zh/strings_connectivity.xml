@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="widget_status_offline">离线</string>
+  <string name="widget_status_failed">刷新失败</string>
+  <string name="widget_status_with_date">%1$s · %2$s</string>
+  <string name="reconnect_refresh_title">网络恢复时刷新</string>
+  <string name="reconnect_refresh_subtitle_on"
+    >已开启：网络恢复后立即在后台刷新小部件和通知，即使应用已关闭。</string
+  >
+  <string name="reconnect_refresh_subtitle_off"
+    >已关闭：应用打开时，仪表盘仍会在网络恢复后自动刷新。小部件等待下一次计划刷新。</string
+  >
+  <string name="reconnect_refresh_dialog_title">网络恢复时在后台刷新？</string>
+  <string name="reconnect_refresh_dialog_text"
+    >当刷新因无网络而失败时，TokenUsage 会请求 Android
+    在网络恢复后于后台重新刷新（即使应用已关闭），以更新小部件和通知。\n\n•
+    不会请求任何新权限。\n• 每次网络恢复刷新一次；若连接仍不可用，最多重试 3
+    次。\n• 具体时间由 Android 决定（省电模式、低电耗模式）。\n•
+    您可以随时在此关闭此选项。</string
+  >
+  <string name="reconnect_refresh_dialog_accept">允许</string>
+  <string name="reconnect_refresh_dialog_decline">暂不</string>
+</resources>

@@ -13,7 +13,6 @@ import com.google.crypto.tink.daead.DeterministicAeadConfig
 import com.google.crypto.tink.daead.PredefinedDeterministicAeadParameters
 import java.util.Base64
 
-
 internal class TinkKeysetVault(
     private val storage: SharedPreferences,
     private val masterKey: Aead
@@ -27,7 +26,6 @@ internal class TinkKeysetVault(
         loadOrCreate(VALUE_KEYSET, PredefinedAeadParameters.AES256_GCM)
             .getPrimitive(RegistryConfiguration.get(), Aead::class.java)
     }
-
     val keyDaead: DeterministicAead by lazy {
         loadOrCreate(KEY_KEYSET, PredefinedDeterministicAeadParameters.AES256_SIV)
             .getPrimitive(RegistryConfiguration.get(), DeterministicAead::class.java)
@@ -51,7 +49,9 @@ internal class TinkKeysetVault(
             associatedData,
             RegistryConfiguration.get()
         )
-        check(storage.edit().putString(name, Base64.getEncoder().encodeToString(wrapped)).commit()) {
+        check(
+            storage.edit().putString(name, Base64.getEncoder().encodeToString(wrapped)).commit()
+        ) {
             "Unable to persist keyset $name"
         }
         return handle

@@ -6,20 +6,16 @@ import com.google.crypto.tink.DeterministicAead
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 
-
 internal class SecurePreferences(
     private val storeName: String,
     private val backing: SharedPreferences,
     private val valueAead: Aead,
     private val keyDaead: DeterministicAead
 ) : SharedPreferences {
-
     private val keyAssociatedData = "$KEY_AAD_PREFIX$storeName".toByteArray(Charsets.UTF_8)
-
     private val listeners =
         ConcurrentHashMap<SharedPreferences.OnSharedPreferenceChangeListener,
-            SharedPreferences.OnSharedPreferenceChangeListener>()
-
+                SharedPreferences.OnSharedPreferenceChangeListener>()
 
     override fun getAll(): Map<String, *> = buildMap {
         backing.all.forEach { (encryptedKey, raw) ->
@@ -37,18 +33,13 @@ internal class SecurePreferences(
         (read(key) as? Set<String>)?.toMutableSet() ?: defValues
 
     override fun getInt(key: String, defValue: Int): Int = read(key) as? Int ?: defValue
-
     override fun getLong(key: String, defValue: Long): Long = read(key) as? Long ?: defValue
-
     override fun getFloat(key: String, defValue: Float): Float = read(key) as? Float ?: defValue
-
     override fun getBoolean(key: String, defValue: Boolean): Boolean =
         read(key) as? Boolean ?: defValue
 
     override fun contains(key: String): Boolean = backing.contains(encryptKey(key))
-
     override fun edit(): SharedPreferences.Editor = SecureEditor()
-
     override fun registerOnSharedPreferenceChangeListener(
         listener: SharedPreferences.OnSharedPreferenceChangeListener
     ) {
@@ -70,7 +61,6 @@ internal class SecurePreferences(
         val raw = backing.getString(encryptedKey, null) ?: return null
         return decryptValue(encryptedKey, raw)
     }
-
 
     private fun encryptKey(key: String): String =
         ENCODER.encodeToString(
@@ -100,11 +90,9 @@ internal class SecurePreferences(
         null
     }
 
-
     private inner class SecureEditor : SharedPreferences.Editor {
         private val pending = LinkedHashMap<String, Any?>()
         private var clearRequested = false
-
         override fun putString(key: String, value: String?) = stage(key, value)
         override fun putStringSet(key: String, values: Set<String>?) = stage(key, values?.toSet())
         override fun putInt(key: String, value: Int) = stage(key, value)
@@ -112,22 +100,18 @@ internal class SecurePreferences(
         override fun putFloat(key: String, value: Float) = stage(key, value)
         override fun putBoolean(key: String, value: Boolean) = stage(key, value)
         override fun remove(key: String) = stage(key, null)
-
         override fun clear(): SharedPreferences.Editor {
             synchronized(pending) { clearRequested = true }
             return this
         }
 
         override fun commit(): Boolean = buildBackingEdit().commit()
-
         override fun apply() = buildBackingEdit().apply()
-
         private fun stage(key: String, value: Any?): SharedPreferences.Editor {
             synchronized(pending) { pending[key] = value }
             return this
         }
 
-        
         private fun buildBackingEdit(): SharedPreferences.Editor {
             val editor = backing.edit()
             synchronized(pending) {
@@ -155,7 +139,6 @@ internal class SecurePreferences(
     }
 }
 
-
 internal object LockedPreferences : SharedPreferences {
     override fun getAll(): Map<String, *> = emptyMap<String, Any>()
     override fun getString(key: String, defValue: String?): String? = defValue
@@ -169,6 +152,7 @@ internal object LockedPreferences : SharedPreferences {
     override fun registerOnSharedPreferenceChangeListener(
         listener: SharedPreferences.OnSharedPreferenceChangeListener
     ) = Unit
+
     override fun unregisterOnSharedPreferenceChangeListener(
         listener: SharedPreferences.OnSharedPreferenceChangeListener
     ) = Unit

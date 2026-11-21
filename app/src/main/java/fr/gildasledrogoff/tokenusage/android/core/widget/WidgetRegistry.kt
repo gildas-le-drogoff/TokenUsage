@@ -33,33 +33,27 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
-import fr.gildasledrogoff.tokenusage.R
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
-import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
-import fr.gildasledrogoff.tokenusage.core.workmanager.QuotaRefreshEntryPoint
-import fr.gildasledrogoff.tokenusage.ui.i18n.localizedWindowLabel
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import fr.gildasledrogoff.tokenusage.R
+import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
+import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRepository
+import fr.gildasledrogoff.tokenusage.core.workmanager.QuotaRefreshEntryPoint
+import fr.gildasledrogoff.tokenusage.ui.i18n.localizedWindowLabel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-
 internal object WidgetRegistry {
-
     val REVISION_KEY = longPreferencesKey("revision")
-
-    
     private val renderLock = Mutex()
-
-    
     suspend fun refresh(context: Context, glanceId: GlanceId) = renderLock.withLock {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId)
         updateAppWidgetState(context, glanceId) { prefs ->
@@ -68,7 +62,6 @@ internal object WidgetRegistry {
         resolve(context, appWidgetId).update(context, glanceId)
     }
 
-    
     suspend fun refreshAll(context: Context) = renderLock.withLock {
         val manager = GlanceAppWidgetManager(context)
         for (widget in listOf(
@@ -86,7 +79,6 @@ internal object WidgetRegistry {
         }
     }
 
-    
     fun resolve(context: Context, appWidgetId: Int): GlanceAppWidget {
         val provider = AppWidgetManager.getInstance(context)
             .getAppWidgetInfo(appWidgetId)?.provider?.className
@@ -98,7 +90,6 @@ internal object WidgetRegistry {
         }
     }
 }
-
 
 class RefreshWidgetAction : ActionCallback {
     override suspend fun onAction(
@@ -114,13 +105,11 @@ class RefreshWidgetAction : ActionCallback {
     }
 }
 
-
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface WidgetActionsEntryPoint {
     fun displayPreferences(): DisplayPreferencesRepository
 }
-
 
 class ToggleWidgetThemeAction : ActionCallback {
     override suspend fun onAction(
@@ -140,14 +129,10 @@ class ToggleWidgetThemeAction : ActionCallback {
     }
 }
 
-
 abstract class TokenUsageGlanceWidget : GlanceAppWidget() {
-
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
-
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-
         provideContent {
             currentState<Preferences>()[WidgetRegistry.REVISION_KEY]
             val snapshots = WidgetSnapshots.load(context, appWidgetId)
@@ -165,9 +150,7 @@ abstract class TokenUsageGlanceWidget : GlanceAppWidget() {
     protected abstract fun Content(snapshots: List<ServiceSnapshot>)
 }
 
-
 class QuotaCompactGlanceWidget : TokenUsageGlanceWidget() {
-
     @Composable
     override fun Content(snapshots: List<ServiceSnapshot>) {
         CompactTile(snapshots, GlanceModifier.fillMaxSize().padding(12.dp))
@@ -178,9 +161,7 @@ class QuotaCompactWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = QuotaCompactGlanceWidget()
 }
 
-
 class ResetGlanceWidget : TokenUsageGlanceWidget() {
-
     @Composable
     override fun Content(snapshots: List<ServiceSnapshot>) {
         ResetContent(snapshots)
@@ -200,7 +181,6 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
         .filter { it.third > nowSecond }
         .minByOrNull { it.third }
     val narrow = LocalSize.current.height < 90.dp
-
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -221,7 +201,7 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
                 ) {
                     Column(modifier = GlanceModifier.defaultWeight()) {
                         Text(
-                            text = service.service.displayName,
+                            text = service.title(context),
                             style = TextStyle(
                                 color = Palette.title,
                                 fontSize = 11.sp,
@@ -234,6 +214,10 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
                             style = TextStyle(color = Palette.secondary, fontSize = 10.sp),
                             maxLines = 1
                         )
+                    }
+                    service.staleText(context)?.let { staleText ->
+                        Spacer(modifier = GlanceModifier.width(6.dp))
+                        StaleIcon(staleText)
                     }
                     Spacer(modifier = GlanceModifier.width(8.dp))
                     Text(
@@ -258,7 +242,7 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
                         ServiceDot(service.service.brandColor, 8.dp)
                         Spacer(modifier = GlanceModifier.width(6.dp))
                         Text(
-                            text = service.service.displayName,
+                            text = service.title(context),
                             style = TextStyle(
                                 color = Palette.title,
                                 fontSize = 13.sp,
@@ -285,15 +269,22 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
                     )
                     Spacer(modifier = GlanceModifier.height(4.dp))
                     Text(
-                        text = "${context.localizedWindowLabel(window.label)} · ${resetClock(resetsAt)}",
+                        text = "${context.localizedWindowLabel(window.label)} · ${
+                            resetClock(
+                                resetsAt
+                            )
+                        }",
                         style = TextStyle(color = Palette.secondary, fontSize = 11.sp)
                     )
+                    service.staleText(context)?.let { staleText ->
+                        Spacer(modifier = GlanceModifier.height(2.dp))
+                        StaleLine(staleText, fontSize = 10.sp, centered = true)
+                    }
                 }
             }
         }
     }
 }
-
 
 private fun resetClock(epochSecond: Long): String {
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -304,9 +295,7 @@ class ResetWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = ResetGlanceWidget()
 }
 
-
 class BalancesGlanceWidget : TokenUsageGlanceWidget() {
-
     @Composable
     override fun Content(snapshots: List<ServiceSnapshot>) {
         BalancesContent(snapshots)
@@ -334,7 +323,7 @@ private fun BalancesContent(snapshots: List<ServiceSnapshot>) {
                         ServiceDot(snapshot.service.brandColor, 10.dp)
                         Spacer(modifier = GlanceModifier.width(8.dp))
                         Text(
-                            text = snapshot.service.displayName,
+                            text = snapshot.title(LocalContext.current),
                             style = TextStyle(
                                 color = Palette.title,
                                 fontSize = 15.sp,
@@ -348,6 +337,10 @@ private fun BalancesContent(snapshots: List<ServiceSnapshot>) {
                         style = TextStyle(color = Palette.secondary, fontSize = 12.sp),
                         maxLines = 3
                     )
+                    snapshot.staleText(LocalContext.current)?.let { staleText ->
+                        Spacer(modifier = GlanceModifier.height(2.dp))
+                        StaleLine(staleText, fontSize = 10.sp)
+                    }
                 }
             }
         }

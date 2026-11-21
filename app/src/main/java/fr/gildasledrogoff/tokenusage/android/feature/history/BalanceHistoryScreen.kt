@@ -17,15 +17,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,12 +35,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.gildasledrogoff.tokenusage.R
-import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionGranularity
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionPoint
 import fr.gildasledrogoff.tokenusage.core.domain.model.DeepseekAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.FxRate
+import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.ui.i18n.fxRateNote
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,14 +53,16 @@ fun BalanceHistoryScreen(
     viewModel: BalanceHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.screen_history_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(painter = painterResource(R.drawable.ic_arrow_back_rounded), contentDescription = stringResource(R.string.cd_back))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back_rounded),
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
                     }
                 }
             )
@@ -110,18 +113,17 @@ fun BalanceHistoryScreen(
                             selectedAccountId = uiState.selectedAccountId,
                             onAccountSelected = viewModel::selectAccount
                         )
-
                         GranularitySelector(
                             granularity = uiState.granularity,
                             onGranularitySelected = viewModel::selectGranularity
                         )
-
                         CurrentBalanceCard(
                             balance = uiState.latestBalance,
                             currency = uiState.currency,
-                            fxRate = uiState.fxRate
+                            fxRate = uiState.fxRate,
+                            depletionAt = uiState.depletionAt,
+                            depletionEstimated = uiState.depletionEstimated
                         )
-
                         HistoryCard(
                             points = uiState.points,
                             granularity = uiState.granularity,
@@ -167,7 +169,6 @@ private fun GranularitySelector(
         ConsumptionGranularity.DAILY to stringResource(R.string.granularity_daily),
         ConsumptionGranularity.MONTHLY to stringResource(R.string.granularity_monthly)
     )
-
     ChoiceChipRow(
         options = options,
         selected = options.first { it.first == granularity },
@@ -181,7 +182,9 @@ private fun GranularitySelector(
 private fun CurrentBalanceCard(
     balance: Double?,
     currency: String,
-    fxRate: FxRate?
+    fxRate: FxRate?,
+    depletionAt: Instant?,
+    depletionEstimated: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -203,6 +206,21 @@ private fun CurrentBalanceCard(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
+            if (balance != null && depletionEstimated) {
+                Text(
+                    text = if (depletionAt != null) {
+                        stringResource(
+                            R.string.history_depletion_estimate,
+                            formatDepletionDate(depletionAt)
+                        )
+                    } else {
+                        stringResource(R.string.history_depletion_unknown)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             if (fxRate != null) {
                 Text(
                     text = fxRateNote(fxRate) + "\n" + stringResource(R.string.fx_history_approx),
@@ -225,7 +243,10 @@ private fun HistoryCard(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Text(
                 text = if (granularity == ConsumptionGranularity.DAILY) {
                     stringResource(R.string.history_daily_title)
@@ -234,7 +255,6 @@ private fun HistoryCard(
                 },
                 style = MaterialTheme.typography.titleSmall
             )
-
             if (points.isEmpty()) {
                 Text(
                     text = stringResource(R.string.history_not_enough_data),
@@ -254,7 +274,14 @@ private fun HistoryCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (granularity == ConsumptionGranularity.DAILY) {
+                    DailyConsumptionList(points = points, currency = currency, days = 14)
+                }
             }
         }
     }
 }
+
+private fun formatDepletionDate(instant: Instant): String =
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+        .format(instant.atZone(ZoneId.systemDefault()))

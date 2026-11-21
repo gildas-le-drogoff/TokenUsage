@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="diag_title">诊断</string>
+  <string name="diag_local_only"
+    >所有内容都保留在此设备上，不会发送到任何地方，也不会显示任何密钥。</string
+  >
+  <string name="diag_accounts_title">服务和账户</string>
+  <string name="diag_background_title">后台刷新</string>
+  <string name="diag_action_refresh">重新加载</string>
+  <string name="diag_action_copy">复制报告</string>
+  <string name="diag_report_copied">报告已复制到剪贴板</string>
+  <string name="diag_status_ok">正常</string>
+  <string name="diag_status_error">错误</string>
+  <string name="diag_status_not_configured">未配置</string>
+  <string name="diag_status_never">尚未刷新</string>
+  <string name="diag_last_refresh">数据时长：%1$s · 来源：%2$s</string>
+  <string name="diag_error_line">错误：%1$s</string>
+  <string name="diag_last_error_line">上次错误 %1$s：%2$s</string>
+  <string name="diag_origin_dashboard">仪表盘</string>
+  <string name="diag_origin_worker">定期任务</string>
+  <string name="diag_origin_manual">手动刷新（通知、小部件）</string>
+  <string name="diag_origin_tile">快捷设置图块</string>
+  <string name="diag_origin_reconnect">网络恢复（后台）</string>
+  <string name="diag_yes">是</string>
+  <string name="diag_no">否</string>
+  <string name="diag_unknown">未知</string>
+  <string name="diag_battery_ignored">已忽略电池优化</string>
+  <string name="diag_standby_bucket">应用待机分组</string>
+  <string name="diag_standby_restrictive">此分组会大幅延迟定期任务。</string>
+  <string name="diag_background_restricted">后台受限</string>
+  <string name="diag_doze">Doze（设备空闲）</string>
+  <string name="diag_battery_saver">省电模式</string>
+  <string name="diag_work_quota">配额刷新（定期任务）</string>
+  <string name="diag_work_token">令牌刷新（定期任务）</string>
+  <string name="diag_work_state">状态：%1$s</string>
+  <string name="diag_work_attempt">第 %1$d 次尝试</string>
+  <string name="diag_work_next">下次运行：%1$s</string>
+  <string name="diag_work_last">上次运行：%1$s（%2$s）</string>
+  <string name="diag_work_never">上次运行：无记录</string>
+  <string name="diag_work_not_scheduled">未计划</string>
+  <string name="diag_vendor_title"
+    >您的手机（%1$s）以强制终止后台应用而闻名</string
+  >
+  <string name="diag_vendor_xiaomi"
+    >设置 › 应用 › 应用管理 ›
+    TokenUsage：开启自启动，将省电策略设为“无限制”，并在最近任务中锁定应用。</string
+  >
+  <string name="diag_vendor_huawei"
+    >设置 › 电池 › 应用启动管理 ›
+    TokenUsage：改为手动管理，并允许自启动、关联启动和后台活动。</string
+  >
+  <string name="diag_vendor_oppo"
+    >设置 › 电池 ›
+    TokenUsage：允许后台活动和自启动，并在最近任务中锁定应用。</string
+  >
+  <string name="diag_vendor_vivo"
+    >设置 › 电池 › 后台耗电管理 › TokenUsage：允许高耗电后台运行，并在 i
+    管家中开启自启动。</string
+  >
+  <string name="diag_vendor_samsung"
+    >设置 › 电池 › 后台使用限制：将 TokenUsage
+    从“休眠应用”和“深度休眠应用”中移除，并加入“从不休眠的应用”。</string
+  >
+  <string name="diag_vendor_oneplus"
+    >设置 › 电池 › 电池优化 ›
+    TokenUsage：选择“不优化”，并开启允许后台活动和自启动。</string
+  >
+  <string name="diag_vendor_other"
+    >请检查手机的电池设置，将 TokenUsage 从电池优化和后台限制中排除。</string
+  >
+  <string name="diag_vendor_link"
+    >更多说明（仅文本，不会自动打开）：%1$s</string
+  >
+</resources>

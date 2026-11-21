@@ -1,0 +1,8 @@
+{
+  "login": "example-free",
+  "copilot_plan": "free",
+  "access_type_sku": "free_limited_copilot",
+  "monthly_quotas": {"chat": 50, "completions": 2000},
+  "limited_user_quotas": {"chat": 35, "completions": 1500},
+  "quota_reset_date": "2026-12-01"
+}

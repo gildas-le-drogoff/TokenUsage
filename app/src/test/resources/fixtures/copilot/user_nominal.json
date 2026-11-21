@@ -1,0 +1,13 @@
+{
+  "login": "example-user",
+  "copilot_plan": "individual_pro",
+  "access_type_sku": "copilot_pro_subscriber",
+  "token_based_billing": false,
+  "quota_reset_date": "2026-12-01",
+  "quota_reset_date_utc": "2026-12-01T00:00:00.000Z",
+  "quota_snapshots": {
+    "premium_interactions": {"entitlement": 300, "remaining": 120, "percent_remaining": 40.0, "unlimited": false, "quota_id": "premium_interactions", "overage_count": 0},
+    "chat": {"entitlement": 0, "remaining": 0, "percent_remaining": 100.0, "unlimited": true, "quota_id": "chat"},
+    "completions": {"unlimited": true, "quota_id": "completions"}
+  }
+}

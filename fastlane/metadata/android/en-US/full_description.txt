@@ -4,17 +4,17 @@ TokenUsage shows what is left of your AI subscriptions and API credits on a sing
 
 <ul>
 <li>Quotas for Claude, Codex, Gemini, GitHub Copilot and Z.ai, with the reset time of every window</li>
-<li>Prepaid balances for DeepSeek and OpenRouter, spend for OpenAI and OpenRouter</li>
-<li>Several accounts per service for Claude, Z.ai and DeepSeek</li>
+<li>Prepaid balances for DeepSeek, OpenRouter and the Claude API (platform.claude.com), spend for OpenAI and OpenRouter</li>
+<li>Several accounts for every service</li>
 <li>One colour code everywhere: green above 40 % left, amber between 15 and 40 %, red at 15 % or below</li>
 <li>Quotas read as "% left" or "% used"</li>
 <li>Display currency: the one billed by each provider, or everything converted to USD, EUR or CNY</li>
 <li>Daily and monthly consumption charts for DeepSeek</li>
 <li>Home screen widgets (quotas, compact quota, next reset, balances) and a Quick Settings tile</li>
-<li>Notifications for quota status and quota resets</li>
-<li>Background refresh at the interval you choose</li>
+<li>Notifications for quota resets, plus configurable alerts: quota threshold, low balance and depletion forecast</li>
+<li>Background refresh at the interval you choose, with a diagnostics screen (battery, Doze, scheduled jobs)</li>
 <li>App lock with biometrics or the device screen lock</li>
-<li>Encrypted backup protected by a PIN, as a ZIP file or a QR code</li>
+<li>Encrypted backup protected by a password, as a ZIP file or a QR code</li>
 <li>Material 3, light and dark themes, phone and tablet layouts</li>
 <li>English, French and Chinese</li>
 </ul>

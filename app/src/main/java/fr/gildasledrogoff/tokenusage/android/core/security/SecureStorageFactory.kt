@@ -8,24 +8,18 @@ import java.security.ProviderException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
 @Singleton
 class SecureStorageFactory @Inject constructor(
     @ApplicationContext private val context: Context,
     private val integrityGuard: IntegrityGuard
 ) {
     private val vault: TinkKeysetVault by lazy { openVaultOrReset() }
-
-    
     val credentials: SharedPreferences by lazy {
         open(CREDENTIALS_STORE).also { store ->
             if (store is SecurePreferences) LegacyEncryptedPrefsMigrator(context).migrateInto(store)
         }
     }
-
-    
     val databaseKeys: SharedPreferences by lazy { open(DATABASE_KEY_STORE) }
-
     private fun open(storeName: String): SharedPreferences {
         if (integrityGuard.isVaultLocked) return LockedPreferences
         return SecurePreferences(

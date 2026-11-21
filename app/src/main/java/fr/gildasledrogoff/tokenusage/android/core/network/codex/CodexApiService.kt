@@ -5,7 +5,6 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 
 interface CodexApiService {
-
     @GET("backend-api/wham/usage")
     suspend fun getUsage(
         @Header("Authorization") authorization: String,

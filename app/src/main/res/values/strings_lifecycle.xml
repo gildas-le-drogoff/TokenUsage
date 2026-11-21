@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="notif_alert_exhausted_title">%1$s: quota exhausted</string>
+  <string name="notif_alert_exhausted_body">%1$s: 100%% used.</string>
+  <string name="notif_alert_restored_title">%1$s: quota available again</string>
+  <string name="notif_alert_restored_body"
+    >%1$s: quota is available again (%2$d%% remaining).</string
+  >
+  <string name="notif_alert_upcoming_title">%1$s: %2$s reset soon</string>
+  <string name="notif_alert_upcoming_body"
+    >%1$d%% of the quota is still unused. %2$s. Unused quota is lost.</string
+  >
+  <string name="provider_status_operational">Operational</string>
+  <string name="provider_status_minor">Degraded</string>
+  <string name="provider_status_major">Partial outage</string>
+  <string name="provider_status_critical">Major outage</string>
+  <string name="provider_status_maintenance">Maintenance</string>
+  <string name="provider_status_unknown">Unknown status</string>
+  <string name="provider_status_cd">Provider status: %1$s</string>
+  <string name="celebration_reset_title">Weekly quota reset</string>
+  <string name="celebration_reset_body"
+    >%1$s: the 7-day window starts over. Tap to close.</string
+  >
+</resources>

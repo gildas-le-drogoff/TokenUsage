@@ -6,7 +6,6 @@ sealed class Result<out T, out E> {
 
     val isSuccess: Boolean get() = this is Success
     val isFailure: Boolean get() = this is Failure
-
     fun <R> map(transform: (T) -> R): Result<R, E> = when (this) {
         is Success -> Success(transform(value))
         is Failure -> Failure(error)

@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-  <b>所有 AI 配额和 API 余额，一目了然。</b><br/>
+  <b>AI 配额与 API 余额，集中查看。</b><br/>
   DeepSeek · OpenRouter · Z.ai · OpenAI · Claude · Codex · Gemini · GitHub Copilot
 </p>
 
 <p align="center">
-  <a href="https://github.com/gildas-le-drogoff/TokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/gildas-le-drogoff/TokenUsage?label=下载&style=for-the-badge" alt="下载" /></a>
-  <img src="https://img.shields.io/badge/Android-10%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 10+" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/许可证-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0" /></a>
+  <a href="https://github.com/gildas-le-drogoff/TokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/gildas-le-drogoff/TokenUsage?label=下载" alt="下载" /></a>
+  <img src="https://img.shields.io/badge/Android-10%2B-3DDC84&logo=android&logoColor=white" alt="Android 10+" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/许可证-GPL--3.0-blue" alt="GPL-3.0" /></a>
 </p>
 
 <p align="center">
@@ -24,11 +24,12 @@
 
 ---
 
-## ⚡ 粘贴 API 密钥，就这么简单。
+## 快速上手
 
 | 服务 | 所需条件 | 配置方式 |
 |---|---|---|
 | **Claude** | claude.ai 账号 | 点击 **使用 Claude 登录** |
+| **Claude API** | platform.claude.com 会话 Cookie | 粘贴即可 → API 额度余额 + 当月支出 |
 | **DeepSeek** | API 密钥 | 粘贴即可 → 余额 + 每日/每月消费图表 |
 | **OpenRouter** | API 密钥 | 粘贴即可 → 剩余额度 + 支出 |
 | **Z.ai** | API 密钥 | 粘贴即可 → 配额窗口 + 重置时间 |
@@ -38,19 +39,19 @@
 
 打开 **设置**，填写你使用的服务，仪表盘即刻就绪。无需账号，无需服务器，无需注册。
 
-## ✨ 你会喜欢它的理由
+## ✨ 功能
 
-- 🎯 **一个仪表盘看全部**：8 家服务商的配额、预付余额和支出
-- 🚦 **一眼读懂**：绿、黄、红三色，并显示每个配额窗口的重置时间
-- 👥 Claude、Z.ai 和 DeepSeek 支持 **多账号**
-- 📈 DeepSeek **消费历史**，按日、按月查看
-- 💱 **你的货币**：保留各服务商的原始货币，或统一换算为 USD、EUR 或 CNY
-- 📱 **主屏幕小部件** 和 **快速设置磁贴**
-- 🔔 配额重置时发送 **通知**
-- 🔒 **应用锁**（生物识别）、**加密存储**、**加密备份**（ZIP 或二维码）
-- 🌗 Material 3，浅色与深色主题，适配手机和平板 — 支持英文、法文和中文
+- **统一仪表盘**：8 家服务商的配额、预付余额和支出
+- **一眼读懂**：绿、黄、红三色，并显示每个配额窗口的重置时间
+- 所有服务均支持 **多账号**
+- DeepSeek **消费历史**，按日、按月查看
+- **你的货币**：保留各服务商的原始货币，或统一换算为 USD、EUR 或 CNY
+- **主屏幕小部件** 和 **快速设置磁贴**
+- 配额重置时发送 **通知**，并支持 **可配置提醒**（配额阈值、余额不足、耗尽预测）
+- **应用锁**（生物识别）、**加密存储**、**加密备份**（ZIP 或二维码）
+- Material 3，浅色与深色主题，适配手机和平板 — 支持英文、法文和中文
 
-## 🛡️ 隐私至上的设计
+## 🛡️ 隐私
 
 没有后端。没有统计分析。没有跟踪。你的密钥在设备上加密存储（Android Keystore），只会发送给其所属的服务商。唯一的其他请求是获取汇率（Frankfurter 或欧洲央行），且仅在你选择启用时才会发出。
 

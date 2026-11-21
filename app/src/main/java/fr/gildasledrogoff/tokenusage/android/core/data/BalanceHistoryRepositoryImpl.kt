@@ -12,13 +12,11 @@ import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
 @Singleton
 class BalanceHistoryRepositoryImpl @Inject constructor(
     private val dao: BalanceSnapshotDao,
     private val clock: Clock
 ) : BalanceHistoryRepository {
-
     override suspend fun record(
         service: AiService,
         accountId: String,
@@ -57,6 +55,7 @@ class BalanceHistoryRepositoryImpl @Inject constructor(
         return when (granularity) {
             ConsumptionGranularity.DAILY ->
                 BalanceConsumptionAggregator.daily(aggregatorSamples)
+
             ConsumptionGranularity.MONTHLY ->
                 BalanceConsumptionAggregator.monthly(aggregatorSamples)
         }
@@ -71,7 +70,6 @@ class BalanceHistoryRepositoryImpl @Inject constructor(
     )
 
     companion object {
-        
         const val RETENTION_DAYS = 400
     }
 }

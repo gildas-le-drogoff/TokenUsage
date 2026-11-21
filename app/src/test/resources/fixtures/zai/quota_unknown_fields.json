@@ -1,0 +1,6 @@
+{
+  "code": 200, "msg": "ok", "success": true, "traceId": "EXAMPLE",
+  "data": {"level": "max", "region": "global", "limits": [
+    {"type": "TOKENS_LIMIT", "unit": 3, "number": 5, "percentage": 12, "nextResetTime": 1795000000000, "extra": {"a": 1}}
+  ]}
+}

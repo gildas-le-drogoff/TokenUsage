@@ -1,12 +1,19 @@
 package fr.gildasledrogoff.tokenusage.di
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import fr.gildasledrogoff.tokenusage.BuildConfig
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
+import fr.gildasledrogoff.tokenusage.core.network.AndroidNetworkMonitor
+import fr.gildasledrogoff.tokenusage.core.network.NetworkMonitor
 import fr.gildasledrogoff.tokenusage.core.network.RetryInterceptor
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeApiService
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeTokenRefreshService
 import fr.gildasledrogoff.tokenusage.core.network.claude.ClaudeWebApiService
+import fr.gildasledrogoff.tokenusage.core.network.claudeplatform.ClaudePlatformApiService
 import fr.gildasledrogoff.tokenusage.core.network.codex.CodexApiService
 import fr.gildasledrogoff.tokenusage.core.network.codex.CodexTokenRefreshService
 import fr.gildasledrogoff.tokenusage.core.network.copilot.CopilotApiService
@@ -18,10 +25,6 @@ import fr.gildasledrogoff.tokenusage.core.network.gemini.GeminiTokenRefreshServi
 import fr.gildasledrogoff.tokenusage.core.network.openai.OpenAiApiService
 import fr.gildasledrogoff.tokenusage.core.network.openrouter.OpenRouterApiService
 import fr.gildasledrogoff.tokenusage.core.network.zai.ZaiApiService
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -69,6 +72,10 @@ annotation class OpenAiClient
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
+annotation class ClaudePlatformClient
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
 annotation class ExchangeRateClient
 
 @Qualifier
@@ -86,6 +93,9 @@ annotation class GeminiTokenClient
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+    @Provides
+    @Singleton
+    fun provideNetworkMonitor(monitor: AndroidNetworkMonitor): NetworkMonitor = monitor
 
     @Provides
     @Singleton
@@ -101,21 +111,17 @@ object NetworkModule {
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(RetryInterceptor())
-
         if (BuildConfig.IS_DEBUG) {
             val logging = HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
-                
                 redactHeader("Authorization")
                 redactHeader("Cookie")
                 redactHeader("Set-Cookie")
             }
             builder.addInterceptor(logging)
         }
-
         return builder
     }
-
 
     @Provides
     @Singleton
@@ -155,7 +161,6 @@ object NetworkModule {
             .create(ClaudeTokenRefreshService::class.java)
     }
 
-
     @Provides
     @Singleton
     @ClaudeWebClient
@@ -174,7 +179,6 @@ object NetworkModule {
             .build()
             .create(ClaudeWebApiService::class.java)
     }
-
 
     @Provides
     @Singleton
@@ -213,7 +217,6 @@ object NetworkModule {
             .build()
             .create(CodexTokenRefreshService::class.java)
     }
-
 
     @Provides
     @Singleton
@@ -267,7 +270,6 @@ object NetworkModule {
             .create(GeminiProjectsService::class.java)
     }
 
-
     @Provides
     @Singleton
     @DeepseekClient
@@ -287,7 +289,6 @@ object NetworkModule {
             .create(DeepseekApiService::class.java)
     }
 
-
     @Provides
     @Singleton
     @ZaiClient
@@ -306,7 +307,6 @@ object NetworkModule {
             .build()
             .create(ZaiApiService::class.java)
     }
-
 
     @Provides
     @Singleton
@@ -329,7 +329,6 @@ object NetworkModule {
     ): GitHubDeviceFlowService = retrofit(GitHubDeviceFlowService.BASE_URL, client, json)
         .create(GitHubDeviceFlowService::class.java)
 
-
     @Provides
     @Singleton
     @OpenRouterClient
@@ -342,7 +341,6 @@ object NetworkModule {
         json: Json
     ): OpenRouterApiService = retrofit(AiService.OPENROUTER.baseUrl, client, json)
         .create(OpenRouterApiService::class.java)
-
 
     @Provides
     @Singleton
@@ -357,6 +355,19 @@ object NetworkModule {
     ): OpenAiApiService = retrofit(AiService.OPENAI.baseUrl, client, json)
         .create(OpenAiApiService::class.java)
 
+    @Provides
+    @Singleton
+    @ClaudePlatformClient
+    fun provideClaudePlatformOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
+
+    @Provides
+    @Singleton
+    fun provideClaudePlatformApiService(
+        @ClaudePlatformClient client: OkHttpClient,
+        json: Json
+    ): ClaudePlatformApiService = retrofit(AiService.CLAUDE_PLATFORM.baseUrl, client, json)
+        .create(ClaudePlatformApiService::class.java)
+
     private fun retrofit(baseUrl: String, client: OkHttpClient, json: Json): Retrofit =
         Retrofit.Builder()
             .baseUrl(baseUrl)
@@ -364,8 +375,6 @@ object NetworkModule {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
 
-
-    
     @Provides
     @Singleton
     @ExchangeRateClient
@@ -375,7 +384,9 @@ object NetworkModule {
             .readTimeout(10, TimeUnit.SECONDS)
             .callTimeout(20, TimeUnit.SECONDS)
         if (BuildConfig.IS_DEBUG) {
-            builder.addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+            builder.addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BASIC
+            })
         }
         return builder.build()
     }

@@ -1,11 +1,7 @@
 package fr.gildasledrogoff.tokenusage.core.security
-
 import android.content.SharedPreferences
-
-
 class InMemorySharedPreferences : SharedPreferences {
     val data = LinkedHashMap<String, Any?>()
-
     override fun getAll(): Map<String, *> = LinkedHashMap(data)
     override fun getString(key: String, defValue: String?): String? = data[key] as? String ?: defValue
     @Suppress("UNCHECKED_CAST")
@@ -22,7 +18,6 @@ class InMemorySharedPreferences : SharedPreferences {
     override fun unregisterOnSharedPreferenceChangeListener(
         listener: SharedPreferences.OnSharedPreferenceChangeListener
     ) = Unit
-
     override fun edit(): SharedPreferences.Editor = object : SharedPreferences.Editor {
         private val ops = LinkedHashMap<String, Any?>()
         private var clear = false

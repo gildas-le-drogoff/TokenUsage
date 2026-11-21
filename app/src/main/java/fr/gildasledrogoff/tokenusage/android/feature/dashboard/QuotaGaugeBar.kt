@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,8 +33,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
+import fr.gildasledrogoff.tokenusage.core.domain.model.UsagePace
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageSeverity
 import fr.gildasledrogoff.tokenusage.ui.i18n.localizedWindowLabel
+import fr.gildasledrogoff.tokenusage.ui.i18n.paceLabel
 import fr.gildasledrogoff.tokenusage.ui.i18n.resetsInLabel
 import fr.gildasledrogoff.tokenusage.ui.theme.LocalQuotaDisplayMode
 import fr.gildasledrogoff.tokenusage.ui.theme.QuotaStatus
@@ -43,7 +46,6 @@ import fr.gildasledrogoff.tokenusage.ui.theme.quotaStatusOf
 import java.time.Instant
 import kotlin.math.roundToInt
 
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun QuotaGaugeBar(
@@ -51,8 +53,10 @@ fun QuotaGaugeBar(
     label: String? = null,
     resetsAt: Instant? = null,
     severity: UsageSeverity = UsageSeverity.NORMAL,
-    
     detail: String? = null,
+    windowMinutes: Int? = null,
+    historicalPace: UsagePace? = null,
+    showPace: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val dimens = MaterialTheme.dimens
@@ -61,24 +65,30 @@ fun QuotaGaugeBar(
     val usedPct = if (utilization > 1.0) (utilization * 100).roundToInt() else 100 - remainingPct
     val status = quotaStatusOf(remaining, severity)
     val showUsed = LocalQuotaDisplayMode.current == QuotaDisplayMode.USED
-
     val animatedProgress by animateFloatAsState(
         targetValue = if (showUsed) 1f - remaining.toFloat() else remaining.toFloat(),
         animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
         label = "gauge_progress"
     )
     val barColor by animateColorAsState(status.colors.main, tween(400), label = "gauge_color")
-    val trackColor by animateColorAsState(status.colors.container, tween(400), label = "gauge_track")
-
+    val trackColor by animateColorAsState(
+        status.colors.container,
+        tween(400),
+        label = "gauge_track"
+    )
     val windowLabel = label?.let { localizedWindowLabel(it) }
     val resetText = resetsInLabel(resetsAt)
+    val linearPace = remember(utilization, resetsAt, windowMinutes) {
+        UsagePace.compute(utilization, resetsAt, windowMinutes)
+    }
+    val pace = if (showPace) historicalPace ?: linearPace else null
+    val paceText = pace?.let { paceLabel(it) }
     val description = stringResource(
         if (showUsed) R.string.gauge_cd_used else R.string.gauge_cd,
         windowLabel.orEmpty(),
         if (showUsed) usedPct else remainingPct,
         quotaStatusLabel(status)
-    ) + (resetText?.let { ", $it" } ?: "")
-
+    ) + (resetText?.let { ", $it" } ?: "") + (paceText?.let { ", $it" } ?: "")
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -100,7 +110,10 @@ fun QuotaGaugeBar(
                     .alignByBaseline()
             )
             Text(
-                text = stringResource(R.string.gauge_percent_value, if (showUsed) usedPct else remainingPct),
+                text = stringResource(
+                    R.string.gauge_percent_value,
+                    if (showUsed) usedPct else remainingPct
+                ),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = barColor,
@@ -113,7 +126,6 @@ fun QuotaGaugeBar(
                 modifier = Modifier.alignByBaseline()
             )
         }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -129,7 +141,6 @@ fun QuotaGaugeBar(
                     .background(barColor)
             )
         }
-
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceXs, Alignment.Start),
@@ -166,6 +177,14 @@ fun QuotaGaugeBar(
                     )
                 }
             }
+        }
+        if (paceText != null) {
+            Text(
+                text = paceText,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (pace.isInDeficit) QuotaStatus.LOW.colors.main
+                else MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

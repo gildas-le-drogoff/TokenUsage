@@ -20,7 +20,6 @@ import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-
 class ExchangeRateRepositoryImpl(
     private val client: OkHttpClient,
     private val json: Json,
@@ -30,18 +29,14 @@ class ExchangeRateRepositoryImpl(
     private val cacheTtlMs: Long = DEFAULT_CACHE_TTL_MS,
     private val nowMs: () -> Long = System::currentTimeMillis
 ) : ExchangeRateRepository {
-
-    
     private val mutex = Mutex()
 
-    
     private data class EurQuote(val rate: Double, val date: String?)
 
     override suspend fun displayRate(currency: String): FxRate? {
         val from = currency.trim().uppercase()
         val to = prefsManager.getDisplayCurrency().code ?: return null
         if (from.isEmpty() || from == to) return null
-
         return when (val source = prefsManager.getFxRateSource()) {
             FxRateSource.MANUAL -> manualRate(from, to)
             FxRateSource.FRANKFURTER, FxRateSource.ECB -> if (!prefsManager.isFxApiFetchAllowed()) {
@@ -54,13 +49,18 @@ class ExchangeRateRepositoryImpl(
         }
     }
 
-    override suspend fun fetchLatest(source: FxRateSource, from: String, to: String): Result<FxRate, AppError> {
+    override suspend fun fetchLatest(
+        source: FxRateSource,
+        from: String,
+        to: String
+    ): Result<FxRate, AppError> {
         val fromCode = from.trim().uppercase()
         val toCode = to.trim().uppercase()
         if (fromCode == toCode) return Result.Failure(AppError.ParseError("Nothing to convert: $fromCode"))
         return when (source) {
             FxRateSource.MANUAL -> manualRate(fromCode, toCode)?.let { Result.Success(it) }
                 ?: Result.Failure(AppError.ParseError("No manual rate for $fromCode → $toCode"))
+
             FxRateSource.FRANKFURTER, FxRateSource.ECB -> mutex.withLock {
                 val startedAtMs = nowMs()
                 val fromQuote = when (val fetched = freshEurQuote(source, fromCode)) {
@@ -87,7 +87,13 @@ class ExchangeRateRepositoryImpl(
         return cross(source, fromCode, toCode, fromQuote, toQuote)
     }
 
-    private fun cross(source: FxRateSource, from: String, to: String, fromQuote: EurQuote, toQuote: EurQuote) =
+    private fun cross(
+        source: FxRateSource,
+        from: String,
+        to: String,
+        fromQuote: EurQuote,
+        toQuote: EurQuote
+    ) =
         FxRate(
             from = from,
             to = to,
@@ -96,14 +102,12 @@ class ExchangeRateRepositoryImpl(
             date = fromQuote.date ?: toQuote.date
         )
 
-    
     private fun manualRate(from: String, to: String): FxRate? {
         val fromUsd = manualUsdValue(from) ?: return null
         val toUsd = manualUsdValue(to) ?: return null
         return FxRate(from = from, to = to, rate = fromUsd / toUsd, source = FxRateSource.MANUAL)
     }
 
-    
     private fun manualUsdValue(code: String): Double? = when (code) {
         Currencies.USD -> 1.0
         Currencies.EUR -> prefsManager.getManualUsdEurRate()?.let { 1.0 / it }
@@ -116,7 +120,6 @@ class ExchangeRateRepositoryImpl(
         return prefsManager.getCachedEurRate(source, code)?.let { EurQuote(it.rate, it.date) }
     }
 
-    
     private suspend fun eurQuote(source: FxRateSource, code: String): EurQuote? {
         if (code == Currencies.EUR) return EurQuote(1.0, null)
         return mutex.withLock {
@@ -131,10 +134,15 @@ class ExchangeRateRepositoryImpl(
         }
     }
 
-    private suspend fun freshEurQuote(source: FxRateSource, code: String): Result<EurQuote, AppError> =
-        if (code == Currencies.EUR) Result.Success(EurQuote(1.0, null)) else fetchAndCache(source, code)
+    private suspend fun freshEurQuote(
+        source: FxRateSource,
+        code: String
+    ): Result<EurQuote, AppError> =
+        if (code == Currencies.EUR) Result.Success(EurQuote(1.0, null)) else fetchAndCache(
+            source,
+            code
+        )
 
-    
     private fun quoteCachedSince(source: FxRateSource, code: String, sinceMs: Long): EurQuote? {
         if (code == Currencies.EUR) return null
         return prefsManager.getCachedEurRate(source, code)
@@ -142,11 +150,15 @@ class ExchangeRateRepositoryImpl(
             ?.let { EurQuote(it.rate, it.date) }
     }
 
-    private suspend fun fetchAndCache(source: FxRateSource, code: String): Result<EurQuote, AppError> =
+    private suspend fun fetchAndCache(
+        source: FxRateSource,
+        code: String
+    ): Result<EurQuote, AppError> =
         when (source) {
             FxRateSource.FRANKFURTER -> fetchFrankfurter(code).also { result ->
                 if (result is Result.Success) cache(source, code, result.value, nowMs())
             }
+
             FxRateSource.ECB -> fetchEcb(code)
             FxRateSource.MANUAL -> Result.Failure(AppError.ParseError("Not a remote source: $source"))
         }
@@ -160,7 +172,8 @@ class ExchangeRateRepositoryImpl(
     }
 
     private suspend fun fetchFrankfurter(code: String): Result<EurQuote, AppError> {
-        val url = frankfurterBaseUrl.trimEnd('/') + "/" + ExchangeRateEndpoints.frankfurterRatePath(code)
+        val url =
+            frankfurterBaseUrl.trimEnd('/') + "/" + ExchangeRateEndpoints.frankfurterRatePath(code)
         return when (val body = get(url)) {
             is Result.Failure -> body
             is Result.Success -> ExchangeRateParsers.parseFrankfurter(body.value, code, json)
@@ -169,7 +182,6 @@ class ExchangeRateRepositoryImpl(
         }
     }
 
-    
     private suspend fun fetchEcb(code: String): Result<EurQuote, AppError> {
         return when (val body = get(ecbUrl)) {
             is Result.Failure -> body
@@ -178,7 +190,14 @@ class ExchangeRateRepositoryImpl(
                     ?: return Result.Failure(AppError.ParseError("Invalid ECB reference rates"))
                 val fetchedAtMs = nowMs()
                 (Currencies.PROVIDER + code).distinct().forEach { quoted ->
-                    rates[quoted]?.let { cache(FxRateSource.ECB, quoted, EurQuote(it, date), fetchedAtMs) }
+                    rates[quoted]?.let {
+                        cache(
+                            FxRateSource.ECB,
+                            quoted,
+                            EurQuote(it, date),
+                            fetchedAtMs
+                        )
+                    }
                 }
                 rates[code]?.let { Result.Success(EurQuote(it, date)) }
                     ?: Result.Failure(AppError.ParseError("$code is not quoted by the ECB"))

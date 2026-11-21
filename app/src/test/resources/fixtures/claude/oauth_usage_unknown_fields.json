@@ -1,0 +1,16 @@
+{
+  "five_hour": {
+    "utilization": 10.0,
+    "resets_at": "2026-11-20T18:00:00Z",
+    "limit_dollars": null,
+    "used_dollars": null,
+    "remaining_dollars": null,
+    "brand_new_field": {"nested": [1, 2, 3]}
+  },
+  "tangelo": null,
+  "future_window": {"utilization": 99.0},
+  "limits": [
+    {"kind": "weekly", "percent": 5.5, "unknown_flag": true, "scope": {"model": null, "other": "x"}}
+  ],
+  "another_new_top_level_key": "hello"
+}

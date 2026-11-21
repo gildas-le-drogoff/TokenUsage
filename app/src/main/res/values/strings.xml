@@ -1,391 +1,663 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="app_name">TokenUsage</string>
-    <string name="tile_label">TokenUsage</string>
-    <string name="tile_tap_to_setup">Tap to set up</string>
-    <string name="widget_description">Monitor AI service quota usage at a glance</string>
-    <string name="widget_label_quotas">Quotas</string>
-    <string name="widget_label_compact">Compact quota</string>
-    <string name="widget_label_reset">Next reset</string>
-    <string name="widget_label_balances">Balances</string>
-    <string name="widget_compact_description">One service, one big gauge</string>
-    <string name="widget_reset_description">Countdown to the next quota window reset</string>
-    <string name="widget_balances_description">Prepaid balances for your accounts</string>
-
-    <string name="settings">Settings</string>
-    <string name="action_cancel">Cancel</string>
-    <string name="action_close">Close</string>
-    <string name="action_confirm">Confirm</string>
-    <string name="action_validate">Validate</string>
-    <string name="action_allow">Allow</string>
-    <string name="action_delete">Delete</string>
-    <string name="action_add_account">Add account</string>
-    <string name="action_rename">Rename</string>
-    <string name="rename_account_title">Rename account</string>
-
-    <string name="cd_back">Back</string>
-    <string name="cd_close">Close</string>
-    <string name="cd_settings">Settings</string>
-    <string name="cd_error">Error</string>
-    <string name="cd_refresh">Refresh</string>
-    <string name="cd_toggle_theme">Toggle light/dark theme</string>
-    <string name="cd_valid">Valid</string>
-    <string name="cd_invalid">Invalid</string>
-    <string name="cd_remove_account">Remove account</string>
-    <string name="cd_rename_account">Rename this account (does not change its credentials)</string>
-    <string name="cd_expand">Expand</string>
-    <string name="cd_collapse">Collapse</string>
-    <string name="cd_qr_code">Encrypted config QR code</string>
-
-    <string name="dashboard_empty_title">No services configured</string>
-    <string name="dashboard_empty_subtitle">Go to Settings to add your API credentials</string>
-    <string name="dashboard_load_failed">Failed to load quota data</string>
-    <string name="error_failed_services">Failed to load: %1$s</string>
-
-    <string name="gauge_percent_left">%1$d%% left</string>
-    <string name="resets_in">Resets in %1$s</string>
-    <string name="duration_days_hours">%1$dd %2$dh</string>
-    <string name="duration_hours_minutes">%1$dh %2$dm</string>
-    <string name="duration_minutes">%1$dm</string>
-
-    <string name="window_5h">5-Hour</string>
-    <string name="window_7d">7-Day</string>
-    <string name="window_weekly_scoped">Weekly scoped</string>
-
-    <string name="card_usage_this_week">Usage this week</string>
-    <string name="card_credits">Credits: %1$.2f / %2$.2f %3$s</string>
-    <string name="card_credits_converted">Credits: ≈ %1$.2f / %2$.2f %3$s</string>
-    <string name="card_balance">Remaining credit</string>
-    <string name="card_insufficient_balance">Insufficient balance for API calls</string>
-    <string name="card_granted">Granted: %1$.2f %2$s</string>
-
-    <string name="screen_history_title">Consumption history</string>
-    <string name="history_no_account">No DeepSeek account configured</string>
-    <string name="history_no_account_hint">Add an account in Settings, then come back after a refresh</string>
-    <string name="account_n">Account %1$d</string>
-    <string name="account_default">Account</string>
-    <string name="granularity_daily">Daily</string>
-    <string name="granularity_monthly">Monthly</string>
-    <string name="history_current_balance">Current balance</string>
-    <string name="history_balance_value">%1$.2f %2$s</string>
-    <string name="history_daily_title">Daily consumption (last 30 days)</string>
-    <string name="history_monthly_title">Monthly consumption (last 12 months)</string>
-    <string name="history_not_enough_data">Not enough data yet. Samples are collected at each quota refresh; come back after a few refresh cycles.</string>
-    <string name="history_peak_total">Peak: %1$.2f %2$s · Total: %3$.2f %4$s</string>
-    <string name="chart_cd">Consumption chart: %1$d %2$s, maximum %3$.2f</string>
-    <string name="chart_unit_days">days</string>
-    <string name="chart_unit_months">months</string>
-
-    <string name="status_in_use">In use</string>
-    <string name="status_not_in_use">Not in use</string>
-    <plurals name="accounts_in_use">
-        <item quantity="one">%1$d account in use</item>
-        <item quantity="other">%1$d accounts in use</item>
-    </plurals>
-    <string name="notifications_title">Notifications</string>
-    <string name="notifications_subtitle">Quota status and reset alerts</string>
-
-    <!-- Security: app lock + stored-credential secrecy -->
-    <string name="security_title">Security</string>
-    <string name="app_lock_title">App lock</string>
-    <string name="app_lock_subtitle">Ask for biometrics or the device screen lock every time TokenUsage opens</string>
-    <string name="app_lock_biometric_confirm_title">Enable app lock</string>
-    <string name="app_lock_biometric_confirm_subtitle">Authenticate to confirm this device can unlock the app</string>
-    <string name="app_lock_unavailable">No biometric sensor or screen lock is available on this device</string>
-    <string name="app_lock_no_authenticator">The lock can no longer be verified: no biometric or screen lock is set up on this device. Disable the app lock to keep using TokenUsage.</string>
-    <string name="app_lock_disable_button">Disable app lock</string>
-    <string name="unlock_title">TokenUsage is locked</string>
-    <string name="unlock_subtitle">Authenticate to access your dashboards</string>
-    <string name="unlock_action">Unlock</string>
-    <string name="stored_credential_hint">Saved, never shown again — leave empty to keep it, or type a new value to replace it</string>
-    <string name="field_secret_replace_hint">Leave empty to keep the saved value</string>
-    <string name="cd_remove_credential">Remove this credential</string>
-    <string name="demo_data_title">Sample data (debug)</string>
-    <string name="demo_data_subtitle">Show sample accounts and history instead of the configured ones, to review the UI</string>
-    <string name="refresh_interval_title">Refresh Interval</string>
-    <string name="refresh_15m">15 min</string>
-    <string name="refresh_30m">30 min</string>
-    <string name="refresh_1h">1 hour</string>
-    <string name="refresh_manual">Manual</string>
-    <string name="danger_zone_title">Danger Zone</string>
-    <string name="action_delete_all">Delete All Credentials</string>
-    <string name="delete_dialog_text">This will permanently delete all saved API credentials. Type DELETE to confirm.</string>
-    <string name="field_type_delete">Type DELETE</string>
-    <string name="toast_backup_write_failed">Failed to write backup file</string>
-
-    <string name="status_valid">Valid</string>
-    <string name="status_invalid">Invalid</string>
-    <string name="field_access_token">Access Token</string>
-    <string name="field_refresh_token">Refresh Token</string>
-    <string name="field_refresh_token_hint">Required for auto-refresh (tokens expire every 8h)</string>
-    <string name="field_account_id_optional">Account ID (optional)</string>
-    <string name="field_oauth_client_id">OAuth Client ID</string>
-    <string name="field_oauth_client_id_hint">From Google Cloud Console</string>
-    <string name="field_oauth_client_secret">OAuth Client Secret</string>
-    <string name="field_token_expiry">Token Expiry</string>
-    <string name="field_label_optional">Label (optional)</string>
-    <string name="field_api_key">API Key</string>
-    <string name="field_api_key_format">Format sk-...</string>
-    <string name="field_api_key_zai_hint">From z.ai/manage-apikey/apikey-list</string>
-
-    <string name="claude_sign_in">Sign in with Claude</string>
-    <string name="claude_sign_in_hint">Opens claude.ai in an embedded view: log in once and the app captures the session key (sk-ant-sid02-…) automatically. Recommended over OAuth: it never rotates, so the desktop CLI can\'t invalidate it.</string>
-    <string name="field_session_key">Session Key (manual paste)</string>
-    <string name="field_session_key_hint">Or paste the cookie manually: claude.ai sessionKey (sk-ant-sid01-… or sk-ant-sid02-…).</string>
-    <string name="claude_login_title">Sign in to Claude</string>
-    <string name="claude_login_subtitle">Log in once — the session key is captured automatically.</string>
-
-    <string name="deepseek_hint">Remaining credit per account (platform.deepseek.com → API Keys)</string>
-    <string name="deepseek_empty">No account configured. Add a DeepSeek API key to track its remaining credit.</string>
-    <string name="zai_hint">Remaining quota per account: Session (5h), Monthly Tools, Quota (z.ai → API Keys)</string>
-    <string name="zai_hint_no_tools">Remaining quota per account: Session (5h), Quota (z.ai → API Keys)</string>
-    <string name="zai_hide_monthly_tools">Hide “Monthly Tools” (tool-call quota)</string>
-    <string name="zai_empty">No account configured. Add a Z.ai API key to track its remaining quota.</string>
-
-    <string name="backup_title">Backup &amp; Export</string>
-    <string name="backup_description">Encrypted with a password — without it the backup cannot be recovered. ZIP: everything, including the DeepSeek usage history. QR code: access tokens, session keys and API keys only.</string>
-    <string name="field_pin">Password (min. %1$d characters)</string>
-    <string name="field_pin_hint">Encrypts the backup — don\'t lose it</string>
-    <string name="password_strength_label">Strength: %1$s</string>
-    <string name="password_strength_very_weak">very weak</string>
-    <string name="password_strength_weak">weak</string>
-    <string name="password_strength_fair">fair</string>
-    <string name="password_strength_strong">strong</string>
-    <string name="password_strength_very_strong">very strong</string>
-    <string name="field_confirm_pin">Confirm password</string>
-    <string name="pin_mismatch">Passwords don\'t match</string>
-    <string name="field_confirm_pin_hint">Type the password again</string>
-    <string name="action_export_zip">ZIP</string>
-    <string name="action_export_qr">QR code</string>
-    <string name="export_error_pin_short">Password must be at least %1$d characters</string>
-    <string name="export_error_qr_too_large">Configuration too large for a QR code</string>
-    <string name="export_error_generic">Export failed</string>
-    <string name="qr_dialog_title">Encrypted Config QR</string>
-    <string name="qr_dialog_hint">Scan this code with TokenUsage on the destination device, then enter the password to decrypt.</string>
-    <string name="qr_dialog_warning">Anyone who captures this image and knows the password can read your credentials.</string>
-
-    <string name="import_title">Import</string>
-    <string name="import_description">Restore an encrypted backup: a ZIP file (history included) or the QR code from another device. Backup credentials replace this device\'s.</string>
-    <string name="action_import_qr">Scan QR</string>
-    <string name="import_scan_prompt">Point the camera at the TokenUsage configuration QR code</string>
-    <string name="import_dialog_title">Import configuration</string>
-    <string name="import_dialog_hint">Enter the password chosen during the export on the source device.</string>
-    <string name="field_import_pin">Backup password</string>
-    <string name="import_dialog_warning">Credentials of the services contained in the backup will overwrite the ones on this device.</string>
-    <string name="action_import">Import</string>
-    <string name="import_error_not_backup">This is not a TokenUsage backup</string>
-    <string name="import_error_wrong_pin">Wrong password or corrupted backup</string>
-    <string name="import_error_version">Backup made by a newer version of TokenUsage — update the app</string>
-    <string name="import_error_generic">Import failed</string>
-    <string name="action_import_zip">ZIP</string>
-    <plurals name="import_history_added">
-        <item quantity="one">%1$d history entry added</item>
-        <item quantity="other">%1$d history entries added</item>
-    </plurals>
-    <plurals name="import_success">
-        <item quantity="one">Configuration imported: %1$d credential</item>
-        <item quantity="other">Configuration imported: %1$d credentials</item>
-    </plurals>
-
-    <!-- Debug sample data: fake account labels, localized like the rest -->
-    <string name="demo_claude_personal">Claude personal</string>
-    <string name="demo_claude_work">Claude work</string>
-    <string name="demo_account_main">Personal</string>
-    <string name="demo_account_usd">Pro (USD)</string>
-    <string name="demo_account_new">New account</string>
-    <string name="demo_account_old">Old account</string>
-    <string name="demo_zai_personal">Z.ai personal</string>
-    <string name="demo_zai_work">Z.ai work</string>
-
-    <string name="widget_config_title">Configure Widget</string>
-    <string name="widget_config_instruction">Select services to display in this widget:</string>
-    <string name="widget_config_no_services">No services configured yet. Please add credentials in the app settings first.</string>
-    <string name="widget_no_credentials">No credentials configured</string>
-    <string name="widget_waiting_for_data">Waiting for data...</string>
-    <string name="widget_no_upcoming_reset">No upcoming reset</string>
-    <string name="widget_no_balances_to_show">No balances to show</string>
-    <string name="widget_config_compact_hint">This 2×2 widget shows a single service: pick one.</string>
-    <string name="widget_config_main_hint">Narrow layouts (4×1) show only the first service; 4×2 and larger show every selected service, scrollable.</string>
-    <string name="widget_balance_error">%1$s: error</string>
-    <!-- Static texts of the widget picker preview layout (layout/widget_preview.xml).
+  <string name="app_name">TokenUsage</string>
+  <string name="tile_label">TokenUsage</string>
+  <string name="tile_tap_to_setup">Tap to set up</string>
+  <string name="widget_description"
+    >Monitor AI service quota usage at a glance</string
+  >
+  <string name="widget_label_quotas">Quotas</string>
+  <string name="widget_label_compact">Compact quota</string>
+  <string name="widget_label_reset">Next reset</string>
+  <string name="widget_label_balances">Balances</string>
+  <string name="widget_compact_description">One service, one big gauge</string>
+  <string name="widget_reset_description"
+    >Countdown to the next quota window reset</string
+  >
+  <string name="widget_balances_description"
+    >Prepaid balances for your accounts</string
+  >
+  <string name="settings">Settings</string>
+  <string name="action_cancel">Cancel</string>
+  <string name="action_close">Close</string>
+  <string name="action_confirm">Confirm</string>
+  <string name="action_validate">Validate</string>
+  <string name="action_allow">Allow</string>
+  <string name="action_delete">Delete</string>
+  <string name="action_add_account">Add account</string>
+  <string name="action_rename">Rename</string>
+  <string name="rename_account_title">Rename account</string>
+  <string name="cd_back">Back</string>
+  <string name="cd_close">Close</string>
+  <string name="cd_settings">Settings</string>
+  <string name="cd_error">Error</string>
+  <string name="cd_refresh">Refresh</string>
+  <string name="cd_toggle_theme">Toggle light/dark theme</string>
+  <string name="cd_valid">Valid</string>
+  <string name="cd_invalid">Invalid</string>
+  <string name="cd_remove_account">Remove account</string>
+  <string name="cd_rename_account"
+    >Rename this account (does not change its credentials)</string
+  >
+  <string name="cd_expand">Expand</string>
+  <string name="cd_collapse">Collapse</string>
+  <string name="cd_qr_code">Encrypted config QR code</string>
+  <string name="dashboard_empty_title">No services configured</string>
+  <string name="dashboard_empty_subtitle"
+    >Go to Settings to add your API credentials</string
+  >
+  <string name="dashboard_load_failed">Failed to load quota data</string>
+  <string name="dashboard_last_updated">Last updated: %1$s</string>
+  <string name="error_failed_services">Failed to load: %1$s</string>
+  <string name="dashboard_offline_banner"
+    >No internet connection. Showing the latest data received; it refreshes on
+    its own when the connection returns.</string
+  >
+  <string name="dashboard_offline_no_data"
+    >No internet connection and no saved data yet</string
+  >
+  <string name="card_fetch_failed">Refresh failed: %1$s</string>
+  <string name="card_stale_since">Data from %1$s</string>
+  <string name="insights_title">Pace and curves</string>
+  <string name="insights_hint"
+    >Choose, for each provider and each account, whether the dashboard shows the
+    usage pace and the history curves.</string
+  >
+  <string name="insights_empty"
+    >None of your configured accounts offers a pace or curves.</string
+  >
+  <string name="insights_pace">Pace</string>
+  <string name="insights_curves">Curves</string>
+  <string name="gauge_percent_left">%1$d%% left</string>
+  <string name="resets_in">Resets in %1$s</string>
+  <string name="pace_on_track">On pace</string>
+  <string name="pace_deficit">%1$d%% in deficit</string>
+  <string name="pace_reserve">%1$d%% in reserve</string>
+  <string name="pace_runs_out_in">Runs out in %1$s</string>
+  <string name="pace_lasts_to_reset">Lasts until reset</string>
+  <string name="pace_label">Pace: %1$s</string>
+  <string name="pace_balance_rate">%1$.2f %2$s/day</string>
+  <string name="pace_accelerating">accelerating</string>
+  <string name="duration_days_hours">%1$dd %2$dh</string>
+  <string name="duration_hours_minutes">%1$dh %2$dm</string>
+  <string name="duration_minutes">%1$dm</string>
+  <string name="window_5h">5-Hour</string>
+  <string name="window_7d">7-Day</string>
+  <string name="window_weekly_scoped">Weekly scoped</string>
+  <string name="card_usage_this_week">Usage this week</string>
+  <string name="card_credits">Credits: %1$.2f / %2$.2f %3$s</string>
+  <string name="card_credits_converted">Credits: ≈ %1$.2f / %2$.2f %3$s</string>
+  <string name="card_balance">Remaining credit</string>
+  <string name="card_insufficient_balance"
+    >Insufficient balance for API calls</string
+  >
+  <string name="card_granted">Granted: %1$.2f %2$s</string>
+  <string name="screen_history_title">Consumption history</string>
+  <string name="history_no_account">No DeepSeek account configured</string>
+  <string name="history_no_account_hint"
+    >Add an account in Settings, then come back after a refresh</string
+  >
+  <string name="account_n">Account %1$d</string>
+  <string name="account_default">Account</string>
+  <string name="granularity_daily">Daily</string>
+  <string name="granularity_monthly">Monthly</string>
+  <string name="history_current_balance">Current balance</string>
+  <string name="history_balance_value">%1$.2f %2$s</string>
+  <string name="history_daily_title">Daily consumption (last 30 days)</string>
+  <string name="history_monthly_title"
+    >Monthly consumption (last 12 months)</string
+  >
+  <string name="history_not_enough_data"
+    >Not enough data yet. Samples are collected at each quota refresh; come back
+    after a few refresh cycles.</string
+  >
+  <string name="history_peak_total"
+    >Peak: %1$.2f %2$s · Total: %3$.2f %4$s</string
+  >
+  <string name="chart_cd">Consumption chart: %1$d %2$s, maximum %3$.2f</string>
+  <string name="chart_unit_days">days</string>
+  <string name="chart_unit_months">months</string>
+  <string name="status_in_use">In use</string>
+  <string name="status_not_in_use">Not in use</string>
+  <plurals name="accounts_in_use">
+    <item quantity="one">%1$d account in use</item>
+    <item quantity="other">%1$d accounts in use</item>
+  </plurals>
+  <string name="notifications_title">Notifications</string>
+  <string name="notifications_subtitle">Quota status and reset alerts</string>
+  <string name="status_check_title">Provider status check</string>
+  <string name="status_check_desc"
+    >Shows a badge on the cards when a provider reports an incident, by querying
+    its public status page. Off by default: no call is made to these
+    pages.</string
+  >
+  <string name="status_check_all">All providers</string>
+  <!-- Security: app lock + stored-credential secrecy -->
+  <string name="security_title">Security</string>
+  <string name="app_lock_title">App lock</string>
+  <string name="app_lock_subtitle"
+    >Ask for biometrics or the device screen lock every time TokenUsage
+    opens</string
+  >
+  <string name="app_lock_biometric_confirm_title">Enable app lock</string>
+  <string name="app_lock_biometric_confirm_subtitle"
+    >Authenticate to confirm this device can unlock the app</string
+  >
+  <string name="app_lock_unavailable"
+    >No biometric sensor or screen lock is available on this device</string
+  >
+  <string name="app_lock_no_authenticator"
+    >The lock can no longer be verified: no biometric or screen lock is set up
+    on this device. Disable the app lock to keep using TokenUsage.</string
+  >
+  <string name="app_lock_disable_button">Disable app lock</string>
+  <string name="unlock_title">TokenUsage is locked</string>
+  <string name="unlock_subtitle">Authenticate to access your dashboards</string>
+  <string name="unlock_action">Unlock</string>
+  <string name="stored_credential_hint"
+    >Saved, never shown again — leave empty to keep it, or type a new value to
+    replace it</string
+  >
+  <string name="field_secret_replace_hint"
+    >Leave empty to keep the saved value</string
+  >
+  <string name="cd_remove_credential">Remove this credential</string>
+  <string name="demo_data_title">Sample data (debug)</string>
+  <string name="demo_data_subtitle"
+    >Show sample accounts and history instead of the configured ones, to review
+    the UI</string
+  >
+  <string name="refresh_interval_title">Refresh Interval</string>
+  <string name="refresh_15m">15 min</string>
+  <string name="refresh_30m">30 min</string>
+  <string name="refresh_1h">1 hour</string>
+  <string name="refresh_manual">Manual</string>
+  <string name="danger_zone_title">Danger Zone</string>
+  <string name="action_delete_all">Delete All Credentials</string>
+  <string name="delete_dialog_text"
+    >This will permanently delete all saved API credentials. Type DELETE to
+    confirm.</string
+  >
+  <string name="field_type_delete">Type DELETE</string>
+  <string name="toast_backup_write_failed">Failed to write backup file</string>
+  <string name="status_valid">Valid</string>
+  <string name="status_invalid">Invalid</string>
+  <string name="field_access_token">Access Token</string>
+  <string name="field_refresh_token">Refresh Token</string>
+  <string name="field_refresh_token_hint"
+    >Required for auto-refresh (tokens expire every 8h)</string
+  >
+  <string name="field_account_id_optional">Account ID (optional)</string>
+  <string name="field_oauth_client_id">OAuth Client ID</string>
+  <string name="field_oauth_client_id_hint">From Google Cloud Console</string>
+  <string name="field_oauth_client_secret">OAuth Client Secret</string>
+  <string name="field_token_expiry">Token Expiry</string>
+  <string name="field_label_optional">Label (optional)</string>
+  <string name="field_api_key">API Key</string>
+  <string name="field_api_key_format">Format sk-...</string>
+  <string name="field_api_key_zai_hint"
+    >From z.ai/manage-apikey/apikey-list</string
+  >
+  <string name="claude_sign_in">Sign in with Claude</string>
+  <string name="claude_sign_in_hint"
+    >Opens claude.ai in an embedded view: log in once and the app captures the
+    session key (sk-ant-sid02-…) automatically. Recommended over OAuth: it never
+    rotates, so the desktop CLI can\'t invalidate it.</string
+  >
+  <string name="field_session_key">Session Key (manual paste)</string>
+  <string name="field_session_key_hint"
+    >Or paste the cookie manually: claude.ai sessionKey (sk-ant-sid01-… or
+    sk-ant-sid02-…).</string
+  >
+  <string name="claude_login_title">Sign in to Claude</string>
+  <string name="claude_login_subtitle"
+    >Log in once — the session key is captured automatically.</string
+  >
+  <string name="deepseek_hint"
+    >Remaining credit per account (platform.deepseek.com → API Keys)</string
+  >
+  <string name="deepseek_empty"
+    >No account configured. Add a DeepSeek API key to track its remaining
+    credit.</string
+  >
+  <string name="zai_hint"
+    >Remaining quota per account: Session (5h), Monthly Tools, Quota (z.ai → API
+    Keys)</string
+  >
+  <string name="zai_hint_no_tools"
+    >Remaining quota per account: Session (5h), Quota (z.ai → API Keys)</string
+  >
+  <string name="zai_hide_monthly_tools"
+    >Hide “Monthly Tools” (tool-call quota)</string
+  >
+  <string name="zai_empty"
+    >No account configured. Add a Z.ai API key to track its remaining
+    quota.</string
+  >
+  <string name="backup_title">Backup &amp; Export</string>
+  <string name="backup_description"
+    >Encrypted with a password — without it the backup cannot be recovered. ZIP:
+    everything, including the DeepSeek usage history. QR code: access tokens,
+    session keys and API keys only.</string
+  >
+  <string name="field_pin">Password (min. %1$d characters)</string>
+  <string name="field_pin_hint">Encrypts the backup — don\'t lose it</string>
+  <string name="password_strength_label">Strength: %1$s</string>
+  <string name="password_strength_very_weak">very weak</string>
+  <string name="password_strength_weak">weak</string>
+  <string name="password_strength_fair">fair</string>
+  <string name="password_strength_strong">strong</string>
+  <string name="password_strength_very_strong">very strong</string>
+  <string name="field_confirm_pin">Confirm password</string>
+  <string name="pin_mismatch">Passwords don\'t match</string>
+  <string name="field_confirm_pin_hint">Type the password again</string>
+  <string name="action_export_zip">ZIP</string>
+  <string name="action_export_qr">QR code</string>
+  <string name="export_error_pin_short"
+    >Password must be at least %1$d characters</string
+  >
+  <string name="export_error_qr_too_large"
+    >Configuration too large for a QR code</string
+  >
+  <string name="export_error_generic">Export failed</string>
+  <string name="qr_dialog_title">Encrypted Config QR</string>
+  <string name="qr_dialog_multi_title">QR code %1$d / %2$d</string>
+  <string name="qr_dialog_hint"
+    >Scan this code with TokenUsage on the destination device, then enter the
+    password to decrypt.</string
+  >
+  <string name="qr_dialog_multi_hint"
+    >This config spans several QR codes. Scan each one with TokenUsage on the
+    destination device — order doesn\'t matter, but every code is required. Use
+    “Next QR” to display the following code.</string
+  >
+  <string name="qr_dialog_warning"
+    >Anyone who captures this image and knows the password can read your
+    credentials.</string
+  >
+  <string name="action_next_qr">Next QR</string>
+  <string name="action_previous_qr">Previous</string>
+  <string name="import_title">Import</string>
+  <string name="import_description"
+    >Restore an encrypted backup: a ZIP file (history included) or the QR code
+    from another device. Backup credentials replace this device\'s.</string
+  >
+  <string name="action_import_qr">Scan QR</string>
+  <string name="import_scan_prompt"
+    >Point the camera at the TokenUsage configuration QR code</string
+  >
+  <string name="import_scan_prompt_multi"
+    >QR code %1$d of %2$d — point the camera at the next TokenUsage QR
+    code</string
+  >
+  <string name="import_qr_progress">QR codes received: %1$d / %2$d</string>
+  <string name="import_qr_progress_next">Continue with QR code #%1$d</string>
+  <string name="action_scan_next_qr">Scan next QR code</string>
+  <string name="action_restart_qr_scan">Start over</string>
+  <string name="import_dialog_title">Import configuration</string>
+  <string name="import_dialog_hint"
+    >Enter the password chosen during the export on the source device.</string
+  >
+  <string name="field_import_pin">Backup password</string>
+  <string name="import_dialog_warning"
+    >Credentials of the services contained in the backup will overwrite the ones
+    on this device.</string
+  >
+  <string name="action_import">Import</string>
+  <string name="import_error_not_backup"
+    >This is not a TokenUsage backup</string
+  >
+  <string name="import_error_wrong_pin"
+    >Wrong password or corrupted backup</string
+  >
+  <string name="import_error_version"
+    >Backup made by a newer version of TokenUsage — update the app</string
+  >
+  <string name="import_error_generic">Import failed</string>
+  <string name="import_error_qr_mismatch"
+    >This QR code doesn\'t belong to the current multi-code import — restart the
+    scan</string
+  >
+  <string name="action_import_zip">ZIP</string>
+  <plurals name="import_history_added">
+    <item quantity="one">%1$d history entry added</item>
+    <item quantity="other">%1$d history entries added</item>
+  </plurals>
+  <plurals name="import_success">
+    <item quantity="one">Configuration imported: %1$d credential</item>
+    <item quantity="other">Configuration imported: %1$d credentials</item>
+  </plurals>
+  <!-- Debug sample data: fake account labels, localized like the rest -->
+  <string name="demo_claude_personal">Claude personal</string>
+  <string name="demo_claude_work">Claude work</string>
+  <string name="demo_account_main">Personal</string>
+  <string name="demo_account_usd">Pro (USD)</string>
+  <string name="demo_account_new">New account</string>
+  <string name="demo_account_old">Old account</string>
+  <string name="demo_zai_personal">Z.ai personal</string>
+  <string name="demo_zai_work">Z.ai work</string>
+  <string name="widget_config_title">Configure Widget</string>
+  <string name="widget_config_instruction"
+    >Select services to display in this widget:</string
+  >
+  <string name="widget_config_no_services"
+    >No services configured yet. Please add credentials in the app settings
+    first.</string
+  >
+  <string name="widget_no_credentials">No credentials configured</string>
+  <string name="widget_waiting_for_data">Waiting for data...</string>
+  <string name="widget_no_upcoming_reset">No upcoming reset</string>
+  <string name="widget_no_balances_to_show">No balances to show</string>
+  <string name="widget_config_compact_hint"
+    >This 2×2 widget shows a single service: pick one.</string
+  >
+  <string name="widget_config_main_hint"
+    >Narrow layouts (4×1) show only the first service; 4×2 and larger show every
+    selected service, scrollable.</string
+  >
+  <string name="widget_balance_error">%1$s: error</string>
+  <!-- Static texts of the widget picker preview layout (layout/widget_preview.xml).
          formatted="false": literal % signs, these strings are never formatted. -->
-    <string name="widget_preview_left_42" formatted="false">42% left</string>
-    <string name="widget_preview_left_93" formatted="false">93% left</string>
-    <string name="widget_preview_left_100" formatted="false">100% left</string>
-
-    <string name="notif_permission_required">Notification permission required for background quota updates</string>
-    <string name="battery_dialog_title">Background refresh</string>
-    <string name="battery_dialog_text">Exempting TokenUsage from battery optimization keeps scheduled refreshes reliable.\n\nOtherwise Android may delay them, and the notification, widgets and tile may show outdated quotas.</string>
-    <string name="battery_dialog_decline">No thanks</string>
-    <string name="battery_section_title">Battery optimization</string>
-    <string name="battery_status_exempt">TokenUsage is exempt from battery optimization.</string>
-    <string name="battery_status_optimized">TokenUsage is subject to battery optimization.</string>
-    <string name="battery_warning_optimized">Background refreshes may be delayed by hours or skipped (Doze, power saving). The notification, widgets and tile may show outdated quotas, and reset alerts may arrive late, until you open the app.</string>
-    <string name="battery_hint_exempt">Scheduled refreshes run at the chosen interval. You can withdraw the exemption from the Android battery settings.</string>
-    <string name="battery_hint_manual">Manual refresh: no background refresh is scheduled, the exemption is not needed.</string>
-    <string name="battery_action_exempt">Exempt</string>
-    <string name="battery_action_system_settings">Android settings</string>
-    <string name="lock_screen_title">Lock screen</string>
-    <string name="lock_screen_show_all">Show all</string>
-    <string name="lock_screen_system">System</string>
-    <string name="lock_screen_hidden">Hide</string>
-    <string name="lock_screen_hint_show_all">Notifications show services and percentages on the lock screen, and the Quick Settings tile keeps its details.</string>
-    <string name="lock_screen_hint_system">Follows the Android “sensitive content” setting: when it hides content, only a neutral notification is shown. The Quick Settings tile hides its details while the device is locked.</string>
-    <string name="lock_screen_hint_hidden">TokenUsage notifications are not shown on the lock screen, and the Quick Settings tile hides its details while the device is locked.</string>
-    <string name="notif_public_quota">Quota monitoring active</string>
-    <string name="notif_public_reset">A quota has been reset</string>
-
-    <string name="notif_channel_monitor">AI Quota Monitor</string>
-    <string name="notif_channel_monitor_desc">Shows current AI service quota usage</string>
-    <string name="notif_channel_reset">Quota Reset Alerts</string>
-    <string name="notif_channel_reset_desc">Notifies when AI service quotas have been reset</string>
-    <string name="notif_updated">Updated: %1$s</string>
-    <string name="notif_reset_title">%1$s quota reset</string>
-    <string name="notif_reset_body">%1$s window has been reset. Your quota is fully available.</string>
-    <string name="notif_refreshing_title">Refreshing quota data...</string>
-    <string name="time_just_now">just now</string>
-    <plurals name="time_minutes_ago">
-        <item quantity="one">%1$d min ago</item>
-        <item quantity="other">%1$d min ago</item>
-    </plurals>
-    <plurals name="time_hours_ago">
-        <item quantity="one">%1$dh ago</item>
-        <item quantity="other">%1$dh ago</item>
-    </plurals>
-
-    <string name="error_network">Network error</string>
-    <string name="error_network_reason">Network error: %1$s</string>
-    <string name="error_reauth_required">Re-authentication required</string>
-    <string name="error_auth">Authentication error</string>
-    <string name="error_rate_limited">Rate limited</string>
-    <string name="error_parse">Response parse error</string>
-    <string name="error_parse_reason">Parse error: %1$s</string>
-    <string name="error_no_credentials">No credentials configured</string>
-    <string name="error_service_unavailable">Service temporarily unavailable</string>
-    <string name="error_gemini_consumer_unsupported">Google no longer supports Gemini CLI sign-in for individual, AI Pro or Ultra accounts. Only Workspace, education and Code Assist accounts still report a quota here.</string>
-    <string name="error_client_unsupported">The provider no longer supports this account type through this app.</string>
-    <string name="error_token_revoked">Access revoked by the provider: update this account\'s token in Settings (sign in again or paste a new key), or remove the account.</string>
-    <string name="error_invalid_api_key">Invalid API key</string>
-
-    <string name="integrity_title">Untrusted device</string>
-    <string name="integrity_message">TokenUsage detected an environment that could expose your credentials: a rooted app or an injection tool could read them. If you control this device (e.g. a custom ROM), you can still use TokenUsage.</string>
-    <string name="integrity_threats_header">Detected:</string>
-    <string name="integrity_threat_root">Root access</string>
-    <string name="integrity_threat_hooking">Code injection framework (Frida, Xposed…)</string>
-    <string name="integrity_threat_debugger">Debugger attached</string>
-    <string name="integrity_threat_tampered">Modified application</string>
-    <string name="integrity_close">Close</string>
-    <string name="integrity_accept_risk">Continue anyway</string>
-    <string name="integrity_accept_risk_note">Your choice is remembered on this device: these checks will no longer block TokenUsage.</string>
-    <string name="integrity_open_app">Open TokenUsage to choose whether to continue on this device.</string>
-
-    <string name="fx_title">Display currency</string>
-    <string name="fx_subtitle">Shows every amount in a single currency: prepaid balances (DeepSeek, OpenRouter), spend (OpenAI, OpenRouter) and Claude extra credits. Converted values are approximate.</string>
-    <string name="fx_currency_original">Original</string>
-    <string name="fx_currency_original_desc">Amounts stay in the currency billed by each provider (USD / CNY).</string>
-    <string name="fx_source_title">Exchange rate</string>
-    <string name="fx_source_manual">Manual rate</string>
-    <string name="fx_source_frankfurter">Frankfurter</string>
-    <string name="fx_source_ecb">ECB</string>
-    <string name="fx_source_manual_desc">Your own rates, entered below.</string>
-    <string name="fx_source_frankfurter_desc">Daily rate from api.frankfurter.dev.</string>
-    <string name="fx_source_ecb_desc">Euro reference rates of the European Central Bank (ecb.europa.eu).</string>
-    <string name="fx_manual_usd_eur_field">1 USD = … EUR</string>
-    <string name="fx_manual_usd_cny_field">1 USD = … CNY</string>
-    <string name="fx_manual_usd_eur_hint">e.g. 0.92 (dot or comma)</string>
-    <string name="fx_manual_usd_cny_hint">e.g. 7.10 (dot or comma)</string>
-    <string name="fx_manual_invalid">Enter a positive number</string>
-    <string name="fx_rate_note">1 %1$s = %2$.4f %3$s · %4$s</string>
-    <string name="fx_rate_note_dated">1 %1$s = %2$.4f %3$s · %4$s, %5$s</string>
-    <string name="fx_converted_value">≈ %1$.2f %2$s</string>
-    <string name="fx_history_approx">History converted at the current rate.</string>
-    <string name="fx_rate_none">No rate fetched yet.</string>
-    <string name="fx_fetch_failed">Couldn\'t fetch the rate: %1$s</string>
-    <string name="fx_api_consent_title">Allow rate updates from the API</string>
-    <string name="fx_api_consent_desc">Lets the app call the selected rate service to refresh rates. Off: no network call, only manual rates or previously fetched ones are used.</string>
-    <string name="fx_api_consent_off">Rate updates are off. Enable them above to fetch rates, or use a manual rate.</string>
-    <string name="action_refresh_rate">Refresh</string>
-    <string name="gauge_percent_value">%1$d%%</string>
-    <string name="gauge_left_suffix">left</string>
-    <string name="gauge_used">%1$d%% used</string>
-    <string name="gauge_cd">%1$s: %2$d%% left, %3$s</string>
-    <string name="quota_status_ok">OK</string>
-    <string name="quota_status_low">Low</string>
-    <string name="quota_status_critical">Critical</string>
-    <string name="quota_legend_title">Remaining:</string>
-    <string name="quota_legend_ok">OK &gt; %1$d%%</string>
-    <string name="quota_legend_low">Low %1$d–%2$d%%</string>
-    <string name="quota_legend_critical">Critical ≤ %1$d%%</string>
-    <string name="card_extra_credits">Extra credits</string>
-    <string name="dashboard_open_history">Full history</string>
-    <string name="chart_max_label">Max %1$.2f %2$s</string>
-    <string name="chart_average_label">Avg %1$.2f %2$s</string>
-
-    <string name="window_copilot_premium">Premium requests</string>
-    <string name="window_copilot_completions">Completions</string>
-    <string name="window_openrouter_key_limit">API key limit</string>
-    <string name="card_spend">Spend</string>
-    <string name="spend_today">Today</string>
-    <string name="spend_this_week">This week</string>
-    <string name="spend_this_month">This month</string>
-    <string name="spend_last_7_days">Last 7 days</string>
-    <string name="spend_last_30_days">Last 30 days</string>
-    <string name="copilot_hint">Monthly premium requests and chat quota of your GitHub Copilot plan</string>
-    <string name="openrouter_hint">Key spending cap, credit balance and spend (openrouter.ai/settings/keys)</string>
-    <string name="openai_hint">API Platform spend. Requires an organization Admin key: platform.openai.com/settings/organization/admin-keys</string>
-    <string name="field_github_token">GitHub token</string>
-    <string name="field_github_token_hint">Filled in by GitHub sign-in, or paste a token</string>
-    <string name="field_openai_admin_key">Admin API key</string>
-    <string name="field_openai_admin_key_hint">sk-admin-… (project and regular keys are refused)</string>
-    <string name="field_openrouter_key_hint">sk-or-v1-…</string>
-    <string name="copilot_sign_in">Sign in with GitHub</string>
-    <string name="copilot_login_title">GitHub sign-in</string>
-    <string name="copilot_login_requesting">Requesting a code…</string>
-    <string name="copilot_login_step_code">Enter this code on GitHub:</string>
-    <string name="copilot_login_copy">Copy code</string>
-    <string name="copilot_login_open">Copy and open github.com/login/device</string>
-    <string name="copilot_login_waiting">Waiting for authorization…</string>
-    <string name="copilot_login_denied">Sign-in denied on GitHub</string>
-    <string name="copilot_login_expired">Code expired, try again</string>
-    <string name="clip_github_code">GitHub code</string>
-    <string name="action_retry">Retry</string>
-
-    <string name="claude_accounts_hint">Add one account per Claude subscription (personal, work…): each one gets its own dashboard card and is signed in separately.</string>
-    <string name="claude_empty">No Claude account yet.</string>
-    <string name="claude_label_placeholder">e.g. Personal, Work</string>
-    <string name="claude_oauth_toggle">OAuth tokens (alternative)</string>
-
-    <string name="display_title">Display</string>
-    <string name="display_theme">Theme</string>
-    <string name="theme_system">System</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_dark">Dark</string>
-    <string name="display_quota">Quota reading</string>
-    <string name="quota_mode_remaining">% left</string>
-    <string name="quota_mode_used">% used</string>
-    <string name="display_quota_hint">Applies to every capped quota, widget and notification included. Prepaid balances and spend stay as amounts: no cap, no percentage.</string>
-    <string name="gauge_used_suffix">used</string>
-    <string name="gauge_cd_used">%1$s: %2$d%% used, %3$s</string>
-    <string name="quota_legend_title_used">Used:</string>
-    <string name="quota_legend_ok_used">OK &lt; %1$d%%</string>
-    <string name="quota_legend_low_used">Low %1$d–%2$d%%</string>
-    <string name="quota_legend_critical_used">Critical ≥ %1$d%%</string>
-    <string name="settings_credits_title">Credits and attributions</string>
-    <string name="settings_credits_subtitle">About the developer, open-source licenses and acknowledgements</string>
-    <string name="screen_credits_title">Credits and attributions</string>
-    <string name="credits_logo_cd">Developer logo</string>
-    <string name="credits_developer_role">Android developer &amp; creator of TokenUsage</string>
-    <string name="credits_promo">TokenUsage is built with care and kept free and open source. If it saves you time, a star on GitHub is the best way to support it. Got an Android project in mind? Let\'s talk!</string>
-    <string name="credits_visit_profile">Visit my GitHub profile</string>
-    <string name="credits_star_project">Star TokenUsage on GitHub</string>
-    <string name="credits_attributions_title">Attributions</string>
-    <string name="credits_codexbar">The macOS menu bar app that inspired this project (MIT).</string>
-    <string name="credits_codexbar_android">Android port from which TokenUsage was forked (MIT, notice kept in LICENSE-MIT).</string>
-    <string name="credits_simple_icons">Brand icons, released under CC0-1.0.</string>
-    <string name="credits_gradle">Gradle wrapper, Apache-2.0.</string>
-    <string name="credits_open_link">Open link</string>
-    <string name="credits_license_title">License</string>
-    <string name="credits_license_body">Copyright © 2026 Gildas Le Drogoff. TokenUsage is free software distributed under the GPL-3.0-or-later license. Third-party components keep their own licenses.</string>
-    <string name="delete_account_warning_title">Confirm deletion?</string>
+  <string name="widget_preview_left_42" formatted="false">42% left</string>
+  <string name="widget_preview_left_93" formatted="false">93% left</string>
+  <string name="widget_preview_left_100" formatted="false">100% left</string>
+  <string name="notif_permission_required"
+    >Notification permission required for background quota updates</string
+  >
+  <string name="battery_dialog_title">Background refresh</string>
+  <string name="battery_dialog_text"
+    >Exempting TokenUsage from battery optimization keeps scheduled refreshes
+    reliable.\n\nOtherwise Android may delay them, and the notification, widgets
+    and tile may show outdated quotas.</string
+  >
+  <string name="battery_dialog_decline">No thanks</string>
+  <string name="battery_section_title">Battery optimization</string>
+  <string name="battery_status_exempt"
+    >TokenUsage is exempt from battery optimization.</string
+  >
+  <string name="battery_status_optimized"
+    >TokenUsage is subject to battery optimization.</string
+  >
+  <string name="battery_warning_optimized"
+    >Background refreshes may be delayed by hours or skipped (Doze, power
+    saving). The notification, widgets and tile may show outdated quotas, and
+    reset alerts may arrive late, until you open the app.</string
+  >
+  <string name="battery_hint_exempt"
+    >Scheduled refreshes run at the chosen interval. You can withdraw the
+    exemption from the Android battery settings.</string
+  >
+  <string name="battery_hint_manual"
+    >Manual refresh: no background refresh is scheduled, the exemption is not
+    needed.</string
+  >
+  <string name="battery_action_exempt">Exempt</string>
+  <string name="battery_action_system_settings">Android settings</string>
+  <string name="lock_screen_title">Lock screen</string>
+  <string name="lock_screen_show_all">Show all</string>
+  <string name="lock_screen_system">System</string>
+  <string name="lock_screen_hidden">Hide</string>
+  <string name="lock_screen_hint_show_all"
+    >Notifications show services and percentages on the lock screen, and the
+    Quick Settings tile keeps its details.</string
+  >
+  <string name="lock_screen_hint_system"
+    >Follows the Android “sensitive content” setting: when it hides content,
+    only a neutral notification is shown. The Quick Settings tile hides its
+    details while the device is locked.</string
+  >
+  <string name="lock_screen_hint_hidden"
+    >TokenUsage notifications are not shown on the lock screen, and the Quick
+    Settings tile hides its details while the device is locked.</string
+  >
+  <string name="notif_public_quota">Quota monitoring active</string>
+  <string name="notif_public_reset">A quota has been reset</string>
+  <string name="notif_channel_monitor">AI Quota Monitor</string>
+  <string name="notif_channel_monitor_desc"
+    >Shows current AI service quota usage</string
+  >
+  <string name="notif_channel_reset">Quota Reset Alerts</string>
+  <string name="notif_channel_reset_desc"
+    >Notifies when AI service quotas have been reset</string
+  >
+  <string name="notif_updated">Updated: %1$s</string>
+  <string name="notif_reset_title">%1$s quota reset</string>
+  <string name="notif_reset_body"
+    >%1$s window has been reset. Your quota is fully available.</string
+  >
+  <string name="notif_refreshing_title">Refreshing quota data...</string>
+  <string name="time_just_now">just now</string>
+  <plurals name="time_minutes_ago">
+    <item quantity="one">%1$d min ago</item>
+    <item quantity="other">%1$d min ago</item>
+  </plurals>
+  <plurals name="time_hours_ago">
+    <item quantity="one">%1$dh ago</item>
+    <item quantity="other">%1$dh ago</item>
+  </plurals>
+  <string name="error_network">Network error</string>
+  <string name="error_network_reason">Network error: %1$s</string>
+  <string name="error_reauth_required">Re-authentication required</string>
+  <string name="error_auth">Authentication error</string>
+  <string name="error_rate_limited">Rate limited</string>
+  <string name="error_parse">Response parse error</string>
+  <string name="error_parse_reason">Parse error: %1$s</string>
+  <string name="error_no_credentials">No credentials configured</string>
+  <string name="error_service_unavailable"
+    >Service temporarily unavailable</string
+  >
+  <string name="error_gemini_consumer_unsupported"
+    >Google no longer supports Gemini CLI sign-in for individual, AI Pro or
+    Ultra accounts. Only Workspace, education and Code Assist accounts still
+    report a quota here.</string
+  >
+  <string name="error_client_unsupported"
+    >The provider no longer supports this account type through this app.</string
+  >
+  <string name="error_token_revoked"
+    >Access revoked by the provider: update this account\'s token in Settings
+    (sign in again or paste a new key), or remove the account.</string
+  >
+  <string name="error_invalid_api_key">Invalid API key</string>
+  <string name="integrity_title">Untrusted device</string>
+  <string name="integrity_message"
+    >TokenUsage detected an environment that could expose your credentials: a
+    rooted app or an injection tool could read them. If you control this device
+    (e.g. a custom ROM), you can still use TokenUsage.</string
+  >
+  <string name="integrity_threats_header">Detected:</string>
+  <string name="integrity_threat_root">Root access</string>
+  <string name="integrity_threat_hooking"
+    >Code injection framework (Frida, Xposed…)</string
+  >
+  <string name="integrity_threat_debugger">Debugger attached</string>
+  <string name="integrity_threat_tampered">Modified application</string>
+  <string name="integrity_close">Close</string>
+  <string name="integrity_accept_risk">Continue anyway</string>
+  <string name="integrity_accept_risk_note"
+    >Your choice is remembered on this device: these checks will no longer block
+    TokenUsage.</string
+  >
+  <string name="integrity_open_app"
+    >Open TokenUsage to choose whether to continue on this device.</string
+  >
+  <string name="fx_title">Display currency</string>
+  <string name="fx_subtitle"
+    >Shows every amount in a single currency: prepaid balances (DeepSeek,
+    OpenRouter), spend (OpenAI, OpenRouter) and Claude extra credits. Converted
+    values are approximate.</string
+  >
+  <string name="fx_currency_original">Original</string>
+  <string name="fx_currency_original_desc"
+    >Amounts stay in the currency billed by each provider (USD / CNY).</string
+  >
+  <string name="fx_source_title">Exchange rate</string>
+  <string name="fx_source_manual">Manual rate</string>
+  <string name="fx_source_frankfurter">Frankfurter</string>
+  <string name="fx_source_ecb">ECB</string>
+  <string name="fx_source_manual_desc">Your own rates, entered below.</string>
+  <string name="fx_source_frankfurter_desc"
+    >Daily rate from api.frankfurter.dev.</string
+  >
+  <string name="fx_source_ecb_desc"
+    >Euro reference rates of the European Central Bank (ecb.europa.eu).</string
+  >
+  <string name="fx_manual_usd_eur_field">1 USD = … EUR</string>
+  <string name="fx_manual_usd_cny_field">1 USD = … CNY</string>
+  <string name="fx_manual_usd_eur_hint">e.g. 0.92 (dot or comma)</string>
+  <string name="fx_manual_usd_cny_hint">e.g. 7.10 (dot or comma)</string>
+  <string name="fx_manual_invalid">Enter a positive number</string>
+  <string name="fx_rate_note">1 %1$s = %2$.4f %3$s · %4$s</string>
+  <string name="fx_rate_note_dated">1 %1$s = %2$.4f %3$s · %4$s, %5$s</string>
+  <string name="fx_converted_value">≈ %1$.2f %2$s</string>
+  <string name="fx_history_approx"
+    >History converted at the current rate.</string
+  >
+  <string name="fx_rate_none">No rate fetched yet.</string>
+  <string name="fx_fetch_failed">Couldn\'t fetch the rate: %1$s</string>
+  <string name="fx_api_consent_title">Allow rate updates from the API</string>
+  <string name="fx_api_consent_desc"
+    >Lets the app call the selected rate service to refresh rates. Off: no
+    network call, only manual rates or previously fetched ones are used.</string
+  >
+  <string name="fx_api_consent_off"
+    >Rate updates are off. Enable them above to fetch rates, or use a manual
+    rate.</string
+  >
+  <string name="action_refresh_rate">Refresh</string>
+  <string name="gauge_percent_value">%1$d%%</string>
+  <string name="gauge_left_suffix">left</string>
+  <string name="gauge_used">%1$d%% used</string>
+  <string name="gauge_cd">%1$s: %2$d%% left, %3$s</string>
+  <string name="quota_status_ok">OK</string>
+  <string name="quota_status_low">Low</string>
+  <string name="quota_status_critical">Critical</string>
+  <string name="quota_legend_title">Remaining:</string>
+  <string name="quota_legend_ok">OK &gt; %1$d%%</string>
+  <string name="quota_legend_low">Low %1$d–%2$d%%</string>
+  <string name="quota_legend_critical">Critical ≤ %1$d%%</string>
+  <string name="card_extra_credits">Extra credits</string>
+  <string name="dashboard_open_history">Full history</string>
+  <string name="chart_max_label">Max %1$.2f %2$s</string>
+  <string name="chart_average_label">Avg %1$.2f %2$s</string>
+  <string name="window_copilot_premium">Premium requests</string>
+  <string name="window_copilot_completions">Completions</string>
+  <string name="window_claude_platform_api_credit">API credit</string>
+  <string name="window_claude_platform_purchased_credit"
+    >Purchased credit</string
+  >
+  <string name="claude_platform_hint"
+    >Console API credit balance, credit grants and monthly spend, read from your
+    platform.claude.com session (not the Claude subscription)</string
+  >
+  <string name="field_claude_platform_cookie">Cookie header</string>
+  <string name="field_claude_platform_cookie_hint"
+    >sessionKey=… (copy from a signed-in platform.claude.com request)</string
+  >
+  <string name="window_openrouter_key_limit">API key limit</string>
+  <string name="card_spend">Spend</string>
+  <string name="spend_today">Today</string>
+  <string name="spend_this_week">This week</string>
+  <string name="spend_this_month">This month</string>
+  <string name="spend_last_7_days">Last 7 days</string>
+  <string name="spend_last_30_days">Last 30 days</string>
+  <string name="copilot_hint"
+    >Monthly premium requests and chat quota of your GitHub Copilot plan</string
+  >
+  <string name="openrouter_hint"
+    >Key spending cap, credit balance and spend
+    (openrouter.ai/settings/keys)</string
+  >
+  <string name="openai_hint"
+    >API Platform spend. Requires an organization Admin key:
+    platform.openai.com/settings/organization/admin-keys</string
+  >
+  <string name="field_github_token">GitHub token</string>
+  <string name="field_github_token_hint"
+    >Filled in by GitHub sign-in, or paste a token</string
+  >
+  <string name="field_openai_admin_key">Admin API key</string>
+  <string name="field_openai_admin_key_hint"
+    >sk-admin-… (project and regular keys are refused)</string
+  >
+  <string name="field_openrouter_key_hint">sk-or-v1-…</string>
+  <string name="copilot_sign_in">Sign in with GitHub</string>
+  <string name="copilot_login_title">GitHub sign-in</string>
+  <string name="copilot_login_requesting">Requesting a code…</string>
+  <string name="copilot_login_step_code">Enter this code on GitHub:</string>
+  <string name="copilot_login_copy">Copy code</string>
+  <string name="copilot_login_open"
+    >Copy and open github.com/login/device</string
+  >
+  <string name="copilot_login_waiting">Waiting for authorization…</string>
+  <string name="copilot_login_denied">Sign-in denied on GitHub</string>
+  <string name="copilot_login_expired">Code expired, try again</string>
+  <string name="clip_github_code">GitHub code</string>
+  <string name="action_retry">Retry</string>
+  <string name="claude_accounts_hint"
+    >Add one account per Claude subscription (personal, work…): each one gets
+    its own dashboard card and is signed in separately.</string
+  >
+  <string name="claude_empty">No Claude account yet.</string>
+  <string name="claude_label_placeholder">e.g. Personal, Work</string>
+  <string name="claude_oauth_toggle">OAuth tokens (alternative)</string>
+  <string name="display_title">Display</string>
+  <string name="display_theme">Theme</string>
+  <string name="theme_system">System</string>
+  <string name="theme_light">Light</string>
+  <string name="theme_dark">Dark</string>
+  <string name="display_quota">Quota reading</string>
+  <string name="quota_mode_remaining">% left</string>
+  <string name="quota_mode_used">% used</string>
+  <string name="display_quota_hint"
+    >Applies to every capped quota, widget and notification included. Prepaid
+    balances and spend stay as amounts: no cap, no percentage.</string
+  >
+  <string name="gauge_used_suffix">used</string>
+  <string name="gauge_cd_used">%1$s: %2$d%% used, %3$s</string>
+  <string name="quota_legend_title_used">Used:</string>
+  <string name="quota_legend_ok_used">OK &lt; %1$d%%</string>
+  <string name="quota_legend_low_used">Low %1$d–%2$d%%</string>
+  <string name="quota_legend_critical_used">Critical ≥ %1$d%%</string>
+  <string name="settings_credits_title">Credits and attributions</string>
+  <string name="settings_credits_subtitle"
+    >About the developer, open-source licenses and acknowledgements</string
+  >
+  <string name="screen_credits_title">Credits and attributions</string>
+  <string name="credits_logo_cd">Developer logo</string>
+  <string name="credits_developer_role"
+    >Android developer &amp; creator of TokenUsage</string
+  >
+  <string name="credits_promo"
+    >TokenUsage is built with care and kept free and open source. If it saves
+    you time, a star on GitHub is the best way to support it. Got an Android
+    project in mind? Let\'s talk!</string
+  >
+  <string name="credits_visit_profile">Visit my GitHub profile</string>
+  <string name="credits_star_project">Star TokenUsage on GitHub</string>
+  <string name="credits_attributions_title">Attributions</string>
+  <string name="credits_codexbar"
+    >The macOS menu bar app that inspired this project (MIT).</string
+  >
+  <string name="credits_codexbar_android"
+    >Android port from which TokenUsage was forked (MIT, notice kept in
+    LICENSE-MIT).</string
+  >
+  <string name="credits_simple_icons"
+    >Brand icons, released under CC0-1.0.</string
+  >
+  <string name="credits_gradle">Gradle wrapper, Apache-2.0.</string>
+  <string name="credits_open_link">Open link</string>
+  <string name="credits_license_title">License</string>
+  <string name="credits_license_body"
+    >Copyright © 2026 Gildas Le Drogoff. TokenUsage is free software distributed
+    under the GPL-3.0-or-later license. Third-party components keep their own
+    licenses.</string
+  >
+  <string name="delete_account_warning_title">Confirm deletion?</string>
+  <string name="history_today">Today</string>
+  <string name="claude_curves_title">Claude usage curves (7 days)</string>
+  <string name="claude_curve_5h">5-hour window</string>
+  <string name="claude_curve_7d">7-day window</string>
+  <string name="demo_claude_platform">Claude Platform (demo)</string>
 </resources>

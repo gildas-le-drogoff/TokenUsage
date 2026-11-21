@@ -5,7 +5,6 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface CodexTokenRefreshService {
-
     @POST("oauth/token")
     suspend fun refreshToken(
         @Body request: CodexDto.TokenRefreshRequest

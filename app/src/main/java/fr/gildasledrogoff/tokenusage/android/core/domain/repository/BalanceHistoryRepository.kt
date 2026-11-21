@@ -5,10 +5,7 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.BalanceSample
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionGranularity
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionPoint
 
-
 interface BalanceHistoryRepository {
-
-    
     suspend fun record(
         service: AiService,
         accountId: String,
@@ -17,10 +14,7 @@ interface BalanceHistoryRepository {
         totalBalance: Double
     )
 
-    
     suspend fun latestSample(service: AiService, accountId: String): BalanceSample?
-
-    
     suspend fun consumption(
         service: AiService,
         accountId: String,

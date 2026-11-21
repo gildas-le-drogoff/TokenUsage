@@ -4,15 +4,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 object DeepseekDto {
-
-    
     @Serializable
     data class BalanceResponse(
         @SerialName("is_available") val isAvailable: Boolean? = null,
         @SerialName("balance_infos") val balanceInfos: List<BalanceInfo> = emptyList()
     )
 
-    
     @Serializable
     data class BalanceInfo(
         @SerialName("currency") val currency: String? = null,

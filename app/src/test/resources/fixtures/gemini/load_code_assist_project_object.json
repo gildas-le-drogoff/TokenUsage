@@ -1,0 +1,7 @@
+{
+  "currentTier": {"id": "free-tier", "name": "Gemini Code Assist for individuals"},
+  "cloudaicompanionProject": {"id": "example-project-456", "name": "Example"},
+  "ineligibleTiers": [
+    {"reasonCode": "UNSUPPORTED_LOCATION", "reasonMessage": "Not available in your region", "tierId": "standard-tier"}
+  ]
+}
