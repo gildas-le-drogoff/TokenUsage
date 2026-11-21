@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.alerts
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,29 +15,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 @HiltViewModel
 class AlertsSettingsViewModel @Inject constructor(
     private val store: AlertPreferencesStore,
     private val prefsManager: EncryptedPrefsManager,
     private val lastFetch: LastFetchRepository
 ) : ViewModel() {
-
     private data class Known(
         val accounts: Map<AiService, List<Pair<String, String?>>> = emptyMap(),
         val windowLabels: Map<AiService, List<String>> = emptyMap(),
         val notificationsEnabled: Boolean = true
     )
-
     private var known = Known()
     private val _uiState = MutableStateFlow(AlertsSettingsUiState())
     val uiState: StateFlow<AlertsSettingsUiState> = _uiState.asStateFlow()
-
     init {
         reload()
     }
-
-    /** Re-reads the configured accounts (they may have changed in the accounts screen). */
+    
     fun reload() {
         known = known.copy(
             accounts = AiService.entries.associateWith { service ->
@@ -62,18 +56,15 @@ class AlertsSettingsViewModel @Inject constructor(
             publish()
         }
     }
-
     fun updateServiceRule(service: AiService, rule: AlertRule) {
         store.setServiceRule(service, rule)
         publish()
     }
-
     fun updateAccountRule(accountKey: String, rule: AlertRule) {
         store.setAccountRule(accountKey, rule)
         publish()
     }
-
-    /** Gives an account its own rule (a copy of the service default), or takes it back to the default. */
+    
     fun setAccountCustomized(service: AiService, accountKey: String, customized: Boolean) {
         val config = store.currentConfig()
         store.setAccountRule(
@@ -82,7 +73,6 @@ class AlertsSettingsViewModel @Inject constructor(
         )
         publish()
     }
-
     private fun publish() {
         val config: AlertConfig = store.currentConfig()
         val services = AiService.entries.mapNotNull { service ->

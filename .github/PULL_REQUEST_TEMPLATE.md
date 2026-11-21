@@ -1,6 +1,5 @@
 ## Summary
 
-<!-- What does this change and why? Link the related issue if there is one. -->
 
 ## Checklist
 

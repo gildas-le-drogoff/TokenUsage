@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.accounts
-
 import android.os.Build
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -39,8 +38,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
-
-
 @Composable
 fun ClaudeLoginDialog(
     onDismiss: () -> Unit,
@@ -51,14 +48,11 @@ fun ClaudeLoginDialog(
     val currentOnDismiss by rememberUpdatedState(onDismiss)
     var handled by remember { mutableStateOf(false) }
     var progress by remember { mutableIntStateOf(0) }
-
     val webView = remember { WebView(context) }
-
     val userAgent = remember {
         "Mozilla/5.0 (Linux; Android ${Build.VERSION.RELEASE}; ${Build.MODEL}) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36"
     }
-
     fun checkForSessionKey() {
         if (handled) return
         val key = ClaudeSessionCookie.extract(
@@ -70,7 +64,6 @@ fun ClaudeLoginDialog(
         currentOnCaptured(key)
         currentOnDismiss()
     }
-
     DisposableEffect(Unit) {
         CookieManager.getInstance().setAcceptCookie(true)
         webView.settings.apply {
@@ -84,7 +77,6 @@ fun ClaudeLoginDialog(
                 super.doUpdateVisitedHistory(view, url, isReload)
                 checkForSessionKey()
             }
-
             override fun onPageFinished(view: WebView, url: String?) {
                 super.onPageFinished(view, url)
                 checkForSessionKey()
@@ -97,17 +89,14 @@ fun ClaudeLoginDialog(
         }
         webView.loadUrl(ClaudeSessionCookie.LOGIN_URL)
         webView.post { checkForSessionKey() }
-
         onDispose {
             webView.stopLoading()
             webView.destroy()
         }
     }
-
     BackHandler {
         if (!handled && webView.canGoBack()) webView.goBack() else currentOnDismiss()
     }
-
     Dialog(
         onDismissRequest = currentOnDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -137,14 +126,12 @@ fun ClaudeLoginDialog(
                         Icon(painter = painterResource(R.drawable.ic_close_rounded), contentDescription = stringResource(R.string.cd_close))
                     }
                 }
-
                 if (progress in 1..99) {
                     LinearProgressIndicator(
                         progress = { progress / 100f },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-
                 AndroidView(
                     factory = { webView },
                     modifier = Modifier.fillMaxSize()

@@ -1,8 +1,6 @@
 package fr.gildasledrogoff.tokenusage.core.domain.model
-
 import androidx.annotation.DrawableRes
 import fr.gildasledrogoff.tokenusage.R
-
 enum class AiService(
     val displayName: String,
     val brandColor: Long,
@@ -57,5 +55,4 @@ enum class AiService(
         baseUrl = "https://api.openai.com/",
         icon = R.drawable.ic_service_openai
     );
-
 }

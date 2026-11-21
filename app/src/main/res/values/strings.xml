@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">TokenUsage</string>
     <string name="tile_label">TokenUsage</string>
     <string name="tile_tap_to_setup">Tap to set up</string>
@@ -12,7 +11,6 @@
     <string name="widget_compact_description">One service, one big gauge</string>
     <string name="widget_reset_description">Countdown to the next quota window reset</string>
     <string name="widget_balances_description">Prepaid balances for your accounts</string>
-
     <string name="settings">Settings</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_close">Close</string>
@@ -23,7 +21,6 @@
     <string name="action_add_account">Add account</string>
     <string name="action_rename">Rename</string>
     <string name="rename_account_title">Rename account</string>
-
     <string name="cd_back">Back</string>
     <string name="cd_close">Close</string>
     <string name="cd_settings">Settings</string>
@@ -37,30 +34,25 @@
     <string name="cd_expand">Expand</string>
     <string name="cd_collapse">Collapse</string>
     <string name="cd_qr_code">Encrypted config QR code</string>
-
     <string name="dashboard_empty_title">No services configured</string>
     <string name="dashboard_empty_subtitle">Go to Settings to add your API credentials</string>
     <string name="dashboard_load_failed">Failed to load quota data</string>
     <string name="dashboard_last_updated">Last updated: %1$s</string>
     <string name="error_failed_services">Failed to load: %1$s</string>
-
     <string name="gauge_percent_left">%1$d%% left</string>
     <string name="resets_in">Resets in %1$s</string>
     <string name="duration_days_hours">%1$dd %2$dh</string>
     <string name="duration_hours_minutes">%1$dh %2$dm</string>
     <string name="duration_minutes">%1$dm</string>
-
     <string name="window_5h">5-Hour</string>
     <string name="window_7d">7-Day</string>
     <string name="window_weekly_scoped">Weekly scoped</string>
-
     <string name="card_usage_this_week">Usage this week</string>
     <string name="card_credits">Credits: %1$.2f / %2$.2f %3$s</string>
     <string name="card_credits_converted">Credits: ≈ %1$.2f / %2$.2f %3$s</string>
     <string name="card_balance">Remaining credit</string>
     <string name="card_insufficient_balance">Insufficient balance for API calls</string>
     <string name="card_granted">Granted: %1$.2f %2$s</string>
-
     <string name="screen_history_title">Consumption history</string>
     <string name="history_no_account">No DeepSeek account configured</string>
     <string name="history_no_account_hint">Add an account in Settings, then come back after a refresh</string>
@@ -77,7 +69,6 @@
     <string name="chart_cd">Consumption chart: %1$d %2$s, maximum %3$.2f</string>
     <string name="chart_unit_days">days</string>
     <string name="chart_unit_months">months</string>
-
     <string name="status_in_use">In use</string>
     <string name="status_not_in_use">Not in use</string>
     <plurals name="accounts_in_use">
@@ -86,7 +77,6 @@
     </plurals>
     <string name="notifications_title">Notifications</string>
     <string name="notifications_subtitle">Quota status and reset alerts</string>
-
     <!-- Security: app lock + stored-credential secrecy -->
     <string name="security_title">Security</string>
     <string name="app_lock_title">App lock</string>
@@ -114,7 +104,6 @@
     <string name="delete_dialog_text">This will permanently delete all saved API credentials. Type DELETE to confirm.</string>
     <string name="field_type_delete">Type DELETE</string>
     <string name="toast_backup_write_failed">Failed to write backup file</string>
-
     <string name="status_valid">Valid</string>
     <string name="status_invalid">Invalid</string>
     <string name="field_access_token">Access Token</string>
@@ -129,21 +118,18 @@
     <string name="field_api_key">API Key</string>
     <string name="field_api_key_format">Format sk-...</string>
     <string name="field_api_key_zai_hint">From z.ai/manage-apikey/apikey-list</string>
-
     <string name="claude_sign_in">Sign in with Claude</string>
     <string name="claude_sign_in_hint">Opens claude.ai in an embedded view: log in once and the app captures the session key (sk-ant-sid02-…) automatically. Recommended over OAuth: it never rotates, so the desktop CLI can\'t invalidate it.</string>
     <string name="field_session_key">Session Key (manual paste)</string>
     <string name="field_session_key_hint">Or paste the cookie manually: claude.ai sessionKey (sk-ant-sid01-… or sk-ant-sid02-…).</string>
     <string name="claude_login_title">Sign in to Claude</string>
     <string name="claude_login_subtitle">Log in once — the session key is captured automatically.</string>
-
     <string name="deepseek_hint">Remaining credit per account (platform.deepseek.com → API Keys)</string>
     <string name="deepseek_empty">No account configured. Add a DeepSeek API key to track its remaining credit.</string>
     <string name="zai_hint">Remaining quota per account: Session (5h), Monthly Tools, Quota (z.ai → API Keys)</string>
     <string name="zai_hint_no_tools">Remaining quota per account: Session (5h), Quota (z.ai → API Keys)</string>
     <string name="zai_hide_monthly_tools">Hide “Monthly Tools” (tool-call quota)</string>
     <string name="zai_empty">No account configured. Add a Z.ai API key to track its remaining quota.</string>
-
     <string name="backup_title">Backup &amp; Export</string>
     <string name="backup_description">Encrypted with a password — without it the backup cannot be recovered. ZIP: everything, including the DeepSeek usage history. QR code: access tokens, session keys and API keys only.</string>
     <string name="field_pin">Password (min. %1$d characters)</string>
@@ -169,14 +155,13 @@
     <string name="qr_dialog_warning">Anyone who captures this image and knows the password can read your credentials.</string>
     <string name="action_next_qr">Next QR</string>
     <string name="action_previous_qr">Previous</string>
-
     <string name="import_title">Import</string>
     <string name="import_description">Restore an encrypted backup: a ZIP file (history included) or the QR code from another device. Backup credentials replace this device\'s.</string>
     <string name="action_import_qr">Scan QR</string>
     <string name="import_scan_prompt">Point the camera at the TokenUsage configuration QR code</string>
     <string name="import_scan_prompt_multi">QR code %1$d of %2$d — point the camera at the next TokenUsage QR code</string>
     <string name="import_qr_progress">QR codes received: %1$d / %2$d</string>
-    <string name="import_qr_progress_next">Continue with QR code #%1$d</string>
+    <string name="import_qr_progress_next">Continue with QR code 
     <string name="action_scan_next_qr">Scan next QR code</string>
     <string name="action_restart_qr_scan">Start over</string>
     <string name="import_dialog_title">Import configuration</string>
@@ -198,7 +183,6 @@
         <item quantity="one">Configuration imported: %1$d credential</item>
         <item quantity="other">Configuration imported: %1$d credentials</item>
     </plurals>
-
     <!-- Debug sample data: fake account labels, localized like the rest -->
     <string name="demo_claude_personal">Claude personal</string>
     <string name="demo_claude_work">Claude work</string>
@@ -208,7 +192,6 @@
     <string name="demo_account_old">Old account</string>
     <string name="demo_zai_personal">Z.ai personal</string>
     <string name="demo_zai_work">Z.ai work</string>
-
     <string name="widget_config_title">Configure Widget</string>
     <string name="widget_config_instruction">Select services to display in this widget:</string>
     <string name="widget_config_no_services">No services configured yet. Please add credentials in the app settings first.</string>
@@ -224,7 +207,6 @@
     <string name="widget_preview_left_42" formatted="false">42% left</string>
     <string name="widget_preview_left_93" formatted="false">93% left</string>
     <string name="widget_preview_left_100" formatted="false">100% left</string>
-
     <string name="notif_permission_required">Notification permission required for background quota updates</string>
     <string name="battery_dialog_title">Background refresh</string>
     <string name="battery_dialog_text">Exempting TokenUsage from battery optimization keeps scheduled refreshes reliable.\n\nOtherwise Android may delay them, and the notification, widgets and tile may show outdated quotas.</string>
@@ -246,7 +228,6 @@
     <string name="lock_screen_hint_hidden">TokenUsage notifications are not shown on the lock screen, and the Quick Settings tile hides its details while the device is locked.</string>
     <string name="notif_public_quota">Quota monitoring active</string>
     <string name="notif_public_reset">A quota has been reset</string>
-
     <string name="notif_channel_monitor">AI Quota Monitor</string>
     <string name="notif_channel_monitor_desc">Shows current AI service quota usage</string>
     <string name="notif_channel_reset">Quota Reset Alerts</string>
@@ -264,7 +245,6 @@
         <item quantity="one">%1$dh ago</item>
         <item quantity="other">%1$dh ago</item>
     </plurals>
-
     <string name="error_network">Network error</string>
     <string name="error_network_reason">Network error: %1$s</string>
     <string name="error_reauth_required">Re-authentication required</string>
@@ -278,7 +258,6 @@
     <string name="error_client_unsupported">The provider no longer supports this account type through this app.</string>
     <string name="error_token_revoked">Access revoked by the provider: update this account\'s token in Settings (sign in again or paste a new key), or remove the account.</string>
     <string name="error_invalid_api_key">Invalid API key</string>
-
     <string name="integrity_title">Untrusted device</string>
     <string name="integrity_message">TokenUsage detected an environment that could expose your credentials: a rooted app or an injection tool could read them. If you control this device (e.g. a custom ROM), you can still use TokenUsage.</string>
     <string name="integrity_threats_header">Detected:</string>
@@ -290,7 +269,6 @@
     <string name="integrity_accept_risk">Continue anyway</string>
     <string name="integrity_accept_risk_note">Your choice is remembered on this device: these checks will no longer block TokenUsage.</string>
     <string name="integrity_open_app">Open TokenUsage to choose whether to continue on this device.</string>
-
     <string name="fx_title">Display currency</string>
     <string name="fx_subtitle">Shows every amount in a single currency: prepaid balances (DeepSeek, OpenRouter), spend (OpenAI, OpenRouter) and Claude extra credits. Converted values are approximate.</string>
     <string name="fx_currency_original">Original</string>
@@ -332,7 +310,6 @@
     <string name="dashboard_open_history">Full history</string>
     <string name="chart_max_label">Max %1$.2f %2$s</string>
     <string name="chart_average_label">Avg %1$.2f %2$s</string>
-
     <string name="window_copilot_premium">Premium requests</string>
     <string name="window_copilot_completions">Completions</string>
     <string name="window_openrouter_key_limit">API key limit</string>
@@ -361,12 +338,10 @@
     <string name="copilot_login_expired">Code expired, try again</string>
     <string name="clip_github_code">GitHub code</string>
     <string name="action_retry">Retry</string>
-
     <string name="claude_accounts_hint">Add one account per Claude subscription (personal, work…): each one gets its own dashboard card and is signed in separately.</string>
     <string name="claude_empty">No Claude account yet.</string>
     <string name="claude_label_placeholder">e.g. Personal, Work</string>
     <string name="claude_oauth_toggle">OAuth tokens (alternative)</string>
-
     <string name="display_title">Display</string>
     <string name="display_theme">Theme</string>
     <string name="theme_system">System</string>

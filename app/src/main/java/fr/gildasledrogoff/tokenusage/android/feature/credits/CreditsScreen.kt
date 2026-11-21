@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.credits
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,29 +32,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import fr.gildasledrogoff.tokenusage.BuildConfig
 import fr.gildasledrogoff.tokenusage.R
-
 private const val DEVELOPER_URL = "https://github.com/gildas-le-drogoff"
 private const val PROJECT_URL = "https://github.com/gildas-le-drogoff/TokenUsage"
-
 private data class Attribution(
     val name: String,
     val descriptionRes: Int,
     val url: String
 )
-
 private val attributions = listOf(
     Attribution("CodexBar — @steipete", R.string.credits_codexbar, "https://github.com/steipete/CodexBar"),
     Attribution("codexbar-android — hyunnnchoi", R.string.credits_codexbar_android, "https://github.com/hyunnnchoi/codexbar-android"),
     Attribution("Simple Icons", R.string.credits_simple_icons, "https://simpleicons.org/"),
     Attribution("Gradle wrapper", R.string.credits_gradle, "https://www.apache.org/licenses/LICENSE-2.0")
 )
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreditsScreen(onNavigateBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -127,7 +122,6 @@ fun CreditsScreen(onNavigateBack: () -> Unit) {
                     }
                 }
             }
-
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -158,7 +152,6 @@ fun CreditsScreen(onNavigateBack: () -> Unit) {
                     }
                 }
             }
-
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -177,7 +170,13 @@ fun CreditsScreen(onNavigateBack: () -> Unit) {
                     )
                 }
             }
-
+            Text(
+                text = "${BuildConfig.VERSION_NAME} · ${BuildConfig.GIT_HASH} · ${BuildConfig.GIT_DATE}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
     }

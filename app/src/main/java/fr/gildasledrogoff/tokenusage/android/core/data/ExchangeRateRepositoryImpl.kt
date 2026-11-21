@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Currencies
 import fr.gildasledrogoff.tokenusage.core.domain.model.FxRate
@@ -19,8 +18,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-
-
 class ExchangeRateRepositoryImpl(
     private val client: OkHttpClient,
     private val json: Json,
@@ -30,18 +27,12 @@ class ExchangeRateRepositoryImpl(
     private val cacheTtlMs: Long = DEFAULT_CACHE_TTL_MS,
     private val nowMs: () -> Long = System::currentTimeMillis
 ) : ExchangeRateRepository {
-
-    
     private val mutex = Mutex()
-
-    
     private data class EurQuote(val rate: Double, val date: String?)
-
     override suspend fun displayRate(currency: String): FxRate? {
         val from = currency.trim().uppercase()
         val to = prefsManager.getDisplayCurrency().code ?: return null
         if (from.isEmpty() || from == to) return null
-
         return when (val source = prefsManager.getFxRateSource()) {
             FxRateSource.MANUAL -> manualRate(from, to)
             FxRateSource.FRANKFURTER, FxRateSource.ECB -> if (!prefsManager.isFxApiFetchAllowed()) {
@@ -53,7 +44,6 @@ class ExchangeRateRepositoryImpl(
             }
         }
     }
-
     override suspend fun fetchLatest(source: FxRateSource, from: String, to: String): Result<FxRate, AppError> {
         val fromCode = from.trim().uppercase()
         val toCode = to.trim().uppercase()
@@ -76,7 +66,6 @@ class ExchangeRateRepositoryImpl(
             }
         }
     }
-
     override fun cachedRate(source: FxRateSource, from: String, to: String): FxRate? {
         val fromCode = from.trim().uppercase()
         val toCode = to.trim().uppercase()
@@ -86,7 +75,6 @@ class ExchangeRateRepositoryImpl(
         val toQuote = cachedEurQuote(source, toCode) ?: return null
         return cross(source, fromCode, toCode, fromQuote, toQuote)
     }
-
     private fun cross(source: FxRateSource, from: String, to: String, fromQuote: EurQuote, toQuote: EurQuote) =
         FxRate(
             from = from,
@@ -95,28 +83,21 @@ class ExchangeRateRepositoryImpl(
             source = source,
             date = fromQuote.date ?: toQuote.date
         )
-
-    
     private fun manualRate(from: String, to: String): FxRate? {
         val fromUsd = manualUsdValue(from) ?: return null
         val toUsd = manualUsdValue(to) ?: return null
         return FxRate(from = from, to = to, rate = fromUsd / toUsd, source = FxRateSource.MANUAL)
     }
-
-    
     private fun manualUsdValue(code: String): Double? = when (code) {
         Currencies.USD -> 1.0
         Currencies.EUR -> prefsManager.getManualUsdEurRate()?.let { 1.0 / it }
         Currencies.CNY -> prefsManager.getManualUsdCnyRate()?.let { 1.0 / it }
         else -> null
     }
-
     private fun cachedEurQuote(source: FxRateSource, code: String): EurQuote? {
         if (code == Currencies.EUR) return EurQuote(1.0, null)
         return prefsManager.getCachedEurRate(source, code)?.let { EurQuote(it.rate, it.date) }
     }
-
-    
     private suspend fun eurQuote(source: FxRateSource, code: String): EurQuote? {
         if (code == Currencies.EUR) return EurQuote(1.0, null)
         return mutex.withLock {
@@ -130,18 +111,14 @@ class ExchangeRateRepositoryImpl(
             }
         }
     }
-
     private suspend fun freshEurQuote(source: FxRateSource, code: String): Result<EurQuote, AppError> =
         if (code == Currencies.EUR) Result.Success(EurQuote(1.0, null)) else fetchAndCache(source, code)
-
-    
     private fun quoteCachedSince(source: FxRateSource, code: String, sinceMs: Long): EurQuote? {
         if (code == Currencies.EUR) return null
         return prefsManager.getCachedEurRate(source, code)
             ?.takeIf { it.fetchedAtMs >= sinceMs }
             ?.let { EurQuote(it.rate, it.date) }
     }
-
     private suspend fun fetchAndCache(source: FxRateSource, code: String): Result<EurQuote, AppError> =
         when (source) {
             FxRateSource.FRANKFURTER -> fetchFrankfurter(code).also { result ->
@@ -150,7 +127,6 @@ class ExchangeRateRepositoryImpl(
             FxRateSource.ECB -> fetchEcb(code)
             FxRateSource.MANUAL -> Result.Failure(AppError.ParseError("Not a remote source: $source"))
         }
-
     private fun cache(source: FxRateSource, code: String, quote: EurQuote, fetchedAtMs: Long) {
         prefsManager.saveCachedEurRate(
             source,
@@ -158,7 +134,6 @@ class ExchangeRateRepositoryImpl(
             CachedEurRate(rate = quote.rate, date = quote.date, fetchedAtMs = fetchedAtMs)
         )
     }
-
     private suspend fun fetchFrankfurter(code: String): Result<EurQuote, AppError> {
         val url = frankfurterBaseUrl.trimEnd('/') + "/" + ExchangeRateEndpoints.frankfurterRatePath(code)
         return when (val body = get(url)) {
@@ -168,8 +143,6 @@ class ExchangeRateRepositoryImpl(
                 ?: Result.Failure(AppError.ParseError("Invalid Frankfurter rate for $code"))
         }
     }
-
-    
     private suspend fun fetchEcb(code: String): Result<EurQuote, AppError> {
         return when (val body = get(ecbUrl)) {
             is Result.Failure -> body
@@ -185,7 +158,6 @@ class ExchangeRateRepositoryImpl(
             }
         }
     }
-
     private suspend fun get(url: String): Result<String, AppError> = withContext(Dispatchers.IO) {
         try {
             client.newCall(Request.Builder().url(url).get().build()).execute().use { response ->
@@ -209,7 +181,6 @@ class ExchangeRateRepositoryImpl(
             Result.Failure(AppError.NetworkError("Invalid URL: $url", e))
         }
     }
-
     companion object {
         val DEFAULT_CACHE_TTL_MS: Long = TimeUnit.HOURS.toMillis(6)
         private const val MAX_BODY_CHARS = 256 * 1024

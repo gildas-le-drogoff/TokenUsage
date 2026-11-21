@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.accounts
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -53,10 +52,6 @@ import fr.gildasledrogoff.tokenusage.feature.settings.ConfirmDeleteIconButton
 import fr.gildasledrogoff.tokenusage.feature.settings.SettingsFields
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
 
-/**
- * The account section of one service, built entirely from its provider's [CredentialForm]:
- * add / rename / remove / validate any number of accounts. No per-service code.
- */
 @Composable
 internal fun ProviderAccountsSection(
     provider: QuotaProvider,
@@ -76,7 +71,6 @@ internal fun ProviderAccountsSection(
     var webLoginAccountId by rememberSaveable(service.name) { mutableStateOf<String?>(null) }
     var renameAccountId by rememberSaveable(service.name) { mutableStateOf<String?>(null) }
     val configuredCount = accounts.count { it.isConfigured(form) }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -92,7 +86,6 @@ internal fun ProviderAccountsSection(
                 expanded = expanded,
                 onToggle = { expanded = !expanded }
             )
-
             AnimatedVisibility(visible = expanded) {
                 Column(
                     modifier = Modifier.padding(top = dimens.spaceS),
@@ -111,7 +104,6 @@ internal fun ProviderAccountsSection(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
                     form.options.forEach { option ->
                         val checked = optionValue(option.key)
                         Row(
@@ -132,7 +124,6 @@ internal fun ProviderAccountsSection(
                             )
                         }
                     }
-
                     if (accounts.isEmpty()) {
                         Text(
                             text = stringResource(form.emptyRes ?: R.string.accounts_empty),
@@ -140,7 +131,6 @@ internal fun ProviderAccountsSection(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
                     accounts.forEachIndexed { index, account ->
                         if (index > 0) HorizontalDivider()
                         AccountEditor(
@@ -160,7 +150,6 @@ internal fun ProviderAccountsSection(
                             }
                         )
                     }
-
                     OutlinedButton(onClick = onAddAccount) {
                         Icon(
                             painter = painterResource(R.drawable.ic_add_rounded),
@@ -174,7 +163,6 @@ internal fun ProviderAccountsSection(
             }
         }
     }
-
     webLoginAccountId?.let { accountId ->
         ClaudeLoginDialog(
             onDismiss = { webLoginAccountId = null },
@@ -185,7 +173,6 @@ internal fun ProviderAccountsSection(
             }
         )
     }
-
     renameAccountId?.let { accountId ->
         accounts.firstOrNull { it.id == accountId }?.let { account ->
             RenameAccountDialog(
@@ -199,7 +186,6 @@ internal fun ProviderAccountsSection(
         }
     }
 }
-
 @Composable
 private fun RenameAccountDialog(
     account: AccountUi,
@@ -207,7 +193,6 @@ private fun RenameAccountDialog(
     onRename: (String) -> Unit
 ) {
     var draft by remember(account.id) { mutableStateOf(account.label) }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.rename_account_title)) },
@@ -233,7 +218,6 @@ private fun RenameAccountDialog(
         }
     )
 }
-
 @Composable
 private fun AccountEditor(
     form: CredentialForm,
@@ -250,7 +234,6 @@ private fun AccountEditor(
     var showAdvanced by rememberSaveable(account.id) {
         mutableStateOf(advancedFields.any { !account.values[it.key].isNullOrBlank() })
     }
-
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dimens.spaceS)
@@ -274,9 +257,7 @@ private fun AccountEditor(
                 onConfirmed = onRemove
             )
         }
-
         FieldGroup(mainFields, account, onFieldChange)
-
         form.login?.let { login ->
             Button(onClick = onSignIn, modifier = Modifier.fillMaxWidth()) {
                 Icon(
@@ -288,7 +269,6 @@ private fun AccountEditor(
                 Text(stringResource(login.labelRes))
             }
         }
-
         if (advancedFields.isNotEmpty()) {
             val chevron by animateFloatAsState(if (showAdvanced) 180f else 0f, label = "advancedChevron")
             TextButton(onClick = { showAdvanced = !showAdvanced }) {
@@ -306,7 +286,6 @@ private fun AccountEditor(
                 FieldGroup(advancedFields, account, onFieldChange)
             }
         }
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceM)
@@ -329,7 +308,6 @@ private fun AccountEditor(
     }
 }
 
-/** The credential fields of [fields], laid out two per row on wide screens. */
 @Composable
 private fun FieldGroup(
     fields: List<CredentialField>,
@@ -346,7 +324,6 @@ private fun FieldGroup(
         }.toTypedArray()
     )
 }
-
 @Composable
 private fun CredentialTextField(
     field: CredentialField,

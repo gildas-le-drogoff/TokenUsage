@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.diagnostics
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.gildasledrogoff.tokenusage.core.diagnostics.AccountDiagnostic
@@ -20,14 +19,12 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
-
 data class DiagnosticsUiState(
     val loading: Boolean = true,
     val generatedAt: Instant = Instant.EPOCH,
     val accounts: List<AccountDiagnostic> = emptyList(),
     val background: BackgroundSnapshot? = null
 )
-
 @HiltViewModel
 class DiagnosticsViewModel @Inject constructor(
     private val lastFetchRepository: LastFetchRepository,
@@ -36,15 +33,12 @@ class DiagnosticsViewModel @Inject constructor(
     private val configuredServices: ConfiguredServicesSource,
     private val clock: Clock
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(DiagnosticsUiState())
     val state: StateFlow<DiagnosticsUiState> = _state.asStateFlow()
-
     init {
         refresh()
     }
-
-    /** Relit toutes les sources locales. Aucun appel réseau. */
+    
     fun refresh() {
         _state.update { it.copy(loading = true) }
         viewModelScope.launch {
@@ -70,8 +64,7 @@ class DiagnosticsViewModel @Inject constructor(
             )
         }
     }
-
-    /** Rapport texte assaini, prêt pour le presse-papiers. */
+    
     fun buildReport(app: DiagnosticsReport.AppInfo): String {
         val current = _state.value
         return DiagnosticsReport.build(clock.instant(), app, current.accounts, current.background)

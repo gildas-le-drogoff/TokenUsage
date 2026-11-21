@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.security
-
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gildasledrogoff.tokenusage.core.alert.AlertPreferencesStore
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-/** App lock, sample data (debug builds) and the "delete everything" danger zone. */
 @HiltViewModel
 class SecuritySettingsViewModel @Inject constructor(
     private val prefsManager: EncryptedPrefsManager,
@@ -22,7 +20,6 @@ class SecuritySettingsViewModel @Inject constructor(
     private val accountsSync: AccountsSync,
     private val alertPreferences: AlertPreferencesStore
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(
         SecuritySettingsUiState(
             appLockEnabled = appLock.isEnabled(),
@@ -31,25 +28,20 @@ class SecuritySettingsViewModel @Inject constructor(
         )
     )
     val uiState: StateFlow<SecuritySettingsUiState> = _uiState.asStateFlow()
-
     fun setAppLockEnabled(enabled: Boolean) {
         appLock.setEnabled(enabled)
         _uiState.update { it.copy(appLockEnabled = enabled) }
     }
-
     fun setDemoDataEnabled(enabled: Boolean) {
         demoData.setEnabled(enabled)
         _uiState.update { it.copy(demoDataEnabled = demoData.isEnabled()) }
     }
-
     fun showDeleteConfirmDialog() {
         _uiState.update { it.copy(showDeleteConfirmDialog = true) }
     }
-
     fun dismissDeleteConfirmDialog() {
         _uiState.update { it.copy(showDeleteConfirmDialog = false) }
     }
-
     fun deleteAllCredentials() {
         prefsManager.deleteAllCredentials()
         alertPreferences.clear()

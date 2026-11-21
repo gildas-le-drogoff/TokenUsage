@@ -1,0 +1,3 @@
+[submodule "CodexBar"]
+	path = CodexBar
+	url = https://github.com/steipete/CodexBar.git

@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage
-
 import android.app.Activity
 import android.app.Application
 import android.content.BroadcastReceiver
@@ -21,26 +20,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 @HiltAndroidApp
 class TokenUsageApplication : Application(), Configuration.Provider {
-
     @Inject
     lateinit var integrityGuard: IntegrityGuard
-
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
-
     @Inject
     lateinit var refreshScheduler: RefreshScheduler
-
     override fun onCreate() {
         super.onCreate()
-        
         if (!BuildConfig.IS_DEBUG) {
             registerActivityLifecycleCallbacks(SecureWindowPolicy)
         }
-        
         integrityGuard.establishBaseline()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             runCatching { refreshScheduler.applySaved() }
@@ -48,8 +40,6 @@ class TokenUsageApplication : Application(), Configuration.Provider {
         }
         registerWidgetThemeSync()
     }
-
-    
     private fun registerWidgetThemeSync() {
         registerReceiver(
             object : BroadcastReceiver() {
@@ -62,14 +52,10 @@ class TokenUsageApplication : Application(), Configuration.Provider {
             IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED)
         )
     }
-
-    
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
-
-    
     private object SecureWindowPolicy : ActivityLifecycleCallbacks {
         override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
             activity.window.setFlags(
@@ -80,7 +66,6 @@ class TokenUsageApplication : Application(), Configuration.Provider {
                 activity.setRecentsScreenshotEnabled(false)
             }
         }
-
         override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
         override fun onActivityStarted(activity: Activity) = Unit
         override fun onActivityResumed(activity: Activity) = Unit

@@ -1,12 +1,10 @@
 package fr.gildasledrogoff.tokenusage.core.notification
-
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.LockScreenVisibility
 
-/** Applies the user's lock-screen visibility to a notification (shared by all quota notifications). */
 internal fun NotificationCompat.Builder.applyLockScreenVisibility(
     context: Context,
     visibility: LockScreenVisibility,

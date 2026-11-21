@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.demo
-
 import android.content.Context
 import androidx.core.content.edit
 import androidx.annotation.StringRes
@@ -27,20 +26,14 @@ import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class SampleDataRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val clock: Clock,
     private val prefsManager: EncryptedPrefsManager
 ) : DemoDataRepository {
-
-
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
     override val isAvailable: Boolean = true
-
     override val supportedServices: Set<AiService> = setOf(
         AiService.CLAUDE,
         AiService.CODEX,
@@ -51,31 +44,22 @@ class SampleDataRepository @Inject constructor(
         AiService.OPENROUTER,
         AiService.OPENAI
     )
-
     override fun isEnabled(): Boolean = prefs.getBoolean(KEY_ENABLED, true)
-
     override fun setEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_ENABLED, enabled) }
     }
-
     override val history: BalanceHistoryRepository = SampleBalanceHistory(clock, localizedSpecs())
-
     override fun sampleDeepseekAccounts(): List<DeepseekAccount> = localizedSpecs().map { it.account }
-
-
     private fun localizedSpecs(): List<SampleAccountSpec> = DEEPSEEK_SPECS.map { spec ->
         spec.copy(account = spec.account.copy(label = context.getString(labelRes(spec.account.id))))
     }
-
     private fun labelRes(id: String): Int = when (id) {
         ID_MAIN -> R.string.demo_account_main
         ID_USD -> R.string.demo_account_usd
         ID_NEW -> R.string.demo_account_new
         else -> R.string.demo_account_old
     }
-
     override suspend fun sampleQuotas(): List<DemoQuota> {
-
         delay(SIMULATED_LATENCY_MS)
         val now = clock.instant()
         return listOf(
@@ -93,7 +77,6 @@ class SampleDataRepository @Inject constructor(
             DemoQuota(AiService.OPENAI, null, Result.Success(openAi(now)))
         )
     }
-
     private fun claude(now: Instant) = QuotaInfo(
         service = AiService.CLAUDE,
         windows = listOf(
@@ -105,12 +88,10 @@ class SampleDataRepository @Inject constructor(
         tier = "Max 20x",
         weeklyBreakdown = listOf(
             UsageBreakdownRow("Claude Code", 82.0),
-            // UsageBreakdownRow("Claude.ai", 15.0),
             UsageBreakdownRow("Claude Design", 3.0)
         ),
         fetchedAt = now
     )
-
     private fun claudeWork(now: Instant) = QuotaInfo(
         service = AiService.CLAUDE,
         windows = listOf(
@@ -120,7 +101,6 @@ class SampleDataRepository @Inject constructor(
         tier = "Pro",
         fetchedAt = now
     )
-
     private fun codex(now: Instant) = QuotaInfo(
         service = AiService.CODEX,
         windows = listOf(
@@ -131,7 +111,6 @@ class SampleDataRepository @Inject constructor(
         tier = "Plus",
         fetchedAt = now
     )
-
     private fun codexWork(now: Instant) = QuotaInfo(
         service = AiService.CODEX,
         windows = listOf(
@@ -142,7 +121,6 @@ class SampleDataRepository @Inject constructor(
         tier = "Pro",
         fetchedAt = now
     )
-
     private fun gemini(now: Instant) = QuotaInfo(
         service = AiService.GEMINI,
         windows = listOf(
@@ -153,8 +131,7 @@ class SampleDataRepository @Inject constructor(
         tier = "Free",
         fetchedAt = now
     )
-
-    /** One card per DeepSeek account, like every other service. */
+    
     private suspend fun deepseekQuotas(now: Instant): List<DemoQuota> = localizedSpecs().map { spec ->
         val account = spec.account
         val result: Result<QuotaInfo, AppError> = when (account.id) {
@@ -182,7 +159,6 @@ class SampleDataRepository @Inject constructor(
         }
         DemoQuota(AiService.DEEPSEEK, account.label, result, accountId = account.id)
     }
-
     private fun deepseekQuota(now: Instant, account: DeepseekAccount, balance: CreditBalance) = QuotaInfo(
         service = AiService.DEEPSEEK,
         windows = emptyList(),
@@ -192,7 +168,6 @@ class SampleDataRepository @Inject constructor(
         accountId = account.id,
         accountLabel = account.label
     )
-
     private fun zai(now: Instant) = QuotaInfo(
         service = AiService.ZAI,
         windows = listOfNotNull(
@@ -205,7 +180,6 @@ class SampleDataRepository @Inject constructor(
         tier = "Pro",
         fetchedAt = now
     )
-
     private fun zaiWork(now: Instant) = QuotaInfo(
         service = AiService.ZAI,
         windows = listOfNotNull(
@@ -218,7 +192,6 @@ class SampleDataRepository @Inject constructor(
         tier = "Lite",
         fetchedAt = now
     )
-
     private fun copilot(now: Instant) = QuotaInfo(
         service = AiService.COPILOT,
         windows = listOf(
@@ -229,7 +202,6 @@ class SampleDataRepository @Inject constructor(
         tier = "Individual",
         fetchedAt = now
     )
-
     private fun copilotWork(now: Instant) = QuotaInfo(
         service = AiService.COPILOT,
         windows = listOf(
@@ -240,7 +212,6 @@ class SampleDataRepository @Inject constructor(
         tier = "Business",
         fetchedAt = now
     )
-
     private fun openRouter(now: Instant) = QuotaInfo(
         service = AiService.OPENROUTER,
         windows = listOf(UsageWindow("API key limit", 0.42, now + Duration.ofDays(3))),
@@ -258,7 +229,6 @@ class SampleDataRepository @Inject constructor(
         ),
         fetchedAt = now
     )
-
     private fun openAi(now: Instant) = QuotaInfo(
         service = AiService.OPENAI,
         windows = emptyList(),
@@ -271,18 +241,15 @@ class SampleDataRepository @Inject constructor(
         ),
         fetchedAt = now
     )
-
     companion object {
         private const val PREFS_NAME = "tokenusage_debug_demo"
         private const val KEY_ENABLED = "demo_enabled"
         private const val SIMULATED_LATENCY_MS = 800L
         private const val GRANTED_BONUS = 10.0
-
         private const val ID_MAIN = "demo-deepseek-main"
         private const val ID_USD = "demo-deepseek-usd"
         private const val ID_NEW = "demo-deepseek-new"
         private const val ID_OLD = "demo-deepseek-old"
-
         val DEEPSEEK_SPECS = listOf(
             SampleAccountSpec(
                 account = DeepseekAccount(ID_MAIN, "Personal", apiKey = ""),

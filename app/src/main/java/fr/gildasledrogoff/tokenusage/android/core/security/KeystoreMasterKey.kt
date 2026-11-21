@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.security
-
 import android.content.Context
 import android.content.pm.PackageManager
 import android.security.keystore.KeyGenParameterSpec
@@ -14,15 +13,11 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-
-
 internal class KeystoreMasterKey(
     private val context: Context,
     private val alias: String = DEFAULT_ALIAS
 ) : Aead {
-
     private val key: SecretKey by lazy { loadOrCreate() }
-
     override fun encrypt(plaintext: ByteArray, associatedData: ByteArray?): ByteArray =
         try {
             val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -35,7 +30,6 @@ internal class KeystoreMasterKey(
         } catch (e: ProviderException) {
             throw GeneralSecurityException("Keystore encryption failed", e)
         }
-
     override fun decrypt(ciphertext: ByteArray, associatedData: ByteArray?): ByteArray {
         if (ciphertext.size < IV_LENGTH + TAG_LENGTH_BYTES) {
             throw GeneralSecurityException("Ciphertext too short")
@@ -53,16 +47,12 @@ internal class KeystoreMasterKey(
             throw GeneralSecurityException("Keystore decryption failed", e)
         }
     }
-
-    
     fun destroy() {
         runCatching { keyStore().deleteEntry(alias) }
     }
-
     private fun loadOrCreate(): SecretKey {
         val keyStore = keyStore()
         (keyStore.getKey(alias, null) as? SecretKey)?.let { return it }
-
         val wantsStrongBox =
             context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
         if (wantsStrongBox) {
@@ -71,11 +61,9 @@ internal class KeystoreMasterKey(
                 if (selfTest(strongBoxKey)) return strongBoxKey
             } catch (_: StrongBoxUnavailableException) {
             } catch (_: ProviderException) {
-                
             }
             keyStore.deleteEntry(alias)
         }
-
         val teeKey = generate(strongBox = false)
         if (!selfTest(teeKey)) {
             keyStore.deleteEntry(alias)
@@ -83,7 +71,6 @@ internal class KeystoreMasterKey(
         }
         return teeKey
     }
-
     private fun generate(strongBox: Boolean): SecretKey {
         val spec = KeyGenParameterSpec.Builder(
             alias,
@@ -99,8 +86,6 @@ internal class KeystoreMasterKey(
             .apply { init(spec) }
             .generateKey()
     }
-
-    
     private fun selfTest(candidate: SecretKey): Boolean = try {
         val message = ByteArray(32).also { SecureRandom().nextBytes(it) }
         val aad = SELF_TEST_AAD
@@ -119,9 +104,7 @@ internal class KeystoreMasterKey(
     } catch (_: ProviderException) {
         false
     }
-
     private fun keyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-
     companion object {
         const val DEFAULT_ALIAS = "tokenusage_master_key_v2"
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"

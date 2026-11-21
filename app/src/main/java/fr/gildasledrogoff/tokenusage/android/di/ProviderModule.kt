@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.di
-
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,13 +14,9 @@ import fr.gildasledrogoff.tokenusage.core.data.OpenRouterRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.ZaiRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.provider.QuotaProvider
 
-/**
- * One line per service: this is where a provider joins the `ProviderRegistry`.
- */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class ProviderModule {
-
     @Binds @IntoSet abstract fun claude(impl: ClaudeRepositoryImpl): QuotaProvider
     @Binds @IntoSet abstract fun codex(impl: CodexRepositoryImpl): QuotaProvider
     @Binds @IntoSet abstract fun gemini(impl: GeminiRepositoryImpl): QuotaProvider

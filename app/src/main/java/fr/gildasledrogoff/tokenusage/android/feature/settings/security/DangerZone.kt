@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.security
-
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Column
@@ -31,7 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
-
 @Composable
 internal fun DangerZoneSection(onDeleteAll: () -> Unit) {
     Card(
@@ -61,14 +59,12 @@ internal fun DangerZoneSection(onDeleteAll: () -> Unit) {
         }
     }
 }
-
 @Composable
 internal fun DeleteConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     var confirmText by remember { mutableStateOf("") }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.action_delete_all)) },

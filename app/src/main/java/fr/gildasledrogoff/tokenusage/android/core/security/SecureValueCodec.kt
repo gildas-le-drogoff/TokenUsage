@@ -1,22 +1,16 @@
 package fr.gildasledrogoff.tokenusage.core.security
-
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
-
-
 internal object SecureValueCodec {
-
     private const val FORMAT_VERSION: Int = 1
-
     private const val TYPE_STRING: Int = 1
     private const val TYPE_INT: Int = 2
     private const val TYPE_LONG: Int = 3
     private const val TYPE_FLOAT: Int = 4
     private const val TYPE_BOOLEAN: Int = 5
     private const val TYPE_STRING_SET: Int = 6
-
     fun encode(value: Any): ByteArray {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
@@ -52,8 +46,6 @@ internal object SecureValueCodec {
         }
         return bytes.toByteArray()
     }
-
-    
     fun decode(bytes: ByteArray): Any {
         DataInputStream(bytes.inputStream()).use { input ->
             val version = input.readUnsignedByte()
@@ -75,13 +67,11 @@ internal object SecureValueCodec {
             return value
         }
     }
-
     private fun DataOutputStream.writeUtf8(value: String) {
         val utf8 = value.toByteArray(Charsets.UTF_8)
         writeInt(utf8.size)
         write(utf8)
     }
-
     private fun DataInputStream.readUtf8(): String {
         val length = readInt()
         if (length < 0 || length > available()) throw IOException("Invalid string length $length")

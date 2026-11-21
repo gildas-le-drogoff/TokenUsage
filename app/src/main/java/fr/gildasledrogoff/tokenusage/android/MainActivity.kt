@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage
-
 import android.Manifest
 import android.os.Build
 import android.content.Intent
@@ -59,49 +58,37 @@ import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRe
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-
-
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
-
     @Inject
     lateinit var integrityGuard: IntegrityGuard
-
     @Inject
     lateinit var displayPreferences: DisplayPreferencesRepository
-
     @Inject
     lateinit var refreshScheduler: RefreshScheduler
-
     @Inject
     lateinit var appLock: AppLockManager
-
     private val batteryOptLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
         WorkManagerInitializer.scheduleTokenRefresh(this)
         refreshScheduler.applySaved()
     }
-
-    
     private fun acceptRiskAndRestart() {
         integrityGuard.acceptRisk()
         val launch = packageManager.getLaunchIntentForPackage(packageName) ?: return
         startActivity(Intent.makeRestartActivityTask(launch.component))
         Runtime.getRuntime().exit(0)
     }
-
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 appLock.onAppHidden()
             }
         })
-
         if (integrityGuard.isVaultLocked) {
             setContent {
                 AppTheme {
@@ -114,11 +101,9 @@ class MainActivity : FragmentActivity() {
             }
             return
         }
-
         setContent {
             AppTheme {
                 val locked by appLock.isLocked.collectAsStateWithLifecycle()
-
                 if (locked) {
                     AppLockScreen(
                         onUnlock = appLock::unlock,
@@ -126,8 +111,6 @@ class MainActivity : FragmentActivity() {
                     )
                     return@AppTheme
                 }
-
-                
                 if (BuildConfig.IS_DEBUG) {
                     LaunchedEffect(locked) {
                         if (locked) {
@@ -137,29 +120,23 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 }
-
                 val navController = rememberNavController()
                 val snackbarHostState = remember { SnackbarHostState() }
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val permissionState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
                     val permissionMessage = stringResource(R.string.notif_permission_required)
-
                     LaunchedEffect(permissionState.status.isGranted) {
                         if (!permissionState.status.isGranted) {
                             permissionState.launchPermissionRequest()
                         }
                     }
-
                     LaunchedEffect(permissionState.status) {
                         if (!permissionState.status.isGranted) {
                             snackbarHostState.showSnackbar(permissionMessage)
                         }
                     }
                 }
-
                 var showBatteryDialog by remember { mutableStateOf(false) }
-
                 LaunchedEffect(Unit) {
                     if (!displayPreferences.batteryPromptAnswered &&
                         !BatteryOptimizationHelper.isIgnoringBatteryOptimizations(this@MainActivity)
@@ -167,7 +144,6 @@ class MainActivity : FragmentActivity() {
                         showBatteryDialog = true
                     }
                 }
-
                 if (showBatteryDialog) {
                     AlertDialog(
                         onDismissRequest = { showBatteryDialog = false },
@@ -204,7 +180,6 @@ class MainActivity : FragmentActivity() {
                         }
                     )
                 }
-
                 Scaffold(
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     contentWindowInsets = WindowInsets(0)
@@ -233,7 +208,6 @@ class MainActivity : FragmentActivity() {
                                 onNavigateToCredits = {
                                     navController.navigate("credits")
                                 },
-                                // Flip once A3's "diagnostics" route exists (see COORDINATION.md).
                                 showDiagnostics = SETTINGS_DIAGNOSTICS_ROUTE_READY
                             )
                         }
@@ -277,8 +251,6 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
-
-    
     @Composable
     private fun AppTheme(content: @Composable () -> Unit) {
         val themeMode by displayPreferences.themeMode.collectAsStateWithLifecycle()
@@ -287,5 +259,4 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-/** `true` once the `"diagnostics"` route (owned by the diagnostics feature) is registered in the NavHost. */
 private const val SETTINGS_DIAGNOSTICS_ROUTE_READY = true

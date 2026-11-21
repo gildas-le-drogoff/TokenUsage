@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.security
-
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,7 +28,6 @@ import fr.gildasledrogoff.tokenusage.feature.settings.common.SettingsSubScreen
 import fr.gildasledrogoff.tokenusage.feature.settings.common.ToggleSection
 import fr.gildasledrogoff.tokenusage.ui.security.BiometricGate
 
-/** Security sub-screen: app lock, sample data (debug builds) and the danger zone. */
 @Composable
 fun SecuritySettingsScreen(
     onNavigateBack: () -> Unit,
@@ -37,7 +35,6 @@ fun SecuritySettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
     val biometricUnavailable = stringResource(R.string.app_lock_unavailable)
     val biometricConfirmTitle = stringResource(R.string.app_lock_biometric_confirm_title)
     val biometricConfirmSubtitle = stringResource(R.string.app_lock_biometric_confirm_subtitle)
@@ -55,7 +52,6 @@ fun SecuritySettingsScreen(
             )
         }
     }
-
     SettingsSubScreen(title = stringResource(R.string.security_title), onNavigateBack = onNavigateBack) {
         AppLockSection(
             appLockEnabled = uiState.appLockEnabled,
@@ -67,8 +63,7 @@ fun SecuritySettingsScreen(
                 }
             }
         )
-
-        // Debug builds only: sample data for UI/UX validation
+        
         if (uiState.demoDataAvailable) {
             ToggleSection(
                 title = stringResource(R.string.demo_data_title),
@@ -77,10 +72,8 @@ fun SecuritySettingsScreen(
                 onToggle = { viewModel.setDemoDataEnabled(it) }
             )
         }
-
         DangerZoneSection(onDeleteAll = { viewModel.showDeleteConfirmDialog() })
     }
-
     if (uiState.showDeleteConfirmDialog) {
         DeleteConfirmDialog(
             onConfirm = {
@@ -91,7 +84,6 @@ fun SecuritySettingsScreen(
         )
     }
 }
-
 @Composable
 private fun AppLockSection(appLockEnabled: Boolean, onToggle: (Boolean) -> Unit) {
     Card(
@@ -114,7 +106,6 @@ private fun AppLockSection(appLockEnabled: Boolean, onToggle: (Boolean) -> Unit)
                     style = MaterialTheme.typography.titleMedium
                 )
             }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

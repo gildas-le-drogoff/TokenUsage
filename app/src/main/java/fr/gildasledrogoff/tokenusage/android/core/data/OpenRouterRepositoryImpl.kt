@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AccountBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
@@ -25,29 +24,23 @@ import java.time.ZoneOffset
 import java.time.temporal.TemporalAdjusters
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class OpenRouterRepositoryImpl @Inject constructor(
     private val apiService: OpenRouterApiService,
     prefsManager: EncryptedPrefsManager
 ) : BaseQuotaProvider(AiService.OPENROUTER, prefsManager) {
-
     override val form = apiKeyForm(
         labelRes = R.string.field_api_key,
         fieldHintRes = R.string.field_openrouter_key_hint,
         hintRes = R.string.openrouter_hint
     ) { Credential.ApiKeyCredential(accessToken = it) }
-
     override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
         val apiKey = account.credential.accessToken.takeIf { it.isNotBlank() }
             ?: return Result.Failure(AppError.CredentialNotFound(AiService.OPENROUTER))
         return fetchWithKey(apiKey)
     }
-
     private suspend fun fetchWithKey(apiKey: String): Result<QuotaInfo, AppError> {
         val authorization = "Bearer $apiKey"
-
         var keyError: AppError? = null
         val key = try {
             val keyResponse = apiService.getKey(authorization)
@@ -65,22 +58,17 @@ class OpenRouterRepositoryImpl @Inject constructor(
             keyError = AppError.NetworkError(e.message ?: "Network error", e)
             null
         }
-
         val credits = runCatching { apiService.getCredits(authorization) }.getOrNull()
             ?.takeIf { it.isSuccessful }
             ?.body()?.data
             ?.takeIf { it.totalCredits != null && it.totalUsage != null }
-
         if (key == null && credits == null) {
             return Result.Failure(keyError ?: AppError.ParseError("Empty OpenRouter key response"))
         }
         return Result.Success(toQuotaInfo(key, credits))
     }
-
     companion object {
         const val LABEL_KEY_LIMIT = "API key limit"
-
-        
         fun toQuotaInfo(
             key: OpenRouterDto.KeyData?,
             credits: OpenRouterDto.CreditsData?,
@@ -120,8 +108,6 @@ class OpenRouterRepositoryImpl @Inject constructor(
                 fetchedAt = now
             )
         }
-
-        
         fun keyLimitUtilization(key: OpenRouterDto.KeyData): Double? {
             val limit = key.limit?.takeIf { it > 0.0 } ?: return null
             val used = key.limitRemaining?.let { limit - it.coerceIn(0.0, limit) }
@@ -135,8 +121,6 @@ class OpenRouterRepositoryImpl @Inject constructor(
                 ?: return null
             return (used / limit).coerceIn(0.0, 1.0)
         }
-
-        
         fun nextReset(limitReset: String?, now: Instant): Instant? {
             val today = now.atZone(ZoneOffset.UTC).toLocalDate()
             val next = when (limitReset) {

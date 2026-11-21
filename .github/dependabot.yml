@@ -10,7 +10,6 @@ updates:
     commit-message:
       prefix: deps
     groups:
-      # Kotlin, KSP and the Compose compiler plugin must move together.
       kotlin:
         patterns:
           - org.jetbrains.kotlin*

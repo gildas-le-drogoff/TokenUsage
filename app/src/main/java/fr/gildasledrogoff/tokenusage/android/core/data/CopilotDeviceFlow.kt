@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
@@ -9,13 +8,10 @@ import kotlinx.coroutines.delay
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class CopilotDeviceFlow @Inject constructor(
     private val service: GitHubDeviceFlowService
 ) {
-
     suspend fun start(): Result<CopilotDto.DeviceCodeResponse, AppError> = try {
         val response = service.requestDeviceCode()
         val body = response.body()
@@ -27,8 +23,6 @@ class CopilotDeviceFlow @Inject constructor(
     } catch (e: IOException) {
         Result.Failure(AppError.NetworkError(e.message ?: "Network error", e))
     }
-
-    
     suspend fun awaitToken(code: CopilotDto.DeviceCodeResponse): Result<String, AppError> {
         var intervalMs = code.interval.coerceAtLeast(1) * 1000L
         val deadline = System.currentTimeMillis() + code.expiresIn.coerceAtLeast(60) * 1000L
@@ -43,7 +37,6 @@ class CopilotDeviceFlow @Inject constructor(
                 return Result.Failure(AppError.NetworkError("HTTP ${response.code()}"))
             }
             val body = response.body() ?: continue
-
             body.accessToken?.takeIf { it.isNotBlank() }?.let { return Result.Success(it) }
             when (body.error) {
                 CopilotDto.ERROR_PENDING, null -> Unit
@@ -58,12 +51,9 @@ class CopilotDeviceFlow @Inject constructor(
         }
         return expired()
     }
-
     private fun expired(): Result<String, AppError> =
         Result.Failure(AppError.AuthError(AiService.COPILOT, isTerminal = true, message = "expired"))
-
     private companion object {
-        
         const val SLOW_DOWN_STEP_MS = 5_000L
     }
 }

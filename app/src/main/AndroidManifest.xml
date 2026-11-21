@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -9,7 +8,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-
     <queries>
         <package android:name="com.topjohnwu.magisk" />
         <package android:name="io.github.huskydg.magisk" />
@@ -21,7 +19,6 @@
         <package android:name="de.robv.android.xposed.installer" />
         <package android:name="org.lsposed.manager" />
     </queries>
-
     <application
         android:name=".TokenUsageApplication"
         android:allowBackup="false"
@@ -35,11 +32,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TokenUsage"
         tools:targetApi="35">
-
         <profileable
             android:enabled="false"
             android:shell="false" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -48,7 +43,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -57,12 +51,10 @@
                 <data android:scheme="tokenusage" android:host="settings" />
             </intent-filter>
         </activity>
-
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="fullSensor"
             tools:replace="android:screenOrientation" />
-
         <service
             android:name=".core.tile.QuotaTileService"
             android:exported="true"
@@ -73,7 +65,6 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
-
         <receiver
             android:name=".core.notification.RefreshReceiver"
             android:exported="false">
@@ -81,7 +72,6 @@
                 <action android:name="fr.gildasledrogoff.tokenusage.ACTION_REFRESH" />
             </intent-filter>
         </receiver>
-
         <activity
             android:name=".core.widget.WidgetConfigurationActivity"
             android:exported="true"
@@ -90,7 +80,6 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-
         <receiver
             android:name=".core.widget.QuotaWidgetReceiver"
             android:label="@string/widget_label_quotas"
@@ -102,7 +91,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/quota_widget_info" />
         </receiver>
-
         <receiver
             android:name=".core.widget.QuotaCompactWidgetReceiver"
             android:label="@string/widget_label_compact"
@@ -114,7 +102,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/quota_compact_widget_info" />
         </receiver>
-
         <receiver
             android:name=".core.widget.ResetWidgetReceiver"
             android:label="@string/widget_label_reset"
@@ -126,7 +113,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/reset_widget_info" />
         </receiver>
-
         <receiver
             android:name=".core.widget.BalancesWidgetReceiver"
             android:label="@string/widget_label_balances"
@@ -138,8 +124,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/balances_widget_info" />
         </receiver>
-
-        <!-- Ne reçoit que des diffusions système protégées : inutile de l'exporter. -->
         <receiver
             android:name=".core.workmanager.BootReceiver"
             android:exported="false">
@@ -148,14 +132,10 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-
-        <!-- Android 14+ : un travail WorkManager passé au premier plan (setForeground / expedited)
-             exige le type de service déclaré ici (cf. QuotaRefreshWorker.getForegroundInfo). -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
-
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -166,7 +146,5 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
-
     </application>
-
 </manifest>

@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.di
-
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import fr.gildasledrogoff.tokenusage.BuildConfig
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
@@ -30,63 +29,48 @@ import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ClaudeClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ClaudeWebClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class CodexClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class GeminiClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class DeepseekClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ZaiClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class CopilotClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class OpenRouterClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class OpenAiClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ExchangeRateClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ClaudeTokenClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class CodexTokenClient
-
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class GeminiTokenClient
-
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
     @Provides
     @Singleton
     fun provideJson(): Json = Json {
@@ -94,34 +78,27 @@ object NetworkModule {
         coerceInputValues = true
         isLenient = true
     }
-
     private fun baseOkHttpBuilder(): OkHttpClient.Builder {
         val builder = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(RetryInterceptor())
-
         if (BuildConfig.IS_DEBUG) {
             val logging = HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
-                
                 redactHeader("Authorization")
                 redactHeader("Cookie")
                 redactHeader("Set-Cookie")
             }
             builder.addInterceptor(logging)
         }
-
         return builder
     }
-
-
     @Provides
     @Singleton
     @ClaudeClient
     fun provideClaudeOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideClaudeApiService(
@@ -135,12 +112,10 @@ object NetworkModule {
             .build()
             .create(ClaudeApiService::class.java)
     }
-
     @Provides
     @Singleton
     @ClaudeTokenClient
     fun provideClaudeTokenOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideClaudeTokenRefreshService(
@@ -154,13 +129,10 @@ object NetworkModule {
             .build()
             .create(ClaudeTokenRefreshService::class.java)
     }
-
-
     @Provides
     @Singleton
     @ClaudeWebClient
     fun provideClaudeWebOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideClaudeWebApiService(
@@ -174,13 +146,10 @@ object NetworkModule {
             .build()
             .create(ClaudeWebApiService::class.java)
     }
-
-
     @Provides
     @Singleton
     @CodexClient
     fun provideCodexOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideCodexApiService(
@@ -194,12 +163,10 @@ object NetworkModule {
             .build()
             .create(CodexApiService::class.java)
     }
-
     @Provides
     @Singleton
     @CodexTokenClient
     fun provideCodexTokenOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideCodexTokenRefreshService(
@@ -213,13 +180,10 @@ object NetworkModule {
             .build()
             .create(CodexTokenRefreshService::class.java)
     }
-
-
     @Provides
     @Singleton
     @GeminiClient
     fun provideGeminiOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideGeminiApiService(
@@ -233,12 +197,10 @@ object NetworkModule {
             .build()
             .create(GeminiApiService::class.java)
     }
-
     @Provides
     @Singleton
     @GeminiTokenClient
     fun provideGeminiTokenOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideGeminiTokenRefreshService(
@@ -252,7 +214,6 @@ object NetworkModule {
             .build()
             .create(GeminiTokenRefreshService::class.java)
     }
-
     @Provides
     @Singleton
     fun provideGeminiProjectsService(
@@ -266,13 +227,10 @@ object NetworkModule {
             .build()
             .create(GeminiProjectsService::class.java)
     }
-
-
     @Provides
     @Singleton
     @DeepseekClient
     fun provideDeepseekOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideDeepseekApiService(
@@ -286,13 +244,10 @@ object NetworkModule {
             .build()
             .create(DeepseekApiService::class.java)
     }
-
-
     @Provides
     @Singleton
     @ZaiClient
     fun provideZaiOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideZaiApiService(
@@ -306,13 +261,10 @@ object NetworkModule {
             .build()
             .create(ZaiApiService::class.java)
     }
-
-
     @Provides
     @Singleton
     @CopilotClient
     fun provideCopilotOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideCopilotApiService(
@@ -320,7 +272,6 @@ object NetworkModule {
         json: Json
     ): CopilotApiService = retrofit(AiService.COPILOT.baseUrl, client, json)
         .create(CopilotApiService::class.java)
-
     @Provides
     @Singleton
     fun provideGitHubDeviceFlowService(
@@ -328,13 +279,10 @@ object NetworkModule {
         json: Json
     ): GitHubDeviceFlowService = retrofit(GitHubDeviceFlowService.BASE_URL, client, json)
         .create(GitHubDeviceFlowService::class.java)
-
-
     @Provides
     @Singleton
     @OpenRouterClient
     fun provideOpenRouterOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideOpenRouterApiService(
@@ -342,13 +290,10 @@ object NetworkModule {
         json: Json
     ): OpenRouterApiService = retrofit(AiService.OPENROUTER.baseUrl, client, json)
         .create(OpenRouterApiService::class.java)
-
-
     @Provides
     @Singleton
     @OpenAiClient
     fun provideOpenAiOkHttpClient(): OkHttpClient = baseOkHttpBuilder().build()
-
     @Provides
     @Singleton
     fun provideOpenAiApiService(
@@ -356,16 +301,12 @@ object NetworkModule {
         json: Json
     ): OpenAiApiService = retrofit(AiService.OPENAI.baseUrl, client, json)
         .create(OpenAiApiService::class.java)
-
     private fun retrofit(baseUrl: String, client: OkHttpClient, json: Json): Retrofit =
         Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-
-
-    
     @Provides
     @Singleton
     @ExchangeRateClient

@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.accounts
-
 import android.content.ClipData
 import android.content.ClipDescription
 import android.os.PersistableBundle
@@ -38,7 +37,6 @@ import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.ui.i18n.appErrorMessage
 import kotlinx.coroutines.launch
-
 @Composable
 internal fun CopilotLoginDialog(
     state: DeviceLoginUi,
@@ -52,14 +50,13 @@ internal fun CopilotLoginDialog(
     val copyCode = {
         scope.launch {
             val clip = ClipData.newPlainText(clipLabel, state.userCode)
-            // Keep the device code out of the Android 13+ clipboard preview.
+            
             clip.description.extras = PersistableBundle().apply {
                 putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
             }
             clipboard.setClipEntry(ClipEntry(clip))
         }
     }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.copilot_login_title)) },
@@ -127,12 +124,10 @@ internal fun CopilotLoginDialog(
         }
     )
 }
-
 @Composable
 internal fun copilotLoginErrorText(error: AppError): String = when {
     error is AppError.AuthError && error.message == "denied" -> stringResource(R.string.copilot_login_denied)
     error is AppError.AuthError && error.message == "expired" -> stringResource(R.string.copilot_login_expired)
     else -> appErrorMessage(error)
 }
-
 internal const val GITHUB_DEVICE_URL = "https://github.com/login/device"

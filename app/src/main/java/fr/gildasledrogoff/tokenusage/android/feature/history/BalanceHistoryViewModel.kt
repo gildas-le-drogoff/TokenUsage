@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.history
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.gildasledrogoff.tokenusage.core.alert.AlertPreferencesStore
@@ -22,7 +21,6 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Duration
 import javax.inject.Inject
-
 @HiltViewModel
 class BalanceHistoryViewModel @Inject constructor(
     private val historyRepository: BalanceHistoryRepository,
@@ -34,48 +32,38 @@ class BalanceHistoryViewModel @Inject constructor(
     private val alertPreferences: AlertPreferencesStore,
     private val clock: Clock
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(BalanceHistoryUiState())
     val uiState: StateFlow<BalanceHistoryUiState> = _uiState.asStateFlow()
-
     init {
         load()
     }
-
     fun selectAccount(accountId: String) {
         if (_uiState.value.selectedAccountId == accountId) return
         _uiState.update { it.copy(selectedAccountId = accountId, isLoading = true) }
         load()
     }
-
     fun selectGranularity(granularity: ConsumptionGranularity) {
         if (_uiState.value.granularity == granularity) return
         _uiState.update { it.copy(granularity = granularity, isLoading = true) }
         load()
     }
-
     fun refresh() {
         _uiState.update { it.copy(isLoading = true) }
         load()
     }
-
     private fun load() {
         viewModelScope.launch {
-            
             val demo = demoData.isEnabled()
             val accounts = if (demo) demoData.sampleDeepseekAccounts() else prefsManager.getDeepseekAccounts()
             val history = if (demo) demoData.history else historyRepository
-
             if (accounts.isEmpty()) {
                 _uiState.value = BalanceHistoryUiState(isLoading = false)
                 return@launch
             }
-
             val currentState = _uiState.value
             val selectedId = currentState.selectedAccountId
                 ?.takeIf { id -> accounts.any { it.id == id } }
                 ?: accounts.first().id
-
             val points = history.consumption(
                 service = AiService.DEEPSEEK,
                 accountId = selectedId,
@@ -83,9 +71,7 @@ class BalanceHistoryViewModel @Inject constructor(
             )
             val latest = history.latestSample(AiService.DEEPSEEK, selectedId)
             val currency = latest?.currency ?: points.lastOrNull()?.currency ?: ""
-
             val depletion = if (demo) null else estimateDepletion(selectedId)
-
             val rate = exchangeRates.displayRate(currency)
             val shownPoints = if (rate == null) points else points.map { point ->
                 if (point.currency == currency) {
@@ -94,7 +80,6 @@ class BalanceHistoryViewModel @Inject constructor(
                     point
                 }
             }
-
             _uiState.value = BalanceHistoryUiState(
                 accounts = accounts,
                 selectedAccountId = selectedId,
@@ -109,8 +94,7 @@ class BalanceHistoryViewModel @Inject constructor(
             )
         }
     }
-
-    /** Date the balance is expected to reach zero, from the recorded history (`null` if it cannot be told). */
+    
     private suspend fun estimateDepletion(accountId: String): DepletionForecast? {
         val lookback = Duration.ofDays(alertPreferences.currentConfig().forecastWindowDays.toLong())
         return try {

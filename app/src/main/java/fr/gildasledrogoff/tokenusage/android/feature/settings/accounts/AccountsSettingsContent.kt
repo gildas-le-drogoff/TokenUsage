@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.accounts
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
@@ -9,17 +8,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-/**
- * Self-contained "accounts" block of the settings: one section per registered service, plus the
- * sign-in dialogs. Owns its [AccountsViewModel], so it can be placed anywhere.
- */
 @Composable
 fun AccountsSettingsContent(
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         viewModel.providers.forEach { provider ->
             val service = provider.service
@@ -36,7 +30,6 @@ fun AccountsSettingsContent(
             )
         }
     }
-
     uiState.deviceLogin?.let { login ->
         CopilotLoginDialog(
             state = login,

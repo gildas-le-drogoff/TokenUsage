@@ -1,13 +1,9 @@
 package fr.gildasledrogoff.tokenusage.core.network.openai
-
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
-
 interface OpenAiApiService {
-
-    
     @GET("v1/organization/costs")
     suspend fun getCosts(
         @Header("Authorization") authorization: String,

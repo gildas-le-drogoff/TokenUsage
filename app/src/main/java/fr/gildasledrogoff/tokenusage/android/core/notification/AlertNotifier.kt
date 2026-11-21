@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.notification
-
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -20,7 +19,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
 
-/** Shows the threshold / low balance / depletion alerts on their own channel, one per account and alert type. */
 @Singleton
 class AlertNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -29,12 +27,10 @@ class AlertNotifier @Inject constructor(
     companion object {
         const val CHANNEL_ID = "quota_alerts"
         const val NOTIFICATION_ID_BASE = 100_000
-
-        /** Stable id: a new alert replaces the previous one of the same account and type. */
+        
         fun notificationId(alert: QuotaAlert): Int =
             NOTIFICATION_ID_BASE + "${alert.accountKey}/${alert.type.name}".hashCode().and(0xFFFF)
     }
-
     init {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(
@@ -45,7 +41,6 @@ class AlertNotifier @Inject constructor(
             ).apply { description = context.getString(R.string.notif_channel_alerts_desc) }
         )
     }
-
     fun show(alerts: List<QuotaAlert>) {
         if (alerts.isEmpty()) return
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -69,7 +64,6 @@ class AlertNotifier @Inject constructor(
             manager.notify(notificationId(alert), notification)
         }
     }
-
     private fun texts(alert: QuotaAlert): Pair<String, String> {
         val name = accountName(alert)
         val depletion = alert.depletionAt?.let {
@@ -105,21 +99,16 @@ class AlertNotifier @Inject constructor(
             }
         }
     }
-
     private fun accountName(alert: QuotaAlert): String =
         alert.accountLabel?.takeIf { it.isNotBlank() }?.let { "${alert.service.displayName} · $it" }
             ?: alert.service.displayName
-
     private fun percent(fraction: Double): Int = (fraction * 100).roundToInt()
-
     private fun money(amount: Double, currency: String?): String =
         String.format(Locale.getDefault(), "%.2f", amount) + currency?.takeIf { it.isNotBlank() }?.let { " $it" }.orEmpty()
-
     private fun formatDate(instant: java.time.Instant): String =
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
             .withLocale(Locale.getDefault())
             .format(instant.atZone(ZoneId.systemDefault()))
-
     private fun dashboardIntent(): PendingIntent {
         val intent = Intent().apply {
             action = Intent.ACTION_VIEW

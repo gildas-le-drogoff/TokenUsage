@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
@@ -23,7 +22,6 @@ import kotlinx.serialization.json.doubleOrNull
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-
 @Singleton
 class CodexRepositoryImpl @Inject constructor(
     private val apiService: CodexApiService,
@@ -32,7 +30,6 @@ class CodexRepositoryImpl @Inject constructor(
     private val widgetPrefs: WidgetPrefsManager,
     private val widgetQuotaPublisher: WidgetQuotaPublisher
 ) : BaseQuotaProvider(AiService.CODEX, prefsManager) {
-
     override val form = CredentialForm(
         fields = listOf(
             CredentialField(KEY_ACCESS_TOKEN, R.string.field_access_token, hintRes = R.string.field_secret_replace_hint),
@@ -57,17 +54,14 @@ class CodexRepositoryImpl @Inject constructor(
             mapOf(KEY_ACCOUNT_ID to ((credential as? Credential.CodexCredential)?.accountId.orEmpty()))
         }
     )
-
     override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
         val credential = account.credential as? Credential.CodexCredential
             ?: return Result.Failure(AppError.CredentialNotFound(AiService.CODEX))
-
         return run {
             val response = apiService.getUsage(
                 authorization = "Bearer ${credential.accessToken}",
                 accountId = credential.accountId
             )
-
             when (response.code()) {
                 200 -> {
                     val body = response.body()
@@ -99,13 +93,11 @@ class CodexRepositoryImpl @Inject constructor(
             }
         }
     }
-
     private suspend fun refreshToken(
         account: ServiceAccount,
         credential: Credential.CodexCredential
     ): Credential.CodexCredential? =
         refreshSerialized(account.id, credential) { exchangeRefreshToken(account, credential) }
-
     private suspend fun exchangeRefreshToken(
         account: ServiceAccount,
         credential: Credential.CodexCredential
@@ -113,7 +105,6 @@ class CodexRepositoryImpl @Inject constructor(
         return try {
             val request = CodexDto.TokenRefreshRequest(refreshToken = credential.refreshToken)
             val response = tokenRefreshService.refreshToken(request)
-
             if (response.isSuccessful) {
                 val body = response.body() ?: return null
                 val newCredential = Credential.CodexCredential(
@@ -138,7 +129,6 @@ class CodexRepositoryImpl @Inject constructor(
             null
         }
     }
-
     private fun mapToQuotaInfo(response: CodexDto.UsageResponse): QuotaInfo {
         val windows = buildList {
             response.rateLimit?.primaryWindow?.let { window ->
@@ -148,7 +138,6 @@ class CodexRepositoryImpl @Inject constructor(
                 add(mapRateLimitWindow("secondary", window))
             }
         }
-
         return QuotaInfo(
             service = AiService.CODEX,
             windows = windows,
@@ -157,7 +146,6 @@ class CodexRepositoryImpl @Inject constructor(
             fetchedAt = Instant.now()
         )
     }
-
     private fun mapRateLimitWindow(type: String, window: CodexDto.RateLimitWindow): UsageWindow {
         val label = when (window.limitWindowSeconds) {
             18000L -> "5-Hour"
@@ -167,19 +155,16 @@ class CodexRepositoryImpl @Inject constructor(
                 if (seconds > 0) "${seconds / 3600}h" else type.replaceFirstChar { it.uppercase() }
             }
         }
-
         return UsageWindow(
             label = label,
             utilization = window.usedPercent / 100.0,
             resetsAt = window.resetAt?.let { Instant.ofEpochSecond(it) }
         )
     }
-
     companion object {
         const val KEY_ACCESS_TOKEN = "accessToken"
         const val KEY_REFRESH_TOKEN = "refreshToken"
         const val KEY_ACCOUNT_ID = "accountId"
-
         fun parseBalance(element: kotlinx.serialization.json.JsonElement?): Double? {
             if (element == null) return null
             return when (element) {

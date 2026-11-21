@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.dashboard
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
@@ -35,8 +34,6 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
-
-
 private data class FetchOutcome(
     val service: AiService,
     val accountLabel: String?,
@@ -44,7 +41,6 @@ private data class FetchOutcome(
     val accountNumber: Int? = null,
     val accountId: String? = null
 )
-
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val providerRegistry: ProviderRegistry,
@@ -58,32 +54,22 @@ class DashboardViewModel @Inject constructor(
     private val rateLimiter: FetchRateLimiter,
     private val clock: Clock
 ) : ViewModel() {
-
-
     fun toggleTheme(isDarkNow: Boolean) {
         displayPreferences.setThemeMode(if (isDarkNow) ThemeMode.LIGHT else ThemeMode.DARK)
         viewModelScope.launch { widgetQuotaPublisher.refreshWidgets() }
     }
-
     private val _uiState = MutableStateFlow<DashboardUiState>(DashboardUiState.Loading)
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
-
     private val _consumptionChart = MutableStateFlow<ConsumptionChartUiState>(ConsumptionChartUiState.Idle)
     val consumptionChart: StateFlow<ConsumptionChartUiState> = _consumptionChart.asStateFlow()
-
     private var consumptionJob: Job? = null
-
-
     fun loadConsumption() {
         consumptionJob?.cancel()
         consumptionJob = viewModelScope.launch {
             val previous = _consumptionChart.value as? ConsumptionChartUiState.Ready
             if (previous == null) _consumptionChart.value = ConsumptionChartUiState.Loading
-
-
             val demo = demoData.isEnabled()
             val history = if (demo) demoData.history else balanceHistory
-            // (service, account id, label) of every account whose balance history is recorded.
             val tracked: List<Triple<AiService, String, String>> = if (demo) {
                 demoData.sampleDeepseekAccounts().map { Triple(AiService.DEEPSEEK, it.id, it.label) }
             } else {
@@ -91,7 +77,6 @@ class DashboardViewModel @Inject constructor(
                     provider.accounts().map { Triple(provider.service, it.id, it.label) }
                 }
             }
-
             val charts = tracked.map { (service, accountId, label) ->
                 val points = history.consumption(service, accountId, ConsumptionGranularity.DAILY)
                 val currency = points.lastOrNull()?.currency ?: ""
@@ -107,7 +92,6 @@ class DashboardViewModel @Inject constructor(
                     currency = rate?.to ?: currency
                 )
             }
-
             _consumptionChart.value = if (charts.isEmpty()) {
                 ConsumptionChartUiState.Idle
             } else {
@@ -120,34 +104,25 @@ class DashboardViewModel @Inject constructor(
             }
         }
     }
-
     fun selectConsumptionAccount(accountId: String) {
         _consumptionChart.update { state ->
             if (state is ConsumptionChartUiState.Ready) state.copy(selectedAccountId = accountId) else state
         }
     }
-
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
-
-
     private var lastCredentialsFingerprint: String? = null
-
     init {
         refresh()
     }
-
     fun refresh() {
         doRefresh(resetState = true)
     }
-
-
     fun refreshIfCredentialsChanged() {
         if (credentialsFingerprint() != lastCredentialsFingerprint) {
             doRefresh(resetState = false, bypassCooldown = true)
         }
     }
-
     private fun credentialsFingerprint(): String = listOf(
         demoData.isEnabled(),
         providerRegistry.providers.joinToString(";") { provider ->
@@ -160,10 +135,8 @@ class DashboardViewModel @Inject constructor(
         prefsManager.getManualUsdEurRate(),
         prefsManager.getManualUsdCnyRate()
     ).joinToString("|")
-
     private fun doRefresh(resetState: Boolean, bypassCooldown: Boolean = false) {
         lastCredentialsFingerprint = credentialsFingerprint()
-
         viewModelScope.launch {
             if (demoData.isEnabled()) {
                 enterRefreshing(resetState)
@@ -175,34 +148,27 @@ class DashboardViewModel @Inject constructor(
                 _isRefreshing.value = false
                 return@launch
             }
-
             val cached = lastFetchRepository.snapshot()
             if (!bypassCooldown && rateLimiter.isCoolingDown(cached?.fetchedAt)) {
                 serveFromCache(cached)
                 return@launch
             }
-
             enterRefreshing(resetState)
             val results = fetchAllServices()
-
             if (results.isEmpty()) {
                 _uiState.value = DashboardUiState.Success(emptyList(), clock.instant())
                 _isRefreshing.value = false
                 return@launch
             }
-
             val fetchedAt = clock.instant()
             runCatching {
                 lastFetchRepository.record(fetchedAt, results.map { it.toCachedResult() })
             }
-
             applyResults(results, fetchedAt)
             if (_consumptionChart.value is ConsumptionChartUiState.Ready) loadConsumption()
-
             _isRefreshing.value = false
         }
     }
-
     private fun enterRefreshing(resetState: Boolean) {
         _isRefreshing.value = true
         val currentState = _uiState.value
@@ -210,7 +176,6 @@ class DashboardViewModel @Inject constructor(
             _uiState.value = DashboardUiState.Loading
         }
     }
-
     private suspend fun fetchAllServices(): List<FetchOutcome> = coroutineScope {
         providerRegistry.targets().map { target ->
             async {
@@ -224,7 +189,6 @@ class DashboardViewModel @Inject constructor(
             }
         }.awaitAll()
     }
-
     private suspend fun serveFromCache(snapshot: LastFetchSnapshot?) {
         val results = snapshot?.results?.map { it.toFetchOutcome() }
         if (results == null) {
@@ -236,7 +200,6 @@ class DashboardViewModel @Inject constructor(
         }
         applyResults(results, snapshot.fetchedAt, publishWidgets = false)
     }
-
     private suspend fun applyResults(
         results: List<FetchOutcome>,
         lastUpdatedAt: Instant,
@@ -250,12 +213,9 @@ class DashboardViewModel @Inject constructor(
                 runCatching { widgetQuotaPublisher.publish(entries) }
             }
         }
-
         val fxRates = resolveDisplayRates(results)
-
         val successCards = mutableListOf<ServiceCardData>()
         val errors = mutableMapOf<AiService, AppError>()
-
         for (outcome in results) {
             when (val result = outcome.result) {
                 is Result.Success -> {
@@ -281,11 +241,9 @@ class DashboardViewModel @Inject constructor(
                 }
             }
         }
-
         val sortedCards = successCards.sortedByDescending { card ->
             card.windows.maxOfOrNull { it.utilization } ?: 0.0
         }
-
         _uiState.value = if (errors.isEmpty()) {
             DashboardUiState.Success(sortedCards, lastUpdatedAt)
         } else if (successCards.all { it.error != null }) {
@@ -294,7 +252,6 @@ class DashboardViewModel @Inject constructor(
             DashboardUiState.PartialSuccess(sortedCards, errors, lastUpdatedAt)
         }
     }
-
     private fun FetchOutcome.toCachedResult() = CachedQuotaResult(
         service = service,
         accountLabel = accountLabel,
@@ -303,7 +260,6 @@ class DashboardViewModel @Inject constructor(
         quota = result.getOrNull(),
         error = result.errorOrNull()
     )
-
     private fun CachedQuotaResult.toFetchOutcome() = FetchOutcome(
         service = service,
         accountLabel = accountLabel,
@@ -312,7 +268,6 @@ class DashboardViewModel @Inject constructor(
         accountNumber = accountNumber,
         accountId = accountId ?: quota?.accountId
     )
-
     private suspend fun resolveDisplayRates(results: List<FetchOutcome>): Map<String, FxRate> {
         val currencies = results
             .mapNotNull { (it.result as? Result.Success)?.value }
@@ -326,7 +281,6 @@ class DashboardViewModel @Inject constructor(
             .mapNotNull { currency -> exchangeRates.displayRate(currency)?.let { currency to it } }
             .toMap()
     }
-
     private fun mapToCardData(
         quotaInfo: QuotaInfo,
         accountLabel: String? = null,

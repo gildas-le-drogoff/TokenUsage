@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AccountBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
@@ -20,24 +19,19 @@ import java.io.IOException
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class DeepseekRepositoryImpl @Inject constructor(
     private val apiService: DeepseekApiService,
     prefsManager: EncryptedPrefsManager,
     private val balanceHistoryRepository: BalanceHistoryRepository
 ) : BaseQuotaProvider(AiService.DEEPSEEK, prefsManager) {
-
     override val form = apiKeyForm(
         labelRes = R.string.field_api_key,
         fieldHintRes = R.string.field_api_key_format,
         hintRes = R.string.deepseek_hint,
         emptyRes = R.string.deepseek_empty
     ) { Credential.DeepseekCredential(accessToken = it) }
-
     override val tracksBalanceHistory = true
-
     override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
         val balance = fetchAccountBalance(account)
         balance.error?.let { return Result.Failure(it) }
@@ -52,13 +46,11 @@ class DeepseekRepositoryImpl @Inject constructor(
             )
         )
     }
-
     private suspend fun fetchAccountBalance(account: ServiceAccount): AccountBalance {
         return try {
             val response = apiService.getUserBalance(
                 authorization = "Bearer ${account.credential.accessToken}"
             )
-
             if (!response.isSuccessful) {
                 return AccountBalance(
                     label = account.label,
@@ -66,30 +58,25 @@ class DeepseekRepositoryImpl @Inject constructor(
                     error = httpError(AiService.DEEPSEEK, response.code())
                 )
             }
-
             val body = response.body()
                 ?: return AccountBalance(
                     label = account.label,
                     balance = null,
                     error = AppError.ParseError("Empty balance response")
                 )
-
             val info = body.balanceInfos.firstOrNull()
                 ?: return AccountBalance(
                     label = account.label,
                     balance = null,
                     error = AppError.ParseError("No balance info returned")
                 )
-
             val total = info.totalBalance?.toDoubleOrNull()
                 ?: return AccountBalance(
                     label = account.label,
                     balance = null,
                     error = AppError.ParseError("Invalid total_balance: ${info.totalBalance}")
                 )
-
             val currency = info.currency ?: ""
-
             balanceHistoryRepository.record(
                 service = AiService.DEEPSEEK,
                 accountId = account.id,
@@ -97,7 +84,6 @@ class DeepseekRepositoryImpl @Inject constructor(
                 currency = currency,
                 totalBalance = total
             )
-
             AccountBalance(
                 label = account.label,
                 balance = CreditBalance(

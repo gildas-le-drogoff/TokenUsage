@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.widget
-
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
@@ -52,59 +51,42 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 @AndroidEntryPoint
 class WidgetConfigurationActivity : ComponentActivity() {
-
     @Inject
     lateinit var encryptedPrefsManager: EncryptedPrefsManager
-
     @Inject
     lateinit var widgetPrefsManager: WidgetPrefsManager
-
     @Inject
     lateinit var demoData: DemoDataRepository
-
     @Inject
     lateinit var integrityGuard: IntegrityGuard
-
     @Inject
     lateinit var displayPreferences: DisplayPreferencesRepository
-
     @Inject
     lateinit var quotaRefreshService: QuotaRefreshService
-
     private val appWidgetId: Int by lazy {
         intent?.extras?.getInt(
             AppWidgetManager.EXTRA_APPWIDGET_ID,
             AppWidgetManager.INVALID_APPWIDGET_ID
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
     }
-
-    
     private val widgetClassName: String? by lazy {
         AppWidgetManager.getInstance(this).getAppWidgetInfo(appWidgetId)?.provider?.className
     }
-
     private val isCompactWidget: Boolean
         get() = widgetClassName == QuotaCompactWidgetReceiver::class.java.name
-
     private val isMainQuotaWidget: Boolean
         get() = widgetClassName == QuotaWidgetReceiver::class.java.name
-
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setResult(RESULT_CANCELED)
-
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             finish()
             return
         }
-
         enableEdgeToEdge()
-
         if (integrityGuard.isVaultLocked) {
             setContent {
                 AppTheme {
@@ -116,10 +98,8 @@ class WidgetConfigurationActivity : ComponentActivity() {
             }
             return
         }
-
         setContent {
             AppTheme {
-                
                 val availableServices = if (demoData.isEnabled()) {
                     demoData.supportedServices
                 } else {
@@ -135,7 +115,6 @@ class WidgetConfigurationActivity : ComponentActivity() {
                     }
                 }
                 val anyChecked = checkedState.values.any { it }
-
                 Scaffold(
                     topBar = {
                         TopAppBar(
@@ -150,13 +129,11 @@ class WidgetConfigurationActivity : ComponentActivity() {
                             .padding(horizontal = 16.dp)
                     ) {
                         Spacer(modifier = Modifier.height(8.dp))
-
                         Text(
                             text = stringResource(R.string.widget_config_instruction),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-
                         val hintRes = when {
                             isCompactWidget -> R.string.widget_config_compact_hint
                             isMainQuotaWidget -> R.string.widget_config_main_hint
@@ -170,9 +147,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-
                         Spacer(modifier = Modifier.height(16.dp))
-
                         if (availableServices.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.widget_config_no_services),
@@ -195,9 +170,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
                                 )
                             }
                         }
-
                         Spacer(modifier = Modifier.weight(1f))
-
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -212,9 +185,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
                             ) {
                                 Text(stringResource(R.string.action_cancel))
                             }
-
                             Spacer(modifier = Modifier.width(12.dp))
-
                             Button(
                                 onClick = { confirmSelection(checkedState) },
                                 enabled = anyChecked,
@@ -228,25 +199,20 @@ class WidgetConfigurationActivity : ComponentActivity() {
             }
         }
     }
-
     private fun confirmSelection(checkedState: Map<AiService, Boolean>) {
         val selectedServices = checkedState
             .filter { it.value }
             .keys
-
         widgetPrefsManager.saveSelectedServices(appWidgetId, selectedServices)
-
         val resultValue = Intent().apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
         setResult(RESULT_OK, resultValue)
-
         if (demoData.isEnabled()) {
             CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
                 runCatching { quotaRefreshService.refreshNow() }
             }
         }
-
         lifecycleScope.launch {
             try {
                 val glanceId = GlanceAppWidgetManager(this@WidgetConfigurationActivity)
@@ -257,8 +223,6 @@ class WidgetConfigurationActivity : ComponentActivity() {
             finish()
         }
     }
-
-    
     @Composable
     private fun AppTheme(content: @Composable () -> Unit) {
         val themeMode by displayPreferences.themeMode.collectAsStateWithLifecycle()
@@ -266,7 +230,6 @@ class WidgetConfigurationActivity : ComponentActivity() {
         TokenUsageTheme(themeMode = themeMode, quotaDisplayMode = quotaDisplayMode, content = content)
     }
 }
-
 @Composable
 private fun ServiceCheckRow(
     service: AiService,

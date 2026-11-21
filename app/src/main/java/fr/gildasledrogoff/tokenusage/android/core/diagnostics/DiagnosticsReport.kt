@@ -1,13 +1,14 @@
 package fr.gildasledrogoff.tokenusage.core.diagnostics
-
 import java.time.Duration
 import java.time.Instant
 
-/** Construit le rapport texte copié dans le presse-papiers. Sans secret, sans appareil identifiable. */
 object DiagnosticsReport {
-
-    data class AppInfo(val versionName: String, val versionCode: Long)
-
+    data class AppInfo(
+        val versionName: String,
+        val versionCode: Long,
+        val gitHash: String? = null,
+        val gitDate: String? = null
+    )
     fun build(
         now: Instant,
         app: AppInfo,
@@ -18,6 +19,7 @@ object DiagnosticsReport {
             appendLine("TokenUsage diagnostics")
             appendLine("Generated: $now")
             append("App: ${app.versionName} (${app.versionCode})")
+            if (app.gitHash != null) append(" @ ${app.gitHash}" + (app.gitDate?.let { " ($it)" } ?: ""))
             if (background != null) append(" | Android SDK ${background.sdkInt} | Manufacturer: ${background.manufacturer.ifBlank { "?" }}")
             appendLine()
             appendLine()
@@ -29,10 +31,8 @@ object DiagnosticsReport {
                 appendBackground(background, now)
             }
         }
-        // Dernière barrière : même un champ oublié ne doit pas laisser fuiter de secret.
         return DiagnosticsSanitizer.sanitize(text, maxLength = Int.MAX_VALUE).trimEnd()
     }
-
     private fun StringBuilder.appendAccount(a: AccountDiagnostic, now: Instant) {
         val name = a.service.displayName + (a.accountLabel?.let { " ($it)" } ?: "")
         val status = when (a.status) {
@@ -55,7 +55,6 @@ object DiagnosticsReport {
             }
         }
     }
-
     private fun StringBuilder.appendBackground(b: BackgroundSnapshot, now: Instant) {
         appendLine("Battery optimizations ignored: ${yesNo(b.ignoringBatteryOptimizations)}")
         appendLine("App standby bucket: ${BackgroundSnapshot.standbyBucketName(b.standbyBucket) ?: "?"}")
@@ -74,14 +73,12 @@ object DiagnosticsReport {
             appendLine()
         }
     }
-
     private fun yesNo(value: Boolean?): String = when (value) {
         true -> "yes"
         false -> "no"
         null -> "?"
     }
-
-    /** Âge compact et indépendant de la langue : `45s`, `12m`, `3h05`, `2d`. */
+    
     fun formatAge(age: Duration?): String {
         age ?: return "-"
         val seconds = age.seconds.coerceAtLeast(0)

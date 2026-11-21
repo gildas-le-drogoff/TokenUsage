@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
@@ -32,16 +31,10 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import retrofit2.Retrofit
 
-/**
- * N accounts of the same service, against a real [EncryptedPrefsManager]: each account is queried
- * with its own credential and its result carries its own identity.
- */
 class MultiAccountProvidersTest {
-
     private lateinit var server: MockWebServer
     private lateinit var prefs: EncryptedPrefsManager
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true; isLenient = true }
-
     @Before
     fun setup() {
         server = MockWebServer().apply { start() }
@@ -49,18 +42,15 @@ class MultiAccountProvidersTest {
         `when`(factory.credentials).thenReturn(InMemorySharedPreferences())
         prefs = EncryptedPrefsManager(factory)
     }
-
     @After
     fun tearDown() = server.shutdown()
-
     private inline fun <reified T> api(): T = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .client(OkHttpClient())
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
         .create(T::class.java)
-
-    /** Answers each request from the Authorization header, so the order of calls does not matter. */
+    
     private fun answerByToken(bodies: Map<String, String>) {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
@@ -69,7 +59,6 @@ class MultiAccountProvidersTest {
             }
         }
     }
-
     @Test
     fun `copilot queries each account with its own token`() = runTest {
         val provider = CopilotRepositoryImpl(api<CopilotApiService>(), prefs)
@@ -83,10 +72,8 @@ class MultiAccountProvidersTest {
                     {"entitlement":100,"remaining":10,"percent_remaining":10.0,"unlimited":false}}}"""
             )
         )
-
         val accounts = provider.accounts()
         val quotas = accounts.map { (provider.fetchQuota(it) as Result.Success).value }
-
         assertEquals(listOf("Individual", "Business"), quotas.map { it.tier })
         assertEquals(0.2, quotas[0].windows.single().utilization, 1e-9)
         assertEquals(0.9, quotas[1].windows.single().utilization, 1e-9)
@@ -94,7 +81,6 @@ class MultiAccountProvidersTest {
         assertEquals("Perso", quotas[0].accountLabel)
         assertNull("a blank label is not an identity", quotas[1].accountLabel)
     }
-
     @Test
     fun `openrouter accounts fail independently`() = runTest {
         val provider = OpenRouterRepositoryImpl(api<OpenRouterApiService>(), prefs)
@@ -106,14 +92,11 @@ class MultiAccountProvidersTest {
                     "usage_daily":0.1,"usage_weekly":1.0,"usage_monthly":5.0,"is_free_tier":false}}"""
             )
         )
-
         val (good, bad) = provider.accounts().map { provider.fetchQuota(it) }
-
         assertEquals(0.5, (good as Result.Success).value.windows.single().utilization, 1e-9)
         val error = (bad as Result.Failure).error
         assertTrue(error is AppError.AuthError && error.isTerminal)
     }
-
     @Test
     fun `validate targets the requested account only`() = runTest {
         val provider = CopilotRepositoryImpl(api<CopilotApiService>(), prefs)
@@ -121,14 +104,12 @@ class MultiAccountProvidersTest {
         val bad = prefs.addAccount(AiService.COPILOT, "b", Credential.ApiKeyCredential("bad"))
         answerByToken(mapOf("good" to """{"copilot_plan":"individual","quota_snapshots":{"chat":
             {"entitlement":10,"remaining":5,"percent_remaining":50.0,"unlimited":false}}}"""))
-
         assertTrue(provider.validateAccount(provider.accounts()[0].id) is Result.Success)
         assertTrue(provider.validateAccount(bad.id) is Result.Failure)
         assertTrue(
             (provider.validateAccount("unknown") as Result.Failure).error is AppError.CredentialNotFound
         )
     }
-
     @Test
     fun `codex refreshes only the account whose token expired`() = runTest {
         val widgetPrefs = mock(WidgetPrefsManager::class.java)
@@ -151,15 +132,12 @@ class MultiAccountProvidersTest {
                 }
             }
         }
-
         val results = provider.accounts().map { provider.fetchQuota(it) }
-
         assertTrue(results.all { it is Result.Success })
         val stored = prefs.getAccounts(AiService.CODEX).associateBy { it.id }
         assertEquals(Credential.CodexCredential("at-new", "rt-new", null), stored.getValue(expired.id).credential)
         assertEquals(Credential.CodexCredential("at-ok", "rt-ok", null), stored.getValue(healthy.id).credential)
     }
-
     @Test
     fun `codex drops only the revoked account`() = runTest {
         val widgetPrefs = mock(WidgetPrefsManager::class.java)
@@ -176,9 +154,7 @@ class MultiAccountProvidersTest {
                 else -> MockResponse().setResponseCode(401)
             }
         }
-
         val result = provider.fetchQuota(provider.accounts().first { it.id == revoked.id })
-
         assertTrue((result as Result.Failure).error is AppError.AuthError)
         assertEquals(listOf(kept.id), prefs.getAccounts(AiService.CODEX).map { it.id })
     }

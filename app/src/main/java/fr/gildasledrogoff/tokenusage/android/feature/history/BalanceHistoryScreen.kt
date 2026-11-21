@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.history
-
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,7 +47,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BalanceHistoryScreen(
@@ -56,7 +54,6 @@ fun BalanceHistoryScreen(
     viewModel: BalanceHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -78,7 +75,6 @@ fun BalanceHistoryScreen(
                 uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-
                 uiState.accounts.isEmpty() -> {
                     Column(
                         modifier = Modifier
@@ -101,7 +97,6 @@ fun BalanceHistoryScreen(
                         )
                     }
                 }
-
                 else -> {
                     Column(
                         modifier = Modifier
@@ -114,12 +109,10 @@ fun BalanceHistoryScreen(
                             selectedAccountId = uiState.selectedAccountId,
                             onAccountSelected = viewModel::selectAccount
                         )
-
                         GranularitySelector(
                             granularity = uiState.granularity,
                             onGranularitySelected = viewModel::selectGranularity
                         )
-
                         CurrentBalanceCard(
                             balance = uiState.latestBalance,
                             currency = uiState.currency,
@@ -127,7 +120,6 @@ fun BalanceHistoryScreen(
                             depletionAt = uiState.depletionAt,
                             depletionEstimated = uiState.depletionEstimated
                         )
-
                         HistoryCard(
                             points = uiState.points,
                             granularity = uiState.granularity,
@@ -139,7 +131,6 @@ fun BalanceHistoryScreen(
         }
     }
 }
-
 @Composable
 private fun AccountSelector(
     accounts: List<DeepseekAccount>,
@@ -163,7 +154,6 @@ private fun AccountSelector(
         }
     }
 }
-
 @Composable
 private fun GranularitySelector(
     granularity: ConsumptionGranularity,
@@ -173,7 +163,6 @@ private fun GranularitySelector(
         ConsumptionGranularity.DAILY to stringResource(R.string.granularity_daily),
         ConsumptionGranularity.MONTHLY to stringResource(R.string.granularity_monthly)
     )
-
     ChoiceChipRow(
         options = options,
         selected = options.first { it.first == granularity },
@@ -182,7 +171,6 @@ private fun GranularitySelector(
         modifier = Modifier.fillMaxWidth()
     )
 }
-
 @Composable
 private fun CurrentBalanceCard(
     balance: Double?,
@@ -233,7 +221,6 @@ private fun CurrentBalanceCard(
         }
     }
 }
-
 @Composable
 private fun HistoryCard(
     points: List<ConsumptionPoint>,
@@ -254,7 +241,6 @@ private fun HistoryCard(
                 },
                 style = MaterialTheme.typography.titleSmall
             )
-
             if (points.isEmpty()) {
                 Text(
                     text = stringResource(R.string.history_not_enough_data),
@@ -278,7 +264,6 @@ private fun HistoryCard(
         }
     }
 }
-
 private fun formatDepletionDate(instant: Instant): String =
     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
         .format(instant.atZone(ZoneId.systemDefault()))

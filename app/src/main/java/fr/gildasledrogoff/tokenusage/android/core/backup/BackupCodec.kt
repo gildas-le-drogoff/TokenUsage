@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.backup
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
@@ -12,21 +11,14 @@ import java.io.InputStream
 import java.time.Instant
 import java.util.Base64
 import java.util.zip.ZipInputStream
-
-
 class InvalidBackupException(
     val reason: Reason,
     message: String
 ) : Exception(message) {
     enum class Reason { NOT_A_BACKUP, UNSUPPORTED_VERSION }
 }
-
-
 internal object BackupCodec {
-
     private val MAGIC = "CBX1".toByteArray(Charsets.US_ASCII)
-
-    
     fun parseQrPayload(text: String): ByteArray {
         val bytes = try {
             Base64.getDecoder().decode(text.trim())
@@ -38,11 +30,7 @@ internal object BackupCodec {
         }
         return bytes
     }
-
-    
     const val MAX_BACKUP_BYTES = 16 * 1024 * 1024
-
-    
     fun readBounded(input: InputStream, max: Int = MAX_BACKUP_BYTES): ByteArray? {
         val out = ByteArrayOutputStream()
         val buffer = ByteArray(8 * 1024)
@@ -56,8 +44,6 @@ internal object BackupCodec {
         }
         return out.toByteArray()
     }
-
-    
     fun parseZip(zipBytes: ByteArray): ByteArray {
         val container = try {
             ZipInputStream(ByteArrayInputStream(zipBytes)).use { zip ->
@@ -76,11 +62,8 @@ internal object BackupCodec {
         }
         return container
     }
-
     private fun ByteArray.hasMagic(): Boolean =
         size > MAGIC.size && copyOfRange(0, MAGIC.size).contentEquals(MAGIC)
-
-    
     fun decodePayload(jsonBytes: ByteArray, json: Json): BackupPayload {
         val payload = try {
             json.decodeFromString<BackupPayload>(jsonBytes.decodeToString())
@@ -100,8 +83,6 @@ internal object BackupCodec {
         }
         return payload
     }
-
-    
     fun toCredential(service: AiService, backup: ServiceCredentialBackup): Credential? {
         if (backup.accessToken.isBlank()) return null
         return when (backup.type) {
@@ -113,8 +94,7 @@ internal object BackupCodec {
             else -> legacyCredential(service, backup)
         }
     }
-
-    /** Files written before v4 carry no credential type: it is implied by the service. */
+    
     private fun legacyCredential(service: AiService, backup: ServiceCredentialBackup): Credential? = when (service) {
         AiService.CLAUDE ->
             if (backup.authMode == ConfigBackupManager.AUTH_MODE_WEB_SESSION) {
@@ -128,7 +108,6 @@ internal object BackupCodec {
             Credential.ApiKeyCredential(accessToken = backup.accessToken)
         AiService.DEEPSEEK, AiService.ZAI -> null
     }
-
     private fun claudeOAuth(backup: ServiceCredentialBackup) = Credential.ClaudeCredential(
         accessToken = backup.accessToken,
         refreshToken = backup.refreshToken?.takeIf { it.isNotBlank() },
@@ -136,7 +115,6 @@ internal object BackupCodec {
         scopes = backup.scopes,
         rateLimitTier = backup.rateLimitTier
     )
-
     private fun codex(backup: ServiceCredentialBackup): Credential? {
         val refresh = backup.refreshToken?.takeIf { it.isNotBlank() } ?: return null
         return Credential.CodexCredential(
@@ -145,7 +123,6 @@ internal object BackupCodec {
             accountId = backup.accountId?.takeIf { it.isNotBlank() }
         )
     }
-
     private fun gemini(backup: ServiceCredentialBackup): Credential? {
         val refresh = backup.refreshToken?.takeIf { it.isNotBlank() } ?: return null
         val clientId = backup.oauthClientId?.takeIf { it.isNotBlank() } ?: return null
@@ -158,8 +135,7 @@ internal object BackupCodec {
             oauthClientSecret = clientSecret
         )
     }
-
-    /** Backup form of a credential, typed so that restoring needs no knowledge of the service. */
+    
     fun toBackup(credential: Credential): ServiceCredentialBackup = when (credential) {
         is Credential.ClaudeCredential -> ServiceCredentialBackup(
             type = CredentialTypes.CLAUDE_OAUTH,
@@ -194,17 +170,12 @@ internal object BackupCodec {
         is Credential.ApiKeyCredential ->
             ServiceCredentialBackup(type = CredentialTypes.API_KEY, accessToken = credential.accessToken)
     }
-
-    /**
-     * Every account contained in [payload], per service: the v4 `accounts` map plus the legacy
-     * sections of older files, so any backup version can be imported.
-     */
+    
     fun importedAccounts(payload: BackupPayload): Map<AiService, List<ImportedAccount>> {
         val result = LinkedHashMap<AiService, MutableList<ImportedAccount>>()
         fun add(service: AiService, account: ServiceAccount, orgId: String? = null) {
             result.getOrPut(service) { mutableListOf() } += ImportedAccount(account, orgId)
         }
-
         for ((serviceName, entries) in payload.accounts) {
             val service = AiService.entries.firstOrNull { it.name == serviceName } ?: continue
             for (entry in entries) {
@@ -212,15 +183,12 @@ internal object BackupCodec {
                 add(service, ServiceAccount(entry.id, entry.label, credential), entry.orgId)
             }
         }
-
-        // v1-v3: one credential per service...
         for ((serviceName, backup) in payload.credentials) {
             val service = AiService.entries.firstOrNull { it.name == serviceName } ?: continue
             if (service == AiService.CLAUDE || service == AiService.DEEPSEEK || service == AiService.ZAI) continue
             val credential = toCredential(service, backup) ?: continue
             add(service, ServiceAccount(ServiceAccount.newId(), "", credential))
         }
-        // ... and the multi-account services in their own sections.
         val claude = payload.claudeAccounts.mapNotNull { backup ->
             toCredential(AiService.CLAUDE, backup.credential)
                 ?.let { ImportedAccount(ServiceAccount(backup.id, backup.label, it), backup.orgId) }
@@ -240,11 +208,7 @@ internal object BackupCodec {
         }
         return result
     }
-
-    /**
-     * Accounts after an import: an imported account replaces the existing one with the same id
-     * or the same secret; all the others are kept.
-     */
+    
     fun mergeAccounts(existing: List<ServiceAccount>, imported: List<ServiceAccount>): List<ServiceAccount> {
         val importedIds = imported.mapTo(HashSet()) { it.id }
         val importedKeys = imported.mapTo(HashSet()) { it.credential.accessToken.trim() }
@@ -253,6 +217,4 @@ internal object BackupCodec {
     }
 }
 
-
-/** An account read from a backup, with the Claude organisation it was cached with. */
 internal data class ImportedAccount(val account: ServiceAccount, val orgId: String?)

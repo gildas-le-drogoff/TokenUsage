@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.refresh
-
 import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,7 +14,6 @@ import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.util.BatteryOptimizationHelper
 import fr.gildasledrogoff.tokenusage.feature.settings.common.SettingsSubScreen
 
-/** Refresh sub-screen: interval, background refresh (battery) and notifications. */
 @Composable
 fun RefreshSettingsScreen(
     onNavigateBack: () -> Unit,
@@ -23,7 +21,6 @@ fun RefreshSettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
     var batteryExempt by remember { mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context)) }
     LifecycleResumeEffect(Unit) {
         batteryExempt = BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context)
@@ -34,13 +31,11 @@ fun RefreshSettingsScreen(
             runCatching { context.startActivity(BatteryOptimizationHelper.openBatteryOptimizationSettingsIntent()) }
         }
     }
-
     SettingsSubScreen(title = stringResource(R.string.settings_menu_refresh), onNavigateBack = onNavigateBack) {
         NotificationsSection(
             enabled = uiState.notificationsEnabled,
             onToggle = { viewModel.setNotificationsEnabled(it) }
         )
-
         RefreshIntervalSection(
             currentMinutes = uiState.refreshIntervalMinutes,
             onIntervalChange = { viewModel.setRefreshInterval(it) },

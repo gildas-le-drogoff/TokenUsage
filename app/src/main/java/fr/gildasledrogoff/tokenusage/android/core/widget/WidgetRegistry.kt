@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.widget
-
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import androidx.compose.runtime.Composable
@@ -50,16 +49,9 @@ import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
-
 internal object WidgetRegistry {
-
     val REVISION_KEY = longPreferencesKey("revision")
-
-    
     private val renderLock = Mutex()
-
-    
     suspend fun refresh(context: Context, glanceId: GlanceId) = renderLock.withLock {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId)
         updateAppWidgetState(context, glanceId) { prefs ->
@@ -67,8 +59,6 @@ internal object WidgetRegistry {
         }
         resolve(context, appWidgetId).update(context, glanceId)
     }
-
-    
     suspend fun refreshAll(context: Context) = renderLock.withLock {
         val manager = GlanceAppWidgetManager(context)
         for (widget in listOf(
@@ -85,8 +75,6 @@ internal object WidgetRegistry {
             }
         }
     }
-
-    
     fun resolve(context: Context, appWidgetId: Int): GlanceAppWidget {
         val provider = AppWidgetManager.getInstance(context)
             .getAppWidgetInfo(appWidgetId)?.provider?.className
@@ -98,8 +86,6 @@ internal object WidgetRegistry {
         }
     }
 }
-
-
 class RefreshWidgetAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
@@ -113,15 +99,11 @@ class RefreshWidgetAction : ActionCallback {
         ).quotaRefreshService().refreshNow()
     }
 }
-
-
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface WidgetActionsEntryPoint {
     fun displayPreferences(): DisplayPreferencesRepository
 }
-
-
 class ToggleWidgetThemeAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
@@ -139,15 +121,10 @@ class ToggleWidgetThemeAction : ActionCallback {
         android.util.Log.w("TokenUsageWidget", "toggle: refreshAll done")
     }
 }
-
-
 abstract class TokenUsageGlanceWidget : GlanceAppWidget() {
-
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
-
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-
         provideContent {
             currentState<Preferences>()[WidgetRegistry.REVISION_KEY]
             val snapshots = WidgetSnapshots.load(context, appWidgetId)
@@ -160,33 +137,24 @@ abstract class TokenUsageGlanceWidget : GlanceAppWidget() {
             }
         }
     }
-
     @Composable
     protected abstract fun Content(snapshots: List<ServiceSnapshot>)
 }
-
-
 class QuotaCompactGlanceWidget : TokenUsageGlanceWidget() {
-
     @Composable
     override fun Content(snapshots: List<ServiceSnapshot>) {
         CompactTile(snapshots, GlanceModifier.fillMaxSize().padding(12.dp))
     }
 }
-
 class QuotaCompactWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = QuotaCompactGlanceWidget()
 }
-
-
 class ResetGlanceWidget : TokenUsageGlanceWidget() {
-
     @Composable
     override fun Content(snapshots: List<ServiceSnapshot>) {
         ResetContent(snapshots)
     }
 }
-
 @Composable
 private fun ResetContent(snapshots: List<ServiceSnapshot>) {
     val context = LocalContext.current
@@ -200,7 +168,6 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
         .filter { it.third > nowSecond }
         .minByOrNull { it.third }
     val narrow = LocalSize.current.height < 90.dp
-
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -293,26 +260,19 @@ private fun ResetContent(snapshots: List<ServiceSnapshot>) {
         }
     }
 }
-
-
 private fun resetClock(epochSecond: Long): String {
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
     return formatter.format(Instant.ofEpochSecond(epochSecond).atZone(ZoneId.systemDefault()))
 }
-
 class ResetWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = ResetGlanceWidget()
 }
-
-
 class BalancesGlanceWidget : TokenUsageGlanceWidget() {
-
     @Composable
     override fun Content(snapshots: List<ServiceSnapshot>) {
         BalancesContent(snapshots)
     }
 }
-
 @Composable
 private fun BalancesContent(snapshots: List<ServiceSnapshot>) {
     val balances = snapshots.filter { it.balanceText != null }
@@ -353,7 +313,6 @@ private fun BalancesContent(snapshots: List<ServiceSnapshot>) {
         }
     }
 }
-
 class BalancesWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = BalancesGlanceWidget()
 }

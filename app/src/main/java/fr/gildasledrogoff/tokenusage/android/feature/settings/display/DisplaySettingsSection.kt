@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.display
-
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,8 +25,6 @@ import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
 import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
-
-
 @Composable
 internal fun DisplaySettingsSection(
     themeMode: ThemeMode,
@@ -59,7 +56,6 @@ internal fun DisplaySettingsSection(
                     style = MaterialTheme.typography.titleMedium
                 )
             }
-
             Text(
                 text = stringResource(R.string.display_theme),
                 style = MaterialTheme.typography.labelLarge,
@@ -71,7 +67,6 @@ internal fun DisplaySettingsSection(
                 labelRes = ::themeModeLabelRes,
                 onSelect = onThemeModeChange
             )
-
             Text(
                 text = stringResource(R.string.display_quota),
                 style = MaterialTheme.typography.labelLarge,
@@ -91,7 +86,6 @@ internal fun DisplaySettingsSection(
         }
     }
 }
-
 @Composable
 private fun <T> ChoiceRow(
     options: List<T>,
@@ -107,14 +101,12 @@ private fun <T> ChoiceRow(
         modifier = Modifier.fillMaxWidth()
     )
 }
-
 @StringRes
 private fun themeModeLabelRes(mode: ThemeMode): Int = when (mode) {
     ThemeMode.SYSTEM -> R.string.theme_system
     ThemeMode.LIGHT -> R.string.theme_light
     ThemeMode.DARK -> R.string.theme_dark
 }
-
 @StringRes
 private fun quotaDisplayModeLabelRes(mode: QuotaDisplayMode): Int = when (mode) {
     QuotaDisplayMode.REMAINING -> R.string.quota_mode_remaining

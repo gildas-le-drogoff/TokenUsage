@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.widget
-
 import android.content.Context
 import android.content.SharedPreferences
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
@@ -9,8 +8,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class WidgetPrefsManager @Inject constructor(
     @ApplicationContext private val context: Context
@@ -18,13 +15,10 @@ class WidgetPrefsManager @Inject constructor(
     private val prefs: SharedPreferences by lazy {
         context.getSharedPreferences("tokenusage_widget_prefs", Context.MODE_PRIVATE)
     }
-
-
     fun saveSelectedServices(appWidgetId: Int, services: Set<AiService>) {
         val key = "widget_${appWidgetId}_services"
         prefs.edit().putStringSet(key, services.map { it.name }.toSet()).commit()
     }
-
     fun getSelectedServices(appWidgetId: Int): Set<AiService> {
         val key = "widget_${appWidgetId}_services"
         val names = prefs.getStringSet(key, null) ?: return emptySet()
@@ -32,7 +26,6 @@ class WidgetPrefsManager @Inject constructor(
             try { AiService.valueOf(name) } catch (_: Exception) { null }
         }.toSet()
     }
-
     fun deleteWidgetConfig(appWidgetId: Int) {
         val editor = prefs.edit()
         prefs.all.keys
@@ -40,8 +33,6 @@ class WidgetPrefsManager @Inject constructor(
             .forEach { editor.remove(it) }
         editor.apply()
     }
-
-    
     fun removeServiceEverywhere(service: AiService): Boolean {
         val editor = prefs.edit()
         var selectionChanged = false
@@ -58,8 +49,6 @@ class WidgetPrefsManager @Inject constructor(
         editor.apply()
         return selectionChanged
     }
-
-
     fun cacheAccounts(service: AiService, accounts: List<CachedAccount>) {
         val prefix = cachePrefix(service)
         val editor = prefs.edit()
@@ -68,19 +57,15 @@ class WidgetPrefsManager @Inject constructor(
         editor.putLong("${prefix}updated_at", System.currentTimeMillis())
         editor.apply()
     }
-
     fun getCachedAccounts(service: AiService): List<CachedAccount> {
         val prefix = cachePrefix(service)
         val raw = prefs.getString("${prefix}accounts", null)
             ?: return listOfNotNull(legacyCachedAccount(service))
         return runCatching { json.decodeFromString<List<CachedAccount>>(raw) }.getOrDefault(emptyList())
     }
-
     fun getCachedUpdatedAt(service: AiService): Long {
         return prefs.getLong("${cachePrefix(service)}updated_at", 0L)
     }
-
-
     private fun legacyCachedAccount(service: AiService): CachedAccount? {
         val prefix = cachePrefix(service)
         val labels = prefs.getString("${prefix}labels", null)
@@ -101,15 +86,11 @@ class WidgetPrefsManager @Inject constructor(
             }
         )
     }
-
     private fun cachePrefix(service: AiService) = "cache_${service.name}_"
-
     private companion object {
         val json = Json { ignoreUnknownKeys = true }
     }
 }
-
-
 @Serializable
 data class CachedAccount(
     val accountLabel: String? = null,
@@ -118,7 +99,6 @@ data class CachedAccount(
     val windows: List<CachedWindow> = emptyList(),
     val balanceText: String? = null
 )
-
 @Serializable
 data class CachedWindow(
     val label: String,

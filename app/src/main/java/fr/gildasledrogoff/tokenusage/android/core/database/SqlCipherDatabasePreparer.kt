@@ -1,35 +1,26 @@
 package fr.gildasledrogoff.tokenusage.core.database
-
 import android.content.Context
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import java.io.File
-
-
 internal object SqlCipherDatabasePreparer {
-
     private val SQLITE_PLAINTEXT_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
-
     fun prepare(context: Context, name: String, key: DatabaseKeyProvider.DatabaseKey) {
         val dbFile = context.getDatabasePath(name)
         if (!dbFile.exists()) return
-
         when {
             isPlaintext(dbFile) -> runCatching { encrypt(context, dbFile, key.rawKey) }
                 .onFailure { context.deleteDatabase(name) }
             key.isNew -> context.deleteDatabase(name)
         }
     }
-
     private fun isPlaintext(file: File): Boolean {
         val header = ByteArray(SQLITE_PLAINTEXT_HEADER.size)
         val read = file.inputStream().use { it.read(header) }
         return read == header.size && header.contentEquals(SQLITE_PLAINTEXT_HEADER)
     }
-
     private fun encrypt(context: Context, dbFile: File, rawKey: ByteArray) {
         val encrypted = File(dbFile.parentFile, "${dbFile.name}.encrypting")
         context.deleteDatabase(encrypted.name)
-
         val plain = SQLiteDatabase.openDatabase(
             dbFile.path,
             "",
@@ -54,13 +45,10 @@ internal object SqlCipherDatabasePreparer {
         } finally {
             plain.close()
         }
-
         verifyEncryptedCopy(encrypted, rawKey, version, schemaObjects)
-
         context.deleteDatabase(dbFile.name)
         check(encrypted.renameTo(dbFile)) { "Unable to install the encrypted database" }
     }
-
     private fun verifyEncryptedCopy(file: File, rawKey: ByteArray, version: Int, schemaObjects: Long) {
         check(file.exists() && file.length() > 0) { "Encrypted copy missing" }
         check(!isPlaintext(file)) { "Copy is not encrypted" }
@@ -74,7 +62,6 @@ internal object SqlCipherDatabasePreparer {
             copy.close()
         }
     }
-
     private fun SQLiteDatabase.countSchemaObjects(): Long =
         rawQuery("SELECT count(*) FROM sqlite_master", *emptyArray<Any>()).use { cursor ->
             if (cursor.moveToFirst()) cursor.getLong(0) else 0L

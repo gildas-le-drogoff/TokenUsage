@@ -257,5 +257,3 @@ if [ "$VIDEO" = 1 ]; then
 fi
 
 info "Terminé."
-
-# oxipng -o 4 --strip safe

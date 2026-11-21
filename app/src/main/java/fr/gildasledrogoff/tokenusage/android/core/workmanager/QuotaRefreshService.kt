@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.workmanager
-
 import android.content.ComponentName
 import android.content.Context
 import android.service.quicksettings.TileService
@@ -32,8 +31,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class QuotaRefreshService @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -45,26 +42,15 @@ class QuotaRefreshService @Inject constructor(
     private val widgetQuotaPublisher: WidgetQuotaPublisher,
     private val diagnosticsStore: DiagnosticsStore
 ) {
-
-    /**
-     * Un seul rafraîchissement à la fois : périodique, action de notification, widget ou
-     * tuile qui arrivent en même temps partagent la même exécution (pas de double fetch,
-     * pas de refresh de token concurrent, pas de notification en double).
-     */
-    private val singleFlight = SingleFlight<Outcome>(CoroutineScope(SupervisorJob() + Dispatchers.Default))
-
     
+    private val singleFlight = SingleFlight<Outcome>(CoroutineScope(SupervisorJob() + Dispatchers.Default))
     data class Outcome(
         val quotas: List<QuotaInfo>,
         val anyServiceConfigured: Boolean
     )
-
-    
     suspend fun refreshNow(origin: RefreshOrigin = RefreshOrigin.MANUAL_SERVICE): Outcome =
         singleFlight.run { performRefresh(origin) }
-
     private suspend fun performRefresh(origin: RefreshOrigin): Outcome {
-        
         if (demoData.isEnabled()) {
             val demo = demoData.sampleQuotas()
             val samples = demo.mapNotNull { it.result.getOrNull() }
@@ -75,14 +61,10 @@ class QuotaRefreshService @Inject constructor(
             }
             return Outcome(samples, anyServiceConfigured = true)
         }
-
-        // Every account of every registered provider.
         val fetches = providerRegistry.targets().map { target ->
             AccountFetch(target.service, target.label, target.number) { target.fetchQuota() }
         }
-
         if (fetches.isEmpty()) return Outcome(emptyList(), anyServiceConfigured = false)
-
         return try {
             val fetched = coroutineScope {
                 fetches.map { fetch ->
@@ -93,7 +75,6 @@ class QuotaRefreshService @Inject constructor(
                     }
                 }.awaitAll()
             }
-            // Diagnostic local : on garde le Result complet (erreur comprise) ; ce qui est publié aux widgets ne change pas.
             runCatching {
                 diagnosticsStore.recordFetches(
                     origin,
@@ -105,27 +86,20 @@ class QuotaRefreshService @Inject constructor(
             val results = fetched.map { (fetch, result) ->
                 WidgetAccountQuota(fetch.service, fetch.accountLabel, fetch.accountNumber, result.getOrNull())
             }
-
             val successfulQuotas = results.mapNotNull { it.quota }
-
             if (successfulQuotas.isNotEmpty()) {
                 widgetQuotaPublisher.publish(results)
-
                 if (prefsManager.isNotificationsEnabled()) {
-                    // Notifications and reset tracking are keyed per service: keep one account each.
                     val perService = successfulQuotas.distinctBy { it.service }
                     notificationService.showQuotaNotification(perService)
                     checkForResets(perService)
-                    // Threshold / depletion alerts cover every account, not one per service.
                     alertCoordinator.process(successfulQuotas)
                 }
             }
-
             TileService.requestListeningState(
                 context,
                 ComponentName(context, QuotaTileService::class.java)
             )
-
             Outcome(successfulQuotas, anyServiceConfigured = true)
         } catch (e: CancellationException) {
             throw e
@@ -133,40 +107,32 @@ class QuotaRefreshService @Inject constructor(
             Outcome(emptyList(), anyServiceConfigured = true)
         }
     }
-
     private fun checkForResets(quotas: List<QuotaInfo>) {
         val now = Instant.now()
         for (quota in quotas) {
             val previousResetTimes = prefsManager.loadResetTimes(quota.service)
-
             for (window in quota.windows) {
                 val previousResetAt = previousResetTimes[window.label] ?: continue
                 if (previousResetAt.isBefore(now) && window.resetsAt != null && window.resetsAt.isAfter(now)) {
                     notificationService.showResetNotification(quota.service, window.label)
                 }
             }
-
             prefsManager.saveResetTimes(
                 quota.service,
                 quota.windows.map { it.label to it.resetsAt }
             )
         }
     }
-
     private class AccountFetch(
         val service: AiService,
         val accountLabel: String? = null,
         val accountNumber: Int? = null,
         val fetch: suspend () -> Result<QuotaInfo, AppError>
     )
-
     companion object {
-        
         const val REPO_TIMEOUT_MS = 7_000L
     }
 }
-
-
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface QuotaRefreshEntryPoint {

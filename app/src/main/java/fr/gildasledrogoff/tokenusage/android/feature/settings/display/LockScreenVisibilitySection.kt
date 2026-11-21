@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.display
-
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +15,6 @@ import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.LockScreenVisibility
 import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 
-/** What the quota notifications reveal on the lock screen. */
 @Composable
 internal fun LockScreenVisibilitySection(
     lockScreenVisibility: LockScreenVisibility,
@@ -50,13 +48,11 @@ internal fun LockScreenVisibilitySection(
         }
     }
 }
-
 private fun lockScreenVisibilityLabelRes(visibility: LockScreenVisibility): Int = when (visibility) {
     LockScreenVisibility.SHOW_ALL -> R.string.lock_screen_show_all
     LockScreenVisibility.SYSTEM -> R.string.lock_screen_system
     LockScreenVisibility.HIDDEN -> R.string.lock_screen_hidden
 }
-
 private fun lockScreenVisibilityHintRes(visibility: LockScreenVisibility): Int = when (visibility) {
     LockScreenVisibility.SHOW_ALL -> R.string.lock_screen_hint_show_all
     LockScreenVisibility.SYSTEM -> R.string.lock_screen_hint_system

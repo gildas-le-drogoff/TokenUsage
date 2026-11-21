@@ -1,0 +1,5 @@
+- Multiple accounts for every service, not only Claude and Z.ai
+- Configurable alerts (quota threshold, low balance) with depletion forecast
+- New diagnostics screen for background refresh (battery, Doze, scheduled jobs)
+- Settings split into dedicated sub-screens
+- More reliable background refresh and rate-limited dashboard fetches

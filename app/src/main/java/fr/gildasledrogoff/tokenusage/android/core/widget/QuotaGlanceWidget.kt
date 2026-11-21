@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.widget
-
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -38,10 +37,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import fr.gildasledrogoff.tokenusage.MainActivity
 import fr.gildasledrogoff.tokenusage.R
-
-
 class QuotaGlanceWidget : GlanceAppWidget() {
-
     override val sizeMode: SizeMode = SizeMode.Responsive(
         setOf(
             DpSize(110.dp, 110.dp),
@@ -50,16 +46,13 @@ class QuotaGlanceWidget : GlanceAppWidget() {
             DpSize(320.dp, 320.dp)
         )
     )
-
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-
         provideContent {
             currentState<Preferences>()[WidgetRegistry.REVISION_KEY]
             val snapshots = WidgetSnapshots.load(context, appWidgetId)
             val dark = isDarkWidgetTheme(context)
             Palette.use(dark)
-
             key(dark) {
                 GlanceTheme {
                     WidgetRoot(snapshots)
@@ -67,7 +60,6 @@ class QuotaGlanceWidget : GlanceAppWidget() {
             }
         }
     }
-
     @Composable
     private fun WidgetRoot(snapshots: List<ServiceSnapshot>) {
         WidgetSurface {
@@ -80,8 +72,6 @@ class QuotaGlanceWidget : GlanceAppWidget() {
             }
         }
     }
-
-    
     @Composable
     private fun StripContent(snapshots: List<ServiceSnapshot>) {
         val context = LocalContext.current
@@ -148,8 +138,6 @@ class QuotaGlanceWidget : GlanceAppWidget() {
             }
         }
     }
-
-    
     @Composable
     private fun StackedContent(snapshots: List<ServiceSnapshot>) {
         Box(modifier = GlanceModifier.fillMaxSize().padding(16.dp)) {
@@ -177,8 +165,6 @@ class QuotaGlanceWidget : GlanceAppWidget() {
             }
         }
     }
-
-    
     @Composable
     private fun ScrollableContent(snapshots: List<ServiceSnapshot>) {
         if (snapshots.isEmpty()) {

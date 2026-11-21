@@ -1,5 +1,3 @@
-# SPDX licensing metadata per the REUSE specification: https://reuse.software/spec/
-# Verify with: reuse lint
 version = 1
 
 [[annotations]]

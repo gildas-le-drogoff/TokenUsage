@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.backup
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,48 +22,39 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-/** Encrypted backup: ZIP / QR export, ZIP / QR import (single or multi-QR scan). */
 @HiltViewModel
 class BackupViewModel @Inject constructor(
     private val backupManager: ConfigBackupManager,
     private val refreshScheduler: RefreshScheduler,
     private val accountsSync: AccountsSync
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(BackupUiState())
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
-
     private var pendingZipBytes: ByteArray? = null
-
     fun updateExportPin(pin: String) {
         _uiState.update {
             it.copy(export = it.export.copy(pin = pin, error = null, zipReady = false))
         }
     }
-
     fun updateExportConfirmPin(pin: String) {
         _uiState.update {
             it.copy(export = it.export.copy(confirmPin = pin, error = null, zipReady = false))
         }
     }
-
     fun dismissQrExport() {
         _uiState.update { it.copy(export = it.export.copy(qrCodes = null, qrIndex = 0)) }
     }
-
     fun nextExportQr() {
         _uiState.update {
             val max = (it.export.qrCodes?.size ?: 1) - 1
             it.copy(export = it.export.copy(qrIndex = (it.export.qrIndex + 1).coerceAtMost(max)))
         }
     }
-
     fun previousExportQr() {
         _uiState.update {
             it.copy(export = it.export.copy(qrIndex = (it.export.qrIndex - 1).coerceAtLeast(0)))
         }
     }
-
     fun prepareZipExport() {
         if (!validateExportPin()) return
         flushPendingChanges()
@@ -90,17 +80,14 @@ class BackupViewModel @Inject constructor(
             )
         }
     }
-
     fun consumeZipBytes(): ByteArray? {
         val bytes = pendingZipBytes
         pendingZipBytes = null
         return bytes
     }
-
     fun onZipHandled() {
         _uiState.update { it.copy(export = it.export.copy(zipReady = false)) }
     }
-
     fun prepareQrExport() {
         if (!validateExportPin()) return
         flushPendingChanges()
@@ -117,13 +104,11 @@ class BackupViewModel @Inject constructor(
             )
         }
     }
-
     fun isExportPinValid(): Boolean {
         val export = _uiState.value.export
         if (!BackupCrypto.isValidPassword(export.pin)) return false
         return export.confirmPin.isEmpty() || export.pin == export.confirmPin
     }
-
     private fun validateExportPin(): Boolean {
         val export = _uiState.value.export
         val error = when {
@@ -136,21 +121,16 @@ class BackupViewModel @Inject constructor(
         }
         return error == null
     }
-
     private fun setExportBusy(busy: Boolean) {
         _uiState.update { it.copy(export = it.export.copy(isBusy = busy, error = null)) }
     }
-
     private fun exportFailed(error: Throwable) {
         val mapped = if (error is QrPayloadTooLargeException) ExportError.QrTooLarge else ExportError.Failed
         _uiState.update { it.copy(export = it.export.copy(error = mapped)) }
     }
-
     private var pendingImportContainer: ByteArray? = null
-
     private val qrScanChunks = mutableMapOf<Int, QrChunkCodec.Chunk>()
     private var qrSessionHash: String? = null
-
     fun onQrScanned(contents: String) {
         val text = contents.trim()
         if (QrChunkCodec.isMultiQr(text)) {
@@ -163,7 +143,6 @@ class BackupViewModel @Inject constructor(
         }
         onContainerLoaded(runCatching { backupManager.parseQrPayload(text) }.getOrNull())
     }
-
     private fun onMultiQrChunkScanned(text: String) {
         val chunk = runCatching { QrChunkCodec.parseChunk(text) }.getOrNull()
         if (chunk == null) {
@@ -188,7 +167,6 @@ class BackupViewModel @Inject constructor(
             publishQrScanProgress(chunk.total)
         }
     }
-
     private fun completeQrScanSession() {
         val payload = runCatching { QrChunkCodec.reassemble(qrScanChunks.values) }.getOrNull()
         resetQrScanSession()
@@ -198,7 +176,6 @@ class BackupViewModel @Inject constructor(
         }
         onContainerLoaded(runCatching { backupManager.parseQrPayload(payload) }.getOrNull())
     }
-
     private fun publishQrScanProgress(total: Int) {
         _uiState.update {
             it.copy(
@@ -209,21 +186,17 @@ class BackupViewModel @Inject constructor(
             )
         }
     }
-
     private fun setImportError(error: ImportError) {
         _uiState.update { it.copy(importState = it.importState.copy(error = error)) }
     }
-
     private fun resetQrScanSession() {
         qrScanChunks.clear()
         qrSessionHash = null
         _uiState.update { it.copy(importState = it.importState.copy(scanSession = null)) }
     }
-
     fun restartQrScanSession() {
         resetQrScanSession()
     }
-
     fun onZipPicked(openStream: () -> InputStream?) {
         viewModelScope.launch(Dispatchers.IO) {
             val container = runCatching {
@@ -232,7 +205,6 @@ class BackupViewModel @Inject constructor(
             withContext(Dispatchers.Main) { onContainerLoaded(container) }
         }
     }
-
     private fun onContainerLoaded(container: ByteArray?) {
         pendingImportContainer = container
         _uiState.update {
@@ -245,18 +217,15 @@ class BackupViewModel @Inject constructor(
             )
         }
     }
-
     fun updateImportPin(pin: String) {
         _uiState.update { it.copy(importState = it.importState.copy(pin = pin, error = null)) }
     }
-
     fun dismissImport() {
         pendingImportContainer = null
         qrScanChunks.clear()
         qrSessionHash = null
         _uiState.update { it.copy(importState = ImportUiState()) }
     }
-
     fun confirmImport() {
         val container = pendingImportContainer ?: return
         val pin = _uiState.value.importState.pin
@@ -264,7 +233,6 @@ class BackupViewModel @Inject constructor(
         flushPendingChanges()
         accountsSync.discardPending()
         _uiState.update { it.copy(importState = it.importState.copy(isBusy = true, error = null)) }
-
         viewModelScope.launch(Dispatchers.Default) {
             val result = runCatching {
                 backupManager.restore(backupManager.decryptContainer(container, pin))
@@ -301,19 +269,15 @@ class BackupViewModel @Inject constructor(
             }
         }
     }
-
     fun onImportResultShown() {
         _uiState.update { it.copy(importState = it.importState.copy(importedCount = null)) }
     }
-
     fun clearImportError() {
         _uiState.update { it.copy(importState = it.importState.copy(error = null)) }
     }
-
     private fun flushPendingChanges() {
         accountsSync.flushPending()
     }
-
     private fun defaultZipFileName(): String =
         "tokenusage-config-" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")) +

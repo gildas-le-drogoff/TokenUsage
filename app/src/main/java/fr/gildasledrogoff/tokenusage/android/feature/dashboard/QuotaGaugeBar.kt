@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.dashboard
-
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -42,8 +41,6 @@ import fr.gildasledrogoff.tokenusage.ui.theme.dimens
 import fr.gildasledrogoff.tokenusage.ui.theme.quotaStatusOf
 import java.time.Instant
 import kotlin.math.roundToInt
-
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun QuotaGaugeBar(
@@ -51,7 +48,6 @@ fun QuotaGaugeBar(
     label: String? = null,
     resetsAt: Instant? = null,
     severity: UsageSeverity = UsageSeverity.NORMAL,
-    
     detail: String? = null,
     modifier: Modifier = Modifier
 ) {
@@ -61,7 +57,6 @@ fun QuotaGaugeBar(
     val usedPct = if (utilization > 1.0) (utilization * 100).roundToInt() else 100 - remainingPct
     val status = quotaStatusOf(remaining, severity)
     val showUsed = LocalQuotaDisplayMode.current == QuotaDisplayMode.USED
-
     val animatedProgress by animateFloatAsState(
         targetValue = if (showUsed) 1f - remaining.toFloat() else remaining.toFloat(),
         animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
@@ -69,7 +64,6 @@ fun QuotaGaugeBar(
     )
     val barColor by animateColorAsState(status.colors.main, tween(400), label = "gauge_color")
     val trackColor by animateColorAsState(status.colors.container, tween(400), label = "gauge_track")
-
     val windowLabel = label?.let { localizedWindowLabel(it) }
     val resetText = resetsInLabel(resetsAt)
     val description = stringResource(
@@ -78,7 +72,6 @@ fun QuotaGaugeBar(
         if (showUsed) usedPct else remainingPct,
         quotaStatusLabel(status)
     ) + (resetText?.let { ", $it" } ?: "")
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -113,7 +106,6 @@ fun QuotaGaugeBar(
                 modifier = Modifier.alignByBaseline()
             )
         }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -129,7 +121,6 @@ fun QuotaGaugeBar(
                     .background(barColor)
             )
         }
-
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceXs, Alignment.Start),
@@ -169,7 +160,6 @@ fun QuotaGaugeBar(
         }
     }
 }
-
 @Composable
 fun quotaStatusLabel(status: QuotaStatus): String = stringResource(
     when (status) {

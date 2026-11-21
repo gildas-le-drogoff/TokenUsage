@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.backup
-
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import android.graphics.Bitmap
@@ -43,7 +42,6 @@ import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.backup.BackupCrypto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
 @Composable
 internal fun ImportPinDialog(
     state: ImportUiState,
@@ -52,7 +50,6 @@ internal fun ImportPinDialog(
     onDismiss: () -> Unit
 ) {
     val canImport = BackupCrypto.isUsableForImport(state.pin) && !state.isBusy
-
     AlertDialog(
         onDismissRequest = { if (!state.isBusy) onDismiss() },
         title = { Text(stringResource(R.string.import_dialog_title)) },
@@ -102,7 +99,6 @@ internal fun ImportPinDialog(
         }
     )
 }
-
 @Composable
 internal fun ExportQrDialog(
     qrCodes: List<String>,
@@ -114,7 +110,6 @@ internal fun ExportQrDialog(
     val multi = qrCodes.size > 1
     val payload = qrCodes[index]
     val qrImage = rememberQrImage(payload, QR_SIZE_PX)
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -134,7 +129,6 @@ internal fun ExportQrDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -152,7 +146,6 @@ internal fun ExportQrDialog(
                         CircularProgressIndicator(modifier = Modifier.size(32.dp))
                     }
                 }
-
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = stringResource(R.string.qr_dialog_warning),
@@ -181,7 +174,6 @@ internal fun ExportQrDialog(
         }
     )
 }
-
 @Composable
 private fun rememberQrImage(content: String, sizePx: Int): ImageBitmap? {
     var bitmap by remember(content) { mutableStateOf<ImageBitmap?>(null) }
@@ -192,7 +184,6 @@ private fun rememberQrImage(content: String, sizePx: Int): ImageBitmap? {
     }
     return bitmap
 }
-
 private fun generateQrBitmap(content: String, sizePx: Int): ImageBitmap {
     val hints = mapOf(
         EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.L,
@@ -211,5 +202,4 @@ private fun generateQrBitmap(content: String, sizePx: Int): ImageBitmap {
     }
     return Bitmap.createBitmap(colors, sizePx, sizePx, Bitmap.Config.ARGB_8888).asImageBitmap()
 }
-
 private const val QR_SIZE_PX = 900

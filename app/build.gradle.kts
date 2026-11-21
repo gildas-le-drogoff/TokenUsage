@@ -15,6 +15,19 @@ val keystoreProperties =
         val file = rootProject.file("keystore.properties")
         if (file.exists()) file.inputStream().use { load(it) }
     }
+
+fun gitOutput(vararg args: String): String =
+    runCatching {
+        providers.exec {
+            commandLine("git", *args)
+            workingDir = rootProject.projectDir
+            isIgnoreExitValue = true
+        }.standardOutput.asText.get().trim()
+    }.getOrDefault("").ifEmpty { "unknown" }
+
+val gitHash = gitOutput("rev-parse", "--short", "HEAD")
+val gitDate = gitOutput("log", "-1", "--format=%cs")
+
 android {
     namespace = "fr.gildasledrogoff.tokenusage"
     compileSdk = 37
@@ -23,8 +36,10 @@ android {
         applicationId = "fr.gildasledrogoff.tokenusage"
         minSdk = 29
         targetSdk = 37
-        versionCode = 12
-        versionName = "0.1.2"
+        versionCode = 13
+        versionName = "0.2.0"
+        buildConfigField("String", "GIT_HASH", "\"$gitHash\"")
+        buildConfigField("String", "GIT_DATE", "\"$gitDate\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -42,19 +57,16 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            // x86_64 est réservé aux builds de test (émulateurs).
             ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64") }
             buildConfigField("Boolean", "IS_DEBUG", "true")
         }
         release {
-            // Never ship a debuggable build: blocks JDWP, run-as and heap dumps.
+            
             isDebuggable = false
             isJniDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
-            // Un seul APK universel ARM : F-Droid attend un APK par versionCode.
             ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
-            // Build reproductible : pas de métadonnées git dans l'APK.
             vcsInfo { include = false }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -65,9 +77,9 @@ android {
             buildConfigField("Boolean", "IS_DEBUG", "false")
         }
 
-        // Staging : performances release (R8 + shrinkResources, non
-        // debuggable, clé release) mais données d'exemple du debug (source
-        // set partagé src/demoData) et relaxations du debug via IS_DEBUG :
+        
+        
+        
         create("staging") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
@@ -78,14 +90,12 @@ android {
         }
     }
 
-    // F-Droid refuse le bloc de métadonnées de dépendances (chiffré avec une
-    // clé Google) qu'AGP ajoute par défaut au bloc de signature.
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
     }
 
-    // Données d'exemple embarquées uniquement dans les build types debug et
+    
     sourceSets {
         getByName("debug") {
             java.directories.add("src/demoData/java")
@@ -116,9 +126,6 @@ android {
     }
 
     packaging {
-        // Build reproductible : sans cela, AGP strippe les .so quand un NDK est
-        // installé et les laisse intacts sinon (cas du serveur F-Droid), ce qui
-        // donne deux APK différents.
         jniLibs {
             keepDebugSymbols += "**/*.so"
         }
@@ -141,16 +148,13 @@ kotlin {
     }
 }
 
-// Couverture de code (Kover) : Kover n'instrumente que les tâches de test
-// (jamais l'APK), et la CI ne mesure que la variante debug : aucun impact sur
-// les builds release / F-Droid (reproductibilité).
-// Rapports : ./gradlew koverXmlReportDebug koverHtmlReportDebug
+
+
 kover {
     reports {
         filters {
             excludes {
                 classes(
-                    // Code généré par Hilt / Dagger
                     "*_Factory",
                     "*_Factory\$*",
                     "*_HiltModules*",
@@ -161,15 +165,12 @@ kover {
                     "dagger.hilt.internal.*",
                     "hilt_aggregated_deps.*",
                     "*_GeneratedInjector",
-                    // Code généré par Room
                     "*_Impl",
                     "*_Impl\$*",
-                    // Généré par AGP / Compose
                     "*.BuildConfig",
                     "*.R",
                     "*.R\$*",
                     "*ComposableSingletons*",
-                    // Thème et constantes visuelles Compose
                     "*.ui.theme.ThemeKt",
                     "*.ui.theme.DimensKt",
                 )
@@ -216,8 +217,8 @@ dependencies {
 
     implementation(libs.work.runtime.ktx)
 
-    // Security: Tink primitives, keysets wrapped by an AndroidKeyStore AES-GCM key
-    // (replaces the deprecated androidx.security:security-crypto).
+    
+    
     implementation(libs.tink.android)
     implementation(libs.androidx.biometric)
 
@@ -241,11 +242,8 @@ dependencies {
     testImplementation(libs.mockwebserver)
     testImplementation(libs.mockito.core)
 
-    // Captures fastlane (generate-screenshots.sh) : test instrumenté Compose.
     androidTestImplementation(composeBom)
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.runner)
-    // ui-test-junit4 tire un Espresso trop ancien pour les API récentes
-    // (InputManager.getInstance supprimé) : version forcée.
     androidTestImplementation(libs.espresso.core)
 }

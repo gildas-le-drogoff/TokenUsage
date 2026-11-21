@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.alerts
-
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,6 @@ import fr.gildasledrogoff.tokenusage.core.alert.AlertRule
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.feature.settings.common.SettingsSubScreen
 
-/** Alerts sub-screen of the settings. */
 @Composable
 fun AlertsSettingsScreen(
     onNavigateBack: () -> Unit,
@@ -46,7 +44,6 @@ fun AlertsSettingsScreen(
         )
     }
 }
-
 @Composable
 internal fun AlertsSettingsSection(
     state: AlertsSettingsUiState,
@@ -81,7 +78,6 @@ internal fun AlertsSettingsSection(
         )
     }
 }
-
 @Composable
 private fun AlertServiceCard(
     entry: AlertServiceUi,

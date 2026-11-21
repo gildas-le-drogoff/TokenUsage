@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.util
-
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -18,12 +17,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
-
-
 val AiService.iconRes: Int
     @DrawableRes get() = icon
-
-
 @Composable
 fun ServiceIcon(
     @DrawableRes iconRes: Int,

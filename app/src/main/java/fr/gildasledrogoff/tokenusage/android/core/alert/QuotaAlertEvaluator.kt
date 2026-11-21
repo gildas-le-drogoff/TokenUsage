@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.alert
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AccountBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaInfo
 import fr.gildasledrogoff.tokenusage.core.domain.model.UsageWindow
@@ -8,28 +7,18 @@ import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
 
-/**
- * Applies the [AlertConfig] to the quotas of one refresh and returns the alerts to show.
- *
- * Anti-spam: an alert is raised once, then again only after its condition went
- * false (usage back under the threshold, balance topped up…) or after the quota
- * window was reset. The memory lives in [AlertState], which the caller persists.
- */
 class QuotaAlertEvaluator @Inject constructor(
     private val predictor: DepletionPredictor,
     private val balanceSeries: BalanceSeriesSource,
     private val clock: Clock
 ) {
-
     data class Evaluation(val alerts: List<QuotaAlert>, val state: AlertState)
-
     suspend fun evaluate(quotas: List<QuotaInfo>, config: AlertConfig, state: AlertState): Evaluation {
         val now = clock.instant()
         val lookback = Duration.ofDays(config.forecastWindowDays.toLong())
         val fired = state.fired.toMutableMap()
         val samples = pruned(state.samples, now, lookback)
         val alerts = mutableListOf<QuotaAlert>()
-
         for (quota in quotas.distinctBy { it.accountKey }) {
             val rule = config.ruleFor(quota)
             val prefix = quota.accountKey + SEP
@@ -44,7 +33,6 @@ class QuotaAlertEvaluator @Inject constructor(
         }
         return Evaluation(alerts, AlertState(fired, samples))
     }
-
     private fun evaluateWindows(
         quota: QuotaInfo,
         rule: AlertRule,
@@ -60,7 +48,6 @@ class QuotaAlertEvaluator @Inject constructor(
         val newlyOverThreshold = mutableListOf<Pair<UsageWindow, DepletionForecast?>>()
         val newlyDepleting = mutableListOf<Pair<UsageWindow, DepletionForecast>>()
         val horizon = rule.depletionHorizonHours?.let { Duration.ofHours(it.toLong()) }
-
         for (window in windows) {
             val at = minOf(quota.fetchedAt, now)
             val key = "${prefix}W$SEP${window.label}"
@@ -68,21 +55,18 @@ class QuotaAlertEvaluator @Inject constructor(
             val forecast = predictor
                 .predictQuota(series.map { it.toTimedValue() }, lookback)
                 ?.takeIf { it.isBefore(window.resetsAt) }
-
             val thresholdKey = "${prefix}Q$SEP${window.label}"
             val overThreshold = rule.quotaThreshold != null && window.utilization >= rule.quotaThreshold
             if (overThreshold) {
                 touched.mark(thresholdKey, window.resetsAt)
                 if (shouldFire(fired, thresholdKey, window.resetsAt, now)) newlyOverThreshold += window to forecast
             }
-
             val depletionKey = "${prefix}D$SEP${window.label}"
             if (horizon != null && forecast != null && forecast.isWithin(horizon, now)) {
                 touched.mark(depletionKey, window.resetsAt)
                 if (shouldFire(fired, depletionKey, window.resetsAt, now)) newlyDepleting += window to forecast
             }
         }
-
         newlyOverThreshold.maxByOrNull { it.first.utilization }?.let { (window, forecast) ->
             alerts += QuotaAlert(
                 accountKey = quota.accountKey,
@@ -107,7 +91,6 @@ class QuotaAlertEvaluator @Inject constructor(
             )
         }
     }
-
     private suspend fun evaluateBalances(
         quota: QuotaInfo,
         rule: AlertRule,
@@ -125,7 +108,6 @@ class QuotaAlertEvaluator @Inject constructor(
         val horizon = rule.depletionHorizonHours?.let { Duration.ofHours(it.toLong()) }
         val newlyLow = mutableListOf<Triple<AccountBalance, Double, DepletionForecast?>>()
         val newlyDepleting = mutableListOf<Triple<AccountBalance, Double, DepletionForecast>>()
-
         for ((index, entry) in entries) {
             val balance = entry.balance ?: continue
             val at = minOf(quota.fetchedAt, now)
@@ -135,7 +117,6 @@ class QuotaAlertEvaluator @Inject constructor(
                 ?.takeIf { entries.size == 1 }
                 ?.let { balanceSeries.series(quota.service, it, now.minus(lookback)) }
                 .orEmpty()
-            // Prefer the stored history; fall back on the measurements kept by the alerts.
             val base = if (stored.size >= 2) stored else own.map { it.toTimedValue() }
             val last = base.maxByOrNull { it.at }
             val points = if (last == null || at.isAfter(last.at.plusSeconds(CURRENT_POINT_GAP_SECONDS))) {
@@ -144,14 +125,12 @@ class QuotaAlertEvaluator @Inject constructor(
                 base
             }
             val forecast = predictor.predictBalance(points, target = 0.0, lookback = lookback)
-
             val lowKey = "${prefix}B$SEP$index"
             val low = rule.balanceThreshold != null && balance.totalBalance <= rule.balanceThreshold
             if (low) {
                 touched.mark(lowKey, null)
                 if (shouldFire(fired, lowKey, null, now)) newlyLow += Triple(entry, balance.totalBalance, forecast)
             }
-
             val depletionKey = "${prefix}E$SEP$index"
             if (horizon != null && forecast != null && forecast.isWithin(horizon, now)) {
                 touched.mark(depletionKey, null)
@@ -160,7 +139,6 @@ class QuotaAlertEvaluator @Inject constructor(
                 }
             }
         }
-
         newlyLow.minByOrNull { it.second }?.let { (entry, value, forecast) ->
             alerts += QuotaAlert(
                 accountKey = quota.accountKey,
@@ -185,25 +163,17 @@ class QuotaAlertEvaluator @Inject constructor(
             )
         }
     }
-
-    /**
-     * `true` when the alert [key] must be raised now: it was not raised yet, or its
-     * window was reset since the previous evaluation (the reset instant we knew has
-     * passed and the window now announces a later one).
-     */
+    
     private fun shouldFire(fired: Map<String, Long>, key: String, resetsAt: Instant?, now: Instant): Boolean {
         val previous = fired[key] ?: return true
         val current = resetsAt?.toEpochMilli() ?: return false
         return previous != NO_RESET && previous <= now.toEpochMilli() && current > previous
     }
-
     private fun MutableMap<String, Long>.mark(key: String, resetsAt: Instant?) {
         put(key, resetsAt?.toEpochMilli() ?: NO_RESET)
     }
-
     private fun labelOf(quota: QuotaInfo, entry: AccountBalance): String? =
         quota.accountLabel ?: entry.label.takeIf { it.isNotBlank() }
-
     private fun recordWindowSample(
         samples: MutableMap<String, List<TimedSample>>,
         key: String,
@@ -223,7 +193,6 @@ class QuotaAlertEvaluator @Inject constructor(
         samples[key] = series
         return series
     }
-
     private fun recordBalanceSample(
         samples: MutableMap<String, List<TimedSample>>,
         key: String,
@@ -236,8 +205,7 @@ class QuotaAlertEvaluator @Inject constructor(
         samples[key] = series
         return series
     }
-
-    /** Adds [sample]; a sample too close to the last one replaces it. Keeps the list bounded. */
+    
     private fun append(series: List<TimedSample>, sample: TimedSample): List<TimedSample> {
         val last = series.lastOrNull()
         var result = when {
@@ -247,12 +215,10 @@ class QuotaAlertEvaluator @Inject constructor(
             else -> series + sample
         }
         if (result.size > MAX_SAMPLES) {
-            // Halve the resolution, keeping the oldest and the newest measurements.
             result = result.filterIndexed { index, _ -> index % 2 == 0 || index == result.lastIndex }
         }
         return result
     }
-
     private fun pruned(
         samples: Map<String, List<TimedSample>>,
         now: Instant,
@@ -265,9 +231,7 @@ class QuotaAlertEvaluator @Inject constructor(
         }
         return result
     }
-
     private fun TimedSample.toTimedValue() = TimedValue(value, Instant.ofEpochMilli(atMillis))
-
     private companion object {
         const val SEP = "|"
         const val NO_RESET = 0L

@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.history
-
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -31,8 +30,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-
 @Composable
 fun ConsumptionBarChart(
     points: List<ConsumptionPoint>,
@@ -41,24 +38,20 @@ fun ConsumptionBarChart(
     chartHeight: Dp = CHART_HEIGHT
 ) {
     if (points.isEmpty()) return
-
     val colors = MaterialTheme.colorScheme
     val barColor = colors.primary
     val pastBarColor = colors.primary.copy(alpha = PAST_BAR_ALPHA)
     val gridColor = colors.outlineVariant
     val averageColor = colors.tertiary
     val labelColor = colors.onSurfaceVariant
-
     val maxConsumed = points.maxOf { it.consumed }
     val maxValue = maxConsumed.takeIf { it > 0.0 } ?: 1.0
     val average = points.sumOf { it.consumed } / points.size
     val currency = points.last().currency
-
     val growth = remember(points) { Animatable(0f) }
     LaunchedEffect(points) {
         growth.animateTo(1f, tween(durationMillis = 600, easing = FastOutSlowInEasing))
     }
-
     val chartDescription = stringResource(
         R.string.chart_cd,
         points.size,
@@ -67,7 +60,6 @@ fun ConsumptionBarChart(
         ),
         maxConsumed
     )
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -85,7 +77,6 @@ fun ConsumptionBarChart(
                 color = averageColor
             )
         }
-
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
@@ -96,12 +87,10 @@ fun ConsumptionBarChart(
             val plotHeight = size.height * PLOT_HEIGHT_RATIO
             val baseline = size.height
             val radius = (barWidth / 2f).coerceAtMost(6.dp.toPx())
-
             listOf(0.5f, 1f).forEach { ratio ->
                 val y = baseline - plotHeight * ratio
                 drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
             }
-
             points.forEachIndexed { index, point ->
                 val barHeight = ((point.consumed / maxValue) * plotHeight * growth.value)
                     .toFloat()
@@ -114,7 +103,6 @@ fun ConsumptionBarChart(
                     cornerRadius = CornerRadius(radius, radius)
                 )
             }
-
             val averageY = baseline - (average / maxValue).toFloat() * plotHeight
             drawLine(
                 color = averageColor,
@@ -123,10 +111,8 @@ fun ConsumptionBarChart(
                 strokeWidth = 1.5.dp.toPx(),
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
             )
-
             drawLine(gridColor, Offset(0f, baseline), Offset(size.width, baseline), strokeWidth = 1.5.dp.toPx())
         }
-
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
                 text = formatPeriodKey(points.first().periodKey, granularity),
@@ -141,7 +127,6 @@ fun ConsumptionBarChart(
         }
     }
 }
-
 fun formatPeriodKey(periodKey: String, granularity: ConsumptionGranularity): String {
     val locale = Locale.getDefault()
     return try {
@@ -159,10 +144,7 @@ fun formatPeriodKey(periodKey: String, granularity: ConsumptionGranularity): Str
         periodKey
     }
 }
-
-
 private val CHART_HEIGHT = 180.dp
 private const val BAR_FILL_RATIO = 0.62f
-
 private const val PLOT_HEIGHT_RATIO = 0.92f
 private const val PAST_BAR_ALPHA = 0.7f

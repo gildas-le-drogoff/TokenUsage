@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.common
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +27,8 @@ import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.ui.theme.WidthClass
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
-
 internal val SettingsContentMaxWidth = 720.dp
 
-/** Frame shared by every settings screen: top bar with a back arrow, scrolling column of cards. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsSubScreen(

@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.ServiceAccount
@@ -29,8 +28,6 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class ClaudeRepositoryImpl @Inject constructor(
     private val apiService: ClaudeApiService,
@@ -38,7 +35,6 @@ class ClaudeRepositoryImpl @Inject constructor(
     private val tokenRefreshService: ClaudeTokenRefreshService,
     prefsManager: EncryptedPrefsManager
 ) : BaseQuotaProvider(AiService.CLAUDE, prefsManager) {
-
     override val form = CredentialForm(
         fields = listOf(
             CredentialField(KEY_SESSION_KEY, R.string.field_session_key, hintRes = R.string.field_session_key_hint),
@@ -68,7 +64,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             }
         }
     )
-
     override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
         return when (val credential = account.credential) {
             is Credential.ClaudeWebCredential -> fetchQuotaViaWebSession(account.id, credential)
@@ -76,8 +71,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             else -> Result.Failure(AppError.CredentialNotFound(AiService.CLAUDE))
         }
     }
-
-    
     private suspend fun fetchQuotaViaWebSession(
         accountId: String,
         credential: Credential.ClaudeWebCredential
@@ -86,7 +79,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             return Result.Failure(AppError.AuthError(AiService.CLAUDE, isTerminal = true))
         }
         val cookie = ClaudeWebApiService.sessionCookie(credential.accessToken)
-
         return try {
             val cachedOrgId = prefsManager.getClaudeOrgId(accountId)
             if (cachedOrgId != null) {
@@ -106,8 +98,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             Result.Failure(AppError.ParseError(e.message ?: "Parse error", e))
         }
     }
-
-    
     private suspend fun discoverOrg(cookie: String): OrgDiscovery {
         val response = webApiService.getOrganizations(cookie)
         val orgId = if (response.isSuccessful) {
@@ -119,9 +109,7 @@ class ClaudeRepositoryImpl @Inject constructor(
         }
         return OrgDiscovery(orgId, response)
     }
-
     private data class OrgDiscovery(val orgId: String?, val rawResponse: retrofit2.Response<*>)
-
     private suspend fun fetchWebUsage(
         accountId: String,
         cookie: String,
@@ -158,17 +146,14 @@ class ClaudeRepositoryImpl @Inject constructor(
             else -> Result.Failure(AppError.NetworkError("HTTP ${response.code()}: ${response.message()}"))
         }
     }
-
     private suspend fun fetchQuotaViaOAuth(
         accountId: String,
         credential: Credential.ClaudeCredential
     ): Result<QuotaInfo, AppError> {
         val workingCredential = ensureValidToken(accountId, credential)
             ?: return Result.Failure(AppError.AuthError(AiService.CLAUDE, isTerminal = true))
-
         return try {
             val response = apiService.getUsage("Bearer ${workingCredential.accessToken}")
-
             when (response.code()) {
                 200 -> {
                     val body = response.body()
@@ -228,8 +213,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             Result.Failure(AppError.ParseError(e.message ?: "Parse error", e))
         }
     }
-
-    
     private fun revokedError(response: retrofit2.Response<*>): AppError? {
         if (response.code() != 403) return null
         val body = runCatching { response.errorBody()?.string().orEmpty() }.getOrDefault("")
@@ -241,7 +224,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             AppError.TokenRevoked(AiService.CLAUDE)
         }
     }
-
     private suspend fun ensureValidToken(
         accountId: String,
         credential: Credential.ClaudeCredential
@@ -252,19 +234,16 @@ class ClaudeRepositoryImpl @Inject constructor(
         }
         return refreshToken(accountId, credential)
     }
-
     private suspend fun refreshToken(
         accountId: String,
         credential: Credential.ClaudeCredential
     ): Credential.ClaudeCredential? =
         refreshSerialized(accountId, credential) { exchangeRefreshToken(accountId, credential) }
-
     private suspend fun exchangeRefreshToken(
         accountId: String,
         credential: Credential.ClaudeCredential
     ): Credential.ClaudeCredential? {
         val refreshToken = credential.refreshToken ?: return null
-
         return try {
             val response = tokenRefreshService.refreshToken(refreshToken = refreshToken)
             if (response.isSuccessful) {
@@ -285,14 +264,12 @@ class ClaudeRepositoryImpl @Inject constructor(
             null
         }
     }
-
     private fun extractTierFromHeaders(response: retrofit2.Response<*>): String? {
         val raw = response.headers()["anthropic-ratelimit-tier"]
             ?: response.headers()["x-ratelimit-tier"]
             ?: return null
         return raw.trim().replaceFirstChar { it.uppercase() }
     }
-
     private fun extractTierFromJwt(accessToken: String): String? {
         return try {
             val parts = accessToken.split(".")
@@ -308,8 +285,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             null
         }
     }
-
-    
     private fun quotaResult(
         body: ClaudeDto.OAuthUsageResponse,
         tier: String?
@@ -322,7 +297,6 @@ class ClaudeRepositoryImpl @Inject constructor(
         }
         return Result.Success(quotaInfo)
     }
-
     private fun mapToQuotaInfo(response: ClaudeDto.OAuthUsageResponse, tier: String? = null): QuotaInfo {
         val windows = buildList {
             response.fiveHour?.let { add(mapWindow("5-Hour", it)) }
@@ -336,7 +310,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             response.iguanaNecktie?.let { add(mapWindow("Extended", it)) }
             appendStructuredLimits(this, response.limits)
         }
-
         val extraUsage = response.extraUsage?.takeIf { it.isEnabled }?.let {
             ExtraUsage(
                 isEnabled = it.isEnabled,
@@ -346,13 +319,11 @@ class ClaudeRepositoryImpl @Inject constructor(
                 currency = it.currency
             )
         }
-
         val weeklyBreakdown = response.sevenDayBreakdown?.rows
             ?.mapNotNull { row ->
                 row.displayName?.takeIf { it.isNotBlank() }?.let { UsageBreakdownRow(it, row.percent) }
             }
             .orEmpty()
-
         return QuotaInfo(
             service = AiService.CLAUDE,
             windows = windows,
@@ -362,8 +333,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             fetchedAt = Instant.now()
         )
     }
-
-    
     private fun appendStructuredLimits(
         builder: MutableList<UsageWindow>,
         limits: List<ClaudeDto.OAuthLimit>
@@ -381,8 +350,6 @@ class ClaudeRepositoryImpl @Inject constructor(
             )
         }
     }
-
-    
     private fun limitLabel(limit: ClaudeDto.OAuthLimit): String? {
         limit.scope?.model?.displayName?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
         limit.scope?.surface?.displayName?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
@@ -394,18 +361,15 @@ class ClaudeRepositoryImpl @Inject constructor(
             else -> humanizeUsageKey(limit.kind)
         }
     }
-
     private fun humanizeUsageKey(key: String): String =
         key.split("_").joinToString(" ") { part ->
             part.replaceFirstChar { it.uppercase() }
         }
-
     private fun mapSeverity(severity: String?): UsageSeverity = when (severity) {
         "warning" -> UsageSeverity.WARNING
         "critical" -> UsageSeverity.CRITICAL
         else -> UsageSeverity.NORMAL
     }
-
     private fun mapWindow(label: String, window: ClaudeDto.OAuthUsageWindow): UsageWindow {
         return UsageWindow(
             label = label,
@@ -414,14 +378,11 @@ class ClaudeRepositoryImpl @Inject constructor(
             severity = if (window.lockedReason != null) UsageSeverity.CRITICAL else UsageSeverity.NORMAL
         )
     }
-
-    
     private fun parseInstant(isoString: String): Instant? {
         val offsetParsed = runCatching { OffsetDateTime.parse(isoString).toInstant() }.getOrNull()
         if (offsetParsed != null) return offsetParsed
         return runCatching { Instant.parse(isoString) }.getOrNull()
     }
-
     companion object {
         const val KEY_SESSION_KEY = "sessionKey"
         const val KEY_ACCESS_TOKEN = "accessToken"

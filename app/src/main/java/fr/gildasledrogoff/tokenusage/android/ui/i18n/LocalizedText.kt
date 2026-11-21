@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.ui.i18n
-
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
@@ -12,11 +11,6 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.FxRateSource
 import fr.gildasledrogoff.tokenusage.core.domain.model.SpendPeriod
 import java.time.Duration
 import java.time.Instant
-
-
-
-
-
 @StringRes
 fun windowLabelRes(label: String): Int? = when (label) {
     "5-Hour" -> R.string.window_5h
@@ -27,17 +21,11 @@ fun windowLabelRes(label: String): Int? = when (label) {
     "API key limit" -> R.string.window_openrouter_key_limit
     else -> null
 }
-
-
 @Composable
 fun localizedWindowLabel(label: String): String =
     windowLabelRes(label)?.let { stringResource(it) } ?: label
-
-
 fun Context.localizedWindowLabel(label: String): String =
     windowLabelRes(label)?.let { getString(it) } ?: label
-
-
 @StringRes
 fun spendPeriodLabelRes(period: SpendPeriod): Int = when (period) {
     SpendPeriod.TODAY -> R.string.spend_today
@@ -46,9 +34,6 @@ fun spendPeriodLabelRes(period: SpendPeriod): Int = when (period) {
     SpendPeriod.LAST_7_DAYS -> R.string.spend_last_7_days
     SpendPeriod.LAST_30_DAYS -> R.string.spend_last_30_days
 }
-
-
-
 @Composable
 fun appErrorMessage(error: AppError): String = when (error) {
     is AppError.NetworkError ->
@@ -68,18 +53,12 @@ fun appErrorMessage(error: AppError): String = when (error) {
         if (error.service == AiService.GEMINI) stringResource(R.string.error_gemini_consumer_unsupported)
         else stringResource(R.string.error_client_unsupported)
 }
-
-
-
 data class ResetDuration(val days: Long, val hours: Long, val minutes: Long)
-
 fun resetDuration(until: Instant, now: Instant = Instant.now()): ResetDuration? {
     if (until.isBefore(now)) return null
     val duration = Duration.between(now, until)
     return ResetDuration(duration.toDays(), duration.toHours(), duration.toMinutes())
 }
-
-
 @Composable
 fun durationLabel(duration: ResetDuration): String = when {
     duration.days >= 1 ->
@@ -88,15 +67,11 @@ fun durationLabel(duration: ResetDuration): String = when {
         stringResource(R.string.duration_hours_minutes, duration.hours, duration.minutes % 60)
     else -> stringResource(R.string.duration_minutes, duration.minutes)
 }
-
-
 @Composable
 fun resetsInLabel(until: Instant?): String? {
     val duration = until?.let { resetDuration(it) } ?: return null
     return stringResource(R.string.resets_in, durationLabel(duration))
 }
-
-
 fun Context.resetsInText(until: Instant?): String? {
     val duration = until?.let { resetDuration(it) } ?: return null
     val parts = when {
@@ -108,16 +83,12 @@ fun Context.resetsInText(until: Instant?): String? {
     }
     return getString(R.string.resets_in, parts)
 }
-
-
 @StringRes
 fun fxRateSourceLabelRes(source: FxRateSource): Int = when (source) {
     FxRateSource.MANUAL -> R.string.fx_source_manual
     FxRateSource.FRANKFURTER -> R.string.fx_source_frankfurter
     FxRateSource.ECB -> R.string.fx_source_ecb
 }
-
-
 @Composable
 fun fxRateNote(rate: FxRate): String {
     val source = stringResource(fxRateSourceLabelRes(rate.source))

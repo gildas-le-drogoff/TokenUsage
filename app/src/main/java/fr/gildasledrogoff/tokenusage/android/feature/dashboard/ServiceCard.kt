@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.dashboard
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -54,8 +53,6 @@ import fr.gildasledrogoff.tokenusage.ui.theme.QuotaStatus
 import fr.gildasledrogoff.tokenusage.ui.theme.colors
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
 import fr.gildasledrogoff.tokenusage.ui.theme.quotaStatusOf
-
-
 @Composable
 fun ServiceCard(
     cardData: ServiceCardData,
@@ -88,7 +85,6 @@ fun ServiceCard(
             }
         }
     }
-
     if (onToggleExpand != null) {
         Card(
             onClick = onToggleExpand,
@@ -108,7 +104,6 @@ fun ServiceCard(
         )
     }
 }
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded: Boolean) {
@@ -162,9 +157,7 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
                 )
             }
         }
-
         cardStatus(cardData)?.let { StatusPill(it) }
-
         if (expandable) {
             val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "chevron")
             val stateText = stringResource(if (expanded) R.string.cd_collapse else R.string.cd_expand)
@@ -179,14 +172,11 @@ private fun CardHeader(cardData: ServiceCardData, expandable: Boolean, expanded:
         }
     }
 }
-
-
 private fun cardStatus(cardData: ServiceCardData): QuotaStatus? {
     if (cardData.error != null) return QuotaStatus.CRITICAL
     if (cardData.windows.isEmpty()) return null
     return cardData.windows.maxOf { quotaStatusOf(1.0 - it.utilization, it.severity) }
 }
-
 @Composable
 fun StatusPill(status: QuotaStatus, modifier: Modifier = Modifier) {
     val dimens = MaterialTheme.dimens
@@ -209,7 +199,6 @@ fun StatusPill(status: QuotaStatus, modifier: Modifier = Modifier) {
         }
     }
 }
-
 @Composable
 fun StatusDot(status: QuotaStatus, modifier: Modifier = Modifier) {
     Box(
@@ -219,11 +208,9 @@ fun StatusDot(status: QuotaStatus, modifier: Modifier = Modifier) {
             .background(status.colors.main)
     )
 }
-
 @Composable
 private fun CardContent(cardData: ServiceCardData) {
     val dimens = MaterialTheme.dimens
-
     if (cardData.error != null) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -243,7 +230,6 @@ private fun CardContent(cardData: ServiceCardData) {
         }
         return
     }
-
     if (cardData.windows.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceM)) {
             cardData.windows.forEach { window ->
@@ -256,7 +242,6 @@ private fun CardContent(cardData: ServiceCardData) {
             }
         }
     }
-
     cardData.extraUsage?.let { extra ->
         QuotaGaugeBar(
             utilization = extra.utilization,
@@ -271,12 +256,10 @@ private fun CardContent(cardData: ServiceCardData) {
             } ?: stringResource(R.string.card_credits, extra.usedCredits, extra.monthlyLimit, extra.currency)
         )
     }
-
     val breakdownRows = cardData.weeklyBreakdown.filter { it.percent >= 1.0 }
     if (breakdownRows.isNotEmpty()) {
         WeeklyBreakdown(breakdownRows)
     }
-
     if (cardData.accountBalances.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceXs)) {
             Text(
@@ -285,7 +268,6 @@ private fun CardContent(cardData: ServiceCardData) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceM)) {
-                // The card header already names the account when it holds a single balance.
                 val named = cardData.accountLabel != null || cardData.accountNumber != null
                 val showLabel = !(named && cardData.accountBalances.size == 1)
                 cardData.accountBalances.forEach { account ->
@@ -294,7 +276,6 @@ private fun CardContent(cardData: ServiceCardData) {
             }
         }
     }
-
     if (cardData.spending.isNotEmpty()) {
         SpendSection(
             rows = cardData.spending,
@@ -302,8 +283,6 @@ private fun CardContent(cardData: ServiceCardData) {
         )
     }
 }
-
-
 @Composable
 private fun SpendSection(rows: List<SpendRowUi>, showRateNote: Boolean) {
     val dimens = MaterialTheme.dimens
@@ -351,8 +330,6 @@ private fun SpendSection(rows: List<SpendRowUi>, showRateNote: Boolean) {
         }
     }
 }
-
-
 @Composable
 private fun WeeklyBreakdown(rows: List<UsageBreakdownRowUi>) {
     val dimens = MaterialTheme.dimens
@@ -402,8 +379,6 @@ private fun WeeklyBreakdown(rows: List<UsageBreakdownRowUi>) {
         }
     }
 }
-
-
 @Composable
 private fun AccountBalanceRow(account: AccountBalanceUi, showLabel: Boolean = true) {
     val dimens = MaterialTheme.dimens
@@ -413,7 +388,6 @@ private fun AccountBalanceRow(account: AccountBalanceUi, showLabel: Boolean = tr
         QuotaStatus.HEALTHY
     }
     val statusColor = status.colors.main
-
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -458,7 +432,6 @@ private fun AccountBalanceRow(account: AccountBalanceUi, showLabel: Boolean = tr
                 modifier = Modifier.padding(start = dimens.spaceS + dimens.spaceS)
             )
         }
-
         val captions = buildList {
             if (account.error == null && account.rate != null) {
                 add(
@@ -494,8 +467,6 @@ private fun AccountBalanceRow(account: AccountBalanceUi, showLabel: Boolean = tr
         }
     }
 }
-
-
 @Composable
 private fun accountErrorText(error: AppError): String = when (error) {
     is AppError.AuthError ->
@@ -503,5 +474,3 @@ private fun accountErrorText(error: AppError): String = when (error) {
         else stringResource(R.string.error_auth)
     else -> appErrorMessage(error)
 }
-
-

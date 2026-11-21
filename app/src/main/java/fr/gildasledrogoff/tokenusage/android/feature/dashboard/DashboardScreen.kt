@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.dashboard
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,7 +57,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -70,11 +68,9 @@ fun DashboardScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val consumptionChart by viewModel.consumptionChart.collectAsStateWithLifecycle()
     var deepseekExpanded by rememberSaveable { mutableStateOf(false) }
-
     LaunchedEffect(deepseekExpanded) {
         if (deepseekExpanded && consumptionChart is ConsumptionChartUiState.Idle) viewModel.loadConsumption()
     }
-
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -85,7 +81,6 @@ fun DashboardScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -121,7 +116,6 @@ fun DashboardScreen(
                         CircularProgressIndicator()
                     }
                 }
-
                 is DashboardUiState.Success -> {
                     if (state.cards.isEmpty()) {
                         EmptyState()
@@ -138,7 +132,6 @@ fun DashboardScreen(
                         )
                     }
                 }
-
                 is DashboardUiState.PartialSuccess -> {
                     val errorServices = state.errors.keys.joinToString(", ") { it.displayName }
                     CardList(
@@ -152,7 +145,6 @@ fun DashboardScreen(
                         onNavigateToHistory = onNavigateToHistory
                     )
                 }
-
                 is DashboardUiState.Error -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -177,7 +169,6 @@ fun DashboardScreen(
         }
     }
 }
-
 @Composable
 private fun CardList(
     cards: List<ServiceCardData>,
@@ -227,12 +218,10 @@ private fun CardList(
         }
     }
 }
-
 private fun formatLastUpdated(instant: Instant): String =
     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
         .withLocale(Locale.getDefault())
         .format(instant.atZone(ZoneId.systemDefault()))
-
 @Composable
 private fun ErrorBanner(text: String) {
     val dimens = MaterialTheme.dimens
@@ -260,8 +249,6 @@ private fun ErrorBanner(text: String) {
         }
     }
 }
-
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StatusLegend() {
@@ -307,7 +294,6 @@ private fun StatusLegend() {
         }
     }
 }
-
 @Composable
 private fun EmptyState() {
     Box(
@@ -330,8 +316,6 @@ private fun EmptyState() {
     }
 }
 
-
-/** The consumption chart restricted to the account behind a card (all accounts if it has no id). */
 private fun ConsumptionChartUiState.forAccount(accountId: String?): ConsumptionChartUiState {
     if (accountId == null || this !is ConsumptionChartUiState.Ready) return this
     val own = accounts.filter { it.accountId == accountId }

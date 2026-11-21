@@ -1,23 +1,17 @@
 package fr.gildasledrogoff.tokenusage.core.backup
-
 import java.security.MessageDigest
-
 object QrChunkCodec {
-
     const val MULTI_THRESHOLD_CHARS = 640
     const val MAX_QR_CONTENT_CHARS = 640
     const val CHUNK_CHARS = 600
     const val MAX_QR_PARTS = 32
-
     private const val PREFIX = "TUQR1"
     private const val SEPARATOR = ":"
     private const val FULL_HASH_CHARS = 16
     private const val CHUNK_HASH_CHARS = 8
-
     private const val BASE64_REGEX = "^[A-Za-z0-9+/]+={0,2}$"
     private val base64Chars = Regex(BASE64_REGEX)
     private val hexChars = Regex("^[0-9a-f]+$")
-
     data class Chunk(
         val index: Int,
         val total: Int,
@@ -25,9 +19,7 @@ object QrChunkCodec {
         val chunkHash: String,
         val data: String
     )
-
     fun isMultiQr(text: String): Boolean = text.startsWith("$PREFIX$SEPARATOR")
-
     fun encode(payload: String): List<String> {
         if (payload.length <= MULTI_THRESHOLD_CHARS) return listOf(payload)
         val total = (payload.length + CHUNK_CHARS - 1) / CHUNK_CHARS
@@ -46,7 +38,6 @@ object QrChunkCodec {
             ).joinToString(SEPARATOR)
         }
     }
-
     fun parseChunk(text: String): Chunk {
         val parts = text.split(SEPARATOR)
         if (parts.size != 6 || parts[0] != PREFIX) {
@@ -76,7 +67,6 @@ object QrChunkCodec {
         }
         return Chunk(index, total, fullHash, chunkHash, data)
     }
-
     fun reassemble(chunks: Collection<Chunk>): String {
         if (chunks.isEmpty()) {
             throw InvalidBackupException(InvalidBackupException.Reason.NOT_A_BACKUP, "No QR chunks")
@@ -100,7 +90,6 @@ object QrChunkCodec {
         }
         return payload
     }
-
     internal fun sha256Hex(text: String): String =
         MessageDigest.getInstance("SHA-256")
             .digest(text.toByteArray(Charsets.US_ASCII))

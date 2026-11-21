@@ -1,20 +1,14 @@
 package fr.gildasledrogoff.tokenusage.ui.theme
-
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-
-
 enum class WidthClass { COMPACT, MEDIUM, EXPANDED }
-
 fun widthClassOf(widthDp: Int): WidthClass = when {
     widthDp < 600 -> WidthClass.COMPACT
     widthDp < 840 -> WidthClass.MEDIUM
     else -> WidthClass.EXPANDED
 }
-
-
 @Immutable
 data class Dimens(
     val widthClass: WidthClass,
@@ -22,20 +16,13 @@ data class Dimens(
     val spaceS: Dp,
     val spaceM: Dp,
     val spaceL: Dp,
-    
     val screenPadding: Dp,
-    
     val cardPadding: Dp,
     val cardCorner: Dp,
-    
     val gaugeThickness: Dp,
-    
     val serviceIcon: Dp,
-    
     val inlineIcon: Dp,
-    
     val cardMinWidth: Dp,
-    
     val inlineChartHeight: Dp
 ) {
     companion object {
@@ -61,5 +48,4 @@ data class Dimens(
         }
     }
 }
-
 val LocalDimens = staticCompositionLocalOf { Dimens.forWidth(WidthClass.COMPACT) }

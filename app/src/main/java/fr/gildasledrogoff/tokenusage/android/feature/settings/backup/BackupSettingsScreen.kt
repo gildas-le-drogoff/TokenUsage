@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.backup
-
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,7 +15,6 @@ import com.journeyapps.barcodescanner.ScanOptions
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.feature.settings.common.SettingsSubScreen
 
-/** Backup sub-screen: encrypted export (ZIP / QR) and import, plus the system pickers they need. */
 @Composable
 fun BackupSettingsScreen(
     onNavigateBack: () -> Unit,
@@ -25,7 +23,6 @@ fun BackupSettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val backupWriteFailed = stringResource(R.string.toast_backup_write_failed)
-
     val zipLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
@@ -40,13 +37,11 @@ fun BackupSettingsScreen(
         }
         viewModel.onZipHandled()
     }
-
     LaunchedEffect(uiState.export.zipReady) {
         if (uiState.export.zipReady) {
             zipLauncher.launch(uiState.export.zipFileName.ifBlank { "tokenusage-config.zip" })
         }
     }
-
     val scanSession = uiState.importState.scanSession
     val scanPrompt = scanSession?.let { session ->
         stringResource(R.string.import_scan_prompt_multi, session.nextIndex, session.total)
@@ -64,7 +59,6 @@ fun BackupSettingsScreen(
                 .setOrientationLocked(false)
         )
     }
-
     val zipImportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -77,7 +71,6 @@ fun BackupSettingsScreen(
         viewModel.clearImportError()
         zipImportLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
     }
-
     val importedCount = uiState.importState.importedCount
     val importedHistory = uiState.importState.importedHistoryEntries
     val importSuccessMessage = importedCount?.let {
@@ -95,7 +88,6 @@ fun BackupSettingsScreen(
             viewModel.onImportResultShown()
         }
     }
-
     SettingsSubScreen(title = stringResource(R.string.backup_title), onNavigateBack = onNavigateBack) {
         BackupSection(
             export = uiState.export,
@@ -110,7 +102,6 @@ fun BackupSettingsScreen(
             onPickZip = launchZipPick
         )
     }
-
     uiState.export.qrCodes?.let { codes ->
         ExportQrDialog(
             qrCodes = codes,
@@ -120,7 +111,6 @@ fun BackupSettingsScreen(
             onDismiss = { viewModel.dismissQrExport() }
         )
     }
-
     if (uiState.importState.awaitingPin) {
         ImportPinDialog(
             state = uiState.importState,

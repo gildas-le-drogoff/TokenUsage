@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.widget
-
 import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
@@ -42,10 +41,7 @@ import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
 import fr.gildasledrogoff.tokenusage.ui.i18n.localizedWindowLabel
 import fr.gildasledrogoff.tokenusage.ui.i18n.resetsInText
 import java.time.Instant
-
-
 internal object Palette {
-
     private class PaletteSet(
         base: Color,
         title: Color,
@@ -57,7 +53,6 @@ internal object Palette {
         iconTint: Color
     ) {
         val isDark: Boolean = base.red < 0.5f
-
         val base = ColorProvider(base)
         val title = ColorProvider(title)
         val secondary = ColorProvider(secondary)
@@ -66,13 +61,10 @@ internal object Palette {
         val track = ColorProvider(track)
         val divider = ColorProvider(divider)
         val iconTint = ColorProvider(iconTint)
-
-        
         val danger = ColorProvider(if (isDark) Color(0xFFEF5350) else Color(0xFFC62828))
         val warning = ColorProvider(if (isDark) Color(0xFFFFB74D) else Color(0xFFE65100))
         val safe = ColorProvider(if (isDark) Color(0xFF81C784) else Color(0xFF2E7D32))
     }
-
     private val light = PaletteSet(
         base = Color(0xFFFFFBFE),
         title = Color(0xFF1C1B1F),
@@ -93,14 +85,10 @@ internal object Palette {
         divider = Color.White.copy(alpha = 0.12f),
         iconTint = Color.White.copy(alpha = 0.50f)
     )
-
     private var current: PaletteSet = dark
-
-    
     fun use(dark: Boolean) {
         current = if (dark) this.dark else light
     }
-
     val isDark get() = current.isDark
     val base get() = current.base
     val title get() = current.title
@@ -114,8 +102,6 @@ internal object Palette {
     val warning get() = current.warning
     val safe get() = current.safe
 }
-
-
 internal fun isDarkWidgetTheme(context: Context): Boolean {
     val resolved = when (DisplayPreferencesRepositoryImpl.themeMode(context)) {
         ThemeMode.LIGHT -> false
@@ -125,8 +111,6 @@ internal fun isDarkWidgetTheme(context: Context): Boolean {
     android.util.Log.w("TokenUsageWidget", "isDarkWidgetTheme: ${DisplayPreferencesRepositoryImpl.themeMode(context)} -> $resolved")
     return resolved
 }
-
-
 internal fun utilizationColor(utilization: Float): ColorProvider {
     return when {
         utilization >= 0.85f -> Palette.danger
@@ -134,8 +118,6 @@ internal fun utilizationColor(utilization: Float): ColorProvider {
         else -> Palette.safe
     }
 }
-
-
 internal fun gaugeText(context: Context, window: WindowSnapshot): String {
     val usedPct = (window.utilization.coerceIn(0f, 1f) * 100).toInt()
     return if (window.showUsed) {
@@ -144,14 +126,10 @@ internal fun gaugeText(context: Context, window: WindowSnapshot): String {
         context.getString(R.string.gauge_percent_left, 100 - usedPct)
     }
 }
-
-
 internal fun resetLine(context: Context, window: WindowSnapshot): String {
     val resetsAt = window.resetsAtEpochSecond?.let { Instant.ofEpochSecond(it) }
     return context.resetsInText(resetsAt) ?: ""
 }
-
-
 internal fun resetCountdownText(context: Context, epochSecond: Long): String {
     val duration = fr.gildasledrogoff.tokenusage.ui.i18n.resetDuration(Instant.ofEpochSecond(epochSecond))
         ?: return context.getString(R.string.widget_waiting_for_data)
@@ -163,14 +141,10 @@ internal fun resetCountdownText(context: Context, epochSecond: Long): String {
         else -> context.getString(R.string.duration_minutes, duration.minutes)
     }
 }
-
-
 internal fun barProgress(window: WindowSnapshot): Float {
     val utilization = window.utilization.coerceIn(0f, 1f)
     return if (window.showUsed) utilization else 1f - utilization
 }
-
-
 @Composable
 internal fun WidgetSurface(content: @Composable () -> Unit) {
     Box(
@@ -191,8 +165,6 @@ internal fun WidgetSurface(content: @Composable () -> Unit) {
         content()
     }
 }
-
-
 @Composable
 internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModifier = GlanceModifier) {
     val context = LocalContext.current
@@ -233,7 +205,6 @@ internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModif
                         )
                     }
                 }
-
                 val window = service.windows.firstOrNull()
                 Spacer(modifier = GlanceModifier.height(8.dp))
                 if (window == null) {
@@ -275,8 +246,6 @@ internal fun CompactTile(snapshots: List<ServiceSnapshot>, modifier: GlanceModif
         }
     }
 }
-
-
 @Composable
 internal fun ServiceDot(brandColor: Long, diameter: Dp) {
     Box(
@@ -286,7 +255,6 @@ internal fun ServiceDot(brandColor: Long, diameter: Dp) {
             .background(ColorProvider(Color(brandColor)))
     ) {}
 }
-
 @Composable
 internal fun EmptyState() {
     Box(
@@ -299,8 +267,6 @@ internal fun EmptyState() {
         )
     }
 }
-
-
 @Composable
 internal fun NoDataState(messageRes: Int) {
     Box(
@@ -313,7 +279,6 @@ internal fun NoDataState(messageRes: Int) {
         )
     }
 }
-
 @Composable
 internal fun Divider() {
     Box(
@@ -323,8 +288,6 @@ internal fun Divider() {
             .background(Palette.divider)
     ) {}
 }
-
-
 @Composable
 private fun ActionButton(
     iconRes: Int,
@@ -345,7 +308,6 @@ private fun ActionButton(
         )
     }
 }
-
 @Composable
 internal fun ServiceSection(
     snapshot: ServiceSnapshot,
@@ -353,7 +315,6 @@ internal fun ServiceSection(
 ) {
     val service = snapshot.service
     val tier = snapshot.tier
-
     Column(modifier = GlanceModifier.fillMaxWidth()) {
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
@@ -361,7 +322,6 @@ internal fun ServiceSection(
         ) {
             ServiceDot(service.brandColor, 10.dp)
             Spacer(modifier = GlanceModifier.width(8.dp))
-
             Text(
                 text = snapshot.title(LocalContext.current),
                 style = TextStyle(
@@ -371,7 +331,6 @@ internal fun ServiceSection(
                 ),
                 maxLines = 1
             )
-
             if (tier != null) {
                 Spacer(modifier = GlanceModifier.width(8.dp))
                 Box(
@@ -386,9 +345,7 @@ internal fun ServiceSection(
                     )
                 }
             }
-
             Spacer(modifier = GlanceModifier.defaultWeight())
-
             if (showRefresh) {
                 ActionButton(
                     R.drawable.ic_contrast_rounded,
@@ -404,13 +361,10 @@ internal fun ServiceSection(
                 Spacer(modifier = GlanceModifier.width(4.dp))
             }
         }
-
         Spacer(modifier = GlanceModifier.height(8.dp))
-
         for ((index, window) in snapshot.windows.withIndex()) {
             WindowRow(window, topPadding = if (index > 0) 6.dp else 0.dp)
         }
-
         if (snapshot.windows.isEmpty()) {
             val balanceText = snapshot.balanceText
             if (balanceText != null) {
@@ -428,13 +382,11 @@ internal fun ServiceSection(
         }
     }
 }
-
 @Composable
 internal fun WindowRow(window: WindowSnapshot, topPadding: Dp) {
     val context = LocalContext.current
     val utilization = window.utilization.coerceIn(0f, 1f)
     val resetText = resetLine(context, window)
-
     Column(modifier = GlanceModifier.fillMaxWidth().padding(top = topPadding)) {
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
@@ -454,11 +406,8 @@ internal fun WindowRow(window: WindowSnapshot, topPadding: Dp) {
                 )
             )
         }
-
         Spacer(modifier = GlanceModifier.height(3.dp))
-
         UsageProgressBar(window)
-
         if (resetText.isNotEmpty()) {
             Spacer(modifier = GlanceModifier.height(2.dp))
             Row(modifier = GlanceModifier.fillMaxWidth()) {
@@ -471,7 +420,6 @@ internal fun WindowRow(window: WindowSnapshot, topPadding: Dp) {
         }
     }
 }
-
 @Composable
 internal fun UsageProgressBar(window: WindowSnapshot, thickness: Dp = 4.dp) {
     LinearProgressIndicator(

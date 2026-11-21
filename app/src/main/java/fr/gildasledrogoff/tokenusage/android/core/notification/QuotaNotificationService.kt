@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.notification
-
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -22,7 +21,6 @@ import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-
 @Singleton
 class QuotaNotificationService @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -35,16 +33,11 @@ class QuotaNotificationService @Inject constructor(
         const val RESET_NOTIFICATION_ID_BASE = 2000
         const val ACTION_REFRESH = "fr.gildasledrogoff.tokenusage.ACTION_REFRESH"
     }
-
     init {
         createNotificationChannels()
     }
-
-    
     @Volatile
     private var lastQuotas: List<QuotaInfo>? = null
-
-    
     fun reapplyLockScreenVisibility() {
         val quotas = lastQuotas ?: return
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -52,17 +45,13 @@ class QuotaNotificationService @Inject constructor(
             showQuotaNotification(quotas)
         }
     }
-
-    
     private fun NotificationCompat.Builder.applyLockScreenVisibility(
         channelId: String,
         @StringRes publicTextRes: Int
     ): NotificationCompat.Builder =
         applyLockScreenVisibility(context, displayPreferences.lockScreenVisibility.value, channelId, publicTextRes)
-
     private fun createNotificationChannels() {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         val monitorChannel = NotificationChannel(
             CHANNEL_ID,
             context.getString(R.string.notif_channel_monitor),
@@ -71,7 +60,6 @@ class QuotaNotificationService @Inject constructor(
             description = context.getString(R.string.notif_channel_monitor_desc)
             setShowBadge(false)
         }
-
         val resetChannel = NotificationChannel(
             RESET_CHANNEL_ID,
             context.getString(R.string.notif_channel_reset),
@@ -79,22 +67,17 @@ class QuotaNotificationService @Inject constructor(
         ).apply {
             description = context.getString(R.string.notif_channel_reset_desc)
         }
-
         manager.createNotificationChannels(listOf(monitorChannel, resetChannel))
     }
-
     fun showQuotaNotification(quotas: List<QuotaInfo>) {
         lastQuotas = quotas
         val remoteViews = RemoteViews(context.packageName, R.layout.notification_compact)
-
         val showUsed = displayPreferences.quotaDisplayMode.value == QuotaDisplayMode.USED
         quotas.forEachIndexed { index, quota ->
             if (index >= 3) return@forEachIndexed
-
             val maxUtilization = (quota.windows.maxOfOrNull { it.utilization } ?: 0.0).coerceIn(0.0, 1.0)
             val usedPct = (maxUtilization * 100).toInt()
             val progress = if (showUsed) usedPct else 100 - usedPct
-
             when (index) {
                 0 -> {
                     remoteViews.setTextViewText(R.id.service_name_1, quota.service.displayName)
@@ -113,10 +96,8 @@ class QuotaNotificationService @Inject constructor(
                 }
             }
         }
-
         val elapsed = formatElapsed(quotas.firstOrNull()?.fetchedAt)
         remoteViews.setTextViewText(R.id.update_time, context.getString(R.string.notif_updated, elapsed))
-
         val refreshIntent = Intent(context, RefreshReceiver::class.java).apply {
             action = ACTION_REFRESH
         }
@@ -124,7 +105,6 @@ class QuotaNotificationService @Inject constructor(
             context, 0, refreshIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         val dashboardIntent = Intent().apply {
             action = Intent.ACTION_VIEW
             data = android.net.Uri.parse("tokenusage://dashboard")
@@ -135,7 +115,6 @@ class QuotaNotificationService @Inject constructor(
             context, 0, dashboardIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_quota)
             .setCustomContentView(remoteViews)
@@ -145,11 +124,9 @@ class QuotaNotificationService @Inject constructor(
             .addAction(R.drawable.ic_refresh, context.getString(R.string.cd_refresh), refreshPendingIntent)
             .applyLockScreenVisibility(CHANNEL_ID, R.string.notif_public_quota)
             .build()
-
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NOTIFICATION_ID, notification)
     }
-
     fun showResetNotification(service: AiService, windowLabel: String) {
         val dashboardIntent = Intent().apply {
             action = Intent.ACTION_VIEW
@@ -161,7 +138,6 @@ class QuotaNotificationService @Inject constructor(
             context, 0, dashboardIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         val notification = NotificationCompat.Builder(context, RESET_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_quota)
             .setContentTitle(context.getString(R.string.notif_reset_title, service.displayName))
@@ -170,12 +146,10 @@ class QuotaNotificationService @Inject constructor(
             .setAutoCancel(true)
             .applyLockScreenVisibility(RESET_CHANNEL_ID, R.string.notif_public_reset)
             .build()
-
         val notificationId = RESET_NOTIFICATION_ID_BASE + "${service.name}_$windowLabel".hashCode().and(0xFFFF)
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(notificationId, notification)
     }
-
     private fun formatElapsed(fetchedAt: Instant?): String {
         if (fetchedAt == null) return context.getString(R.string.time_just_now)
         val elapsed = Duration.between(fetchedAt, Instant.now())

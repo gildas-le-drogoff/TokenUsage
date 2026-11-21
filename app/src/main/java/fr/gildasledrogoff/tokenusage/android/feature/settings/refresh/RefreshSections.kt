@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.refresh
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.feature.settings.common.ToggleSection
 import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RefreshIntervalSection(
@@ -47,7 +45,6 @@ internal fun RefreshIntervalSection(
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(12.dp))
-
             val options = listOf(
                 15L to stringResource(R.string.refresh_15m),
                 30L to stringResource(R.string.refresh_30m),
@@ -61,7 +58,6 @@ internal fun RefreshIntervalSection(
                 onSelect = { onIntervalChange(it.first) },
                 modifier = Modifier.fillMaxWidth()
             )
-
             BackgroundRefreshBlock(
                 manualOnly = currentMinutes == 0L,
                 batteryExempt = batteryExempt,
@@ -71,7 +67,6 @@ internal fun RefreshIntervalSection(
         }
     }
 }
-
 @Composable
 private fun BackgroundRefreshBlock(
     manualOnly: Boolean,
@@ -134,7 +129,6 @@ private fun BackgroundRefreshBlock(
         }
     }
 }
-
 @Composable
 internal fun NotificationsSection(
     enabled: Boolean,

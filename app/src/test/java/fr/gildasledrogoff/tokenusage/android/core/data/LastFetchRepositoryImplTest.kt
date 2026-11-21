@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.database.LastFetchDao
 import fr.gildasledrogoff.tokenusage.core.database.LastFetchEntity
 import fr.gildasledrogoff.tokenusage.core.domain.model.AccountBalance
@@ -20,9 +19,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.Instant
-
 class LastFetchRepositoryImplTest {
-
     private class FakeLastFetchDao : LastFetchDao {
         val rows = mutableMapOf<String, LastFetchEntity>()
         override suspend fun get(id: String): LastFetchEntity? = rows[id]
@@ -30,10 +27,8 @@ class LastFetchRepositoryImplTest {
             rows[entity.id] = entity
         }
     }
-
     private val dao = FakeLastFetchDao()
     private val repository = LastFetchRepositoryImpl(dao)
-
     private fun quota(service: AiService, fetchedAt: Instant) = QuotaInfo(
         service = service,
         windows = listOf(
@@ -53,12 +48,10 @@ class LastFetchRepositoryImplTest {
         spending = listOf(SpendAmount(SpendPeriod.LAST_30_DAYS, 7.89, "USD")),
         fetchedAt = fetchedAt
     )
-
     @Test
     fun `snapshot is null when nothing recorded`() = runTest {
         assertNull(repository.snapshot())
     }
-
     @Test
     fun `record then snapshot round trips results`() = runTest {
         val fetchedAt = Instant.ofEpochMilli(5_000_000L)
@@ -108,28 +101,22 @@ class LastFetchRepositoryImplTest {
                 error = AppError.CredentialNotFound(AiService.COPILOT)
             )
         )
-
         repository.record(fetchedAt, results)
-
         val snapshot = repository.snapshot()
         assertNotNull(snapshot)
         assertEquals(fetchedAt, snapshot!!.fetchedAt)
         assertEquals(results, snapshot.results)
     }
-
     @Test
     fun `second record replaces previous payload and timestamp`() = runTest {
         val first = Instant.ofEpochMilli(1_000L)
         val second = Instant.ofEpochMilli(2_000L)
-
         repository.record(first, listOf(CachedQuotaResult(AiService.CLAUDE, quota = quota(AiService.CLAUDE, first), error = null)))
         repository.record(second, emptyList())
-
         val snapshot = repository.snapshot()
         assertEquals(second, snapshot!!.fetchedAt)
         assertEquals(emptyList<CachedQuotaResult>(), snapshot.results)
     }
-
     @Test
     fun `corrupt payload yields snapshot without results`() = runTest {
         dao.upsert(LastFetchEntity(id = "dashboard", timestamp = 9_999L, payload = "{not json"))

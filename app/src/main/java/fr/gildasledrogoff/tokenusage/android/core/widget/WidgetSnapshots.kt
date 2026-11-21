@@ -1,12 +1,9 @@
 package fr.gildasledrogoff.tokenusage.core.widget
-
 import android.content.Context
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.data.DisplayPreferencesRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
-
-
 data class ServiceSnapshot(
     val service: AiService,
     val tier: String?,
@@ -15,19 +12,13 @@ data class ServiceSnapshot(
     val accountLabel: String? = null,
     val accountNumber: Int? = null
 )
-
 data class WindowSnapshot(
     val label: String,
     val utilization: Float,
     val resetsAtEpochSecond: Long?,
-    
     val showUsed: Boolean
 )
-
-
 internal object WidgetSnapshots {
-
-    
     fun load(context: Context, appWidgetId: Int): List<ServiceSnapshot> {
         val widgetPrefs = WidgetPrefsManager(context)
         val showUsed = DisplayPreferencesRepositoryImpl.quotaDisplayMode(context) == QuotaDisplayMode.USED
@@ -56,11 +47,7 @@ internal object WidgetSnapshots {
             }
     }
 }
-
-
 internal fun ServiceSnapshot.accountName(context: Context): String? =
     accountLabel ?: accountNumber?.let { context.getString(R.string.account_n, it) }
-
-
 internal fun ServiceSnapshot.title(context: Context): String =
     accountName(context)?.let { "${service.displayName} · $it" } ?: service.displayName

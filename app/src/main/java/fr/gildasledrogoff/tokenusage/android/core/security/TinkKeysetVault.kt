@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.security
-
 import android.content.SharedPreferences
 import com.google.crypto.tink.Aead
 import com.google.crypto.tink.DeterministicAead
@@ -12,8 +11,6 @@ import com.google.crypto.tink.aead.PredefinedAeadParameters
 import com.google.crypto.tink.daead.DeterministicAeadConfig
 import com.google.crypto.tink.daead.PredefinedDeterministicAeadParameters
 import java.util.Base64
-
-
 internal class TinkKeysetVault(
     private val storage: SharedPreferences,
     private val masterKey: Aead
@@ -22,17 +19,14 @@ internal class TinkKeysetVault(
         AeadConfig.register()
         DeterministicAeadConfig.register()
     }
-
     val valueAead: Aead by lazy {
         loadOrCreate(VALUE_KEYSET, PredefinedAeadParameters.AES256_GCM)
             .getPrimitive(RegistryConfiguration.get(), Aead::class.java)
     }
-
     val keyDaead: DeterministicAead by lazy {
         loadOrCreate(KEY_KEYSET, PredefinedDeterministicAeadParameters.AES256_SIV)
             .getPrimitive(RegistryConfiguration.get(), DeterministicAead::class.java)
     }
-
     @Synchronized
     private fun loadOrCreate(name: String, parameters: Parameters): KeysetHandle {
         val associatedData = "$KEYSET_AAD_PREFIX$name".toByteArray(Charsets.UTF_8)
@@ -56,7 +50,6 @@ internal class TinkKeysetVault(
         }
         return handle
     }
-
     companion object {
         const val KEYSET_FILE = "tokenusage_keysets"
         private const val VALUE_KEYSET = "values_aes256_gcm"

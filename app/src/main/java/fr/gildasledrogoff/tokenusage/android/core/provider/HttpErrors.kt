@@ -1,12 +1,10 @@
 package fr.gildasledrogoff.tokenusage.core.provider
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Result
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
-/** HTTP status → [AppError], the mapping shared by every provider. */
 fun httpError(
     service: AiService,
     code: Int,
@@ -21,7 +19,6 @@ fun httpError(
     else -> AppError.NetworkError("HTTP $code")
 }
 
-/** Runs [block], mapping thrown I/O and parsing failures to [AppError]. */
 inline fun <T> guardedFetch(block: () -> Result<T, AppError>): Result<T, AppError> = try {
     block()
 } catch (e: CancellationException) {

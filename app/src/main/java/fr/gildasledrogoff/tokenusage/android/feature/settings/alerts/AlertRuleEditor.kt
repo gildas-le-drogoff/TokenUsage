@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.alerts
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,10 +24,8 @@ import fr.gildasledrogoff.tokenusage.core.alert.AlertRule
 import fr.gildasledrogoff.tokenusage.ui.components.ChoiceChipRow
 import fr.gildasledrogoff.tokenusage.ui.i18n.localizedWindowLabel
 import kotlin.math.roundToInt
-
 private val HORIZON_OPTIONS_HOURS = listOf(6, 12, 24, 48, 72, 168)
 
-/** Edits one [AlertRule]: quota threshold, window, low balance, depletion horizon. */
 @Composable
 internal fun AlertRuleEditor(
     rule: AlertRule,
@@ -40,7 +37,6 @@ internal fun AlertRuleEditor(
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SwitchRow(stringResource(R.string.alerts_enabled), rule.enabled) { onRuleChange(rule.copy(enabled = it)) }
         if (!rule.enabled) return@Column
-
         QuotaThresholdRow(rule, onRuleChange)
         if (rule.quotaThreshold != null || rule.depletionHorizonHours != null) {
             WindowFilterRow(rule, windowLabels, onRuleChange)
@@ -49,7 +45,6 @@ internal fun AlertRuleEditor(
         DepletionHorizonRow(rule, onRuleChange)
     }
 }
-
 @Composable
 private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
@@ -61,7 +56,6 @@ private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
         Switch(checked = checked, onCheckedChange = onChange)
     }
 }
-
 @Composable
 private fun QuotaThresholdRow(rule: AlertRule, onRuleChange: (AlertRule) -> Unit) {
     val threshold = rule.quotaThreshold
@@ -82,7 +76,6 @@ private fun QuotaThresholdRow(rule: AlertRule, onRuleChange: (AlertRule) -> Unit
         )
     }
 }
-
 @Composable
 private fun WindowFilterRow(rule: AlertRule, windowLabels: List<String>, onRuleChange: (AlertRule) -> Unit) {
     if (windowLabels.size < 2) return
@@ -95,7 +88,6 @@ private fun WindowFilterRow(rule: AlertRule, windowLabels: List<String>, onRuleC
         onSelect = { onRuleChange(rule.copy(quotaWindowLabel = it)) }
     )
 }
-
 @Composable
 private fun BalanceThresholdRow(rule: AlertRule, onRuleChange: (AlertRule) -> Unit) {
     SwitchRow(stringResource(R.string.alerts_balance_threshold), rule.balanceThreshold != null) { on ->
@@ -117,7 +109,6 @@ private fun BalanceThresholdRow(rule: AlertRule, onRuleChange: (AlertRule) -> Un
         modifier = Modifier.fillMaxWidth()
     )
 }
-
 @Composable
 private fun DepletionHorizonRow(rule: AlertRule, onRuleChange: (AlertRule) -> Unit) {
     val horizon = rule.depletionHorizonHours
@@ -137,17 +128,13 @@ private fun DepletionHorizonRow(rule: AlertRule, onRuleChange: (AlertRule) -> Un
         onSelect = { onRuleChange(rule.copy(depletionHorizonHours = it)) }
     )
 }
-
 @Composable
 private fun horizonLabel(hours: Int): String =
     if (hours % 24 == 0) stringResource(R.string.alerts_horizon_days, hours / 24)
     else stringResource(R.string.alerts_horizon_hours, hours)
-
 private const val DEFAULT_BALANCE_THRESHOLD = 5.0
 private const val DEFAULT_HORIZON_HOURS = 24
-
 internal fun parseAmount(input: String): Double? =
     input.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it >= 0.0 && it.isFinite() }
-
 internal fun formatAmount(value: Double): String =
     if (value == value.toLong().toDouble()) value.toLong().toString() else value.toString()

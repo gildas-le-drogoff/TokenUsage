@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AccountBalance
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
@@ -16,23 +15,17 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-
 internal object LastFetchCacheCodec {
-
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
     }
-
     fun encode(results: List<CachedQuotaResult>): String =
         json.encodeToString(results.map { it.toDto() })
-
     fun decode(payload: String): List<CachedQuotaResult>? = runCatching {
         json.decodeFromString<List<CachedQuotaResultDto>>(payload).mapNotNull { it.toDomain() }
     }.getOrNull()
 }
-
-
 @Serializable
 internal data class CachedQuotaResultDto(
     val service: String,
@@ -42,8 +35,6 @@ internal data class CachedQuotaResultDto(
     val quota: QuotaInfoDto? = null,
     val error: AppErrorDto? = null
 )
-
-
 @Serializable
 internal data class QuotaInfoDto(
     val service: String,
@@ -57,8 +48,6 @@ internal data class QuotaInfoDto(
     val accountId: String? = null,
     val accountLabel: String? = null
 )
-
-
 @Serializable
 internal data class UsageWindowDto(
     val label: String,
@@ -66,8 +55,6 @@ internal data class UsageWindowDto(
     val resetsAtEpochMs: Long? = null,
     val severity: String = UsageSeverity.NORMAL.name
 )
-
-
 @Serializable
 internal data class ExtraUsageDto(
     val isEnabled: Boolean,
@@ -76,16 +63,12 @@ internal data class ExtraUsageDto(
     val utilization: Double,
     val currency: String
 )
-
-
 @Serializable
 internal data class AccountBalanceDto(
     val label: String,
     val balance: CreditBalanceDto? = null,
     val error: AppErrorDto? = null
 )
-
-
 @Serializable
 internal data class CreditBalanceDto(
     val currency: String,
@@ -94,59 +77,44 @@ internal data class CreditBalanceDto(
     val toppedUpBalance: Double? = null,
     val isAvailable: Boolean
 )
-
-
 @Serializable
 internal data class UsageBreakdownRowDto(
     val label: String,
     val percent: Double
 )
-
-
 @Serializable
 internal data class SpendAmountDto(
     val period: String,
     val amount: Double,
     val currency: String
 )
-
-
 @Serializable
 internal sealed class AppErrorDto {
     @Serializable
     @SerialName("network")
     data class Network(val message: String) : AppErrorDto()
-
     @Serializable
     @SerialName("auth")
     data class Auth(val service: String, val isTerminal: Boolean, val message: String) : AppErrorDto()
-
     @Serializable
     @SerialName("rate_limited")
     data object RateLimited : AppErrorDto()
-
     @Serializable
     @SerialName("parse")
     data class Parse(val message: String) : AppErrorDto()
-
     @Serializable
     @SerialName("credential_not_found")
     data class CredentialNotFound(val service: String) : AppErrorDto()
-
     @Serializable
     @SerialName("token_revoked")
     data class TokenRevoked(val service: String) : AppErrorDto()
-
     @Serializable
     @SerialName("service_unavailable")
     data object ServiceUnavailable : AppErrorDto()
-
     @Serializable
     @SerialName("client_unsupported")
     data class ClientUnsupported(val service: String) : AppErrorDto()
 }
-
-
 private fun CachedQuotaResult.toDto() = CachedQuotaResultDto(
     service = service.name,
     accountLabel = accountLabel,
@@ -155,8 +123,6 @@ private fun CachedQuotaResult.toDto() = CachedQuotaResultDto(
     quota = quota?.toDto(),
     error = error?.toDto()
 )
-
-
 private fun QuotaInfo.toDto() = QuotaInfoDto(
     service = service.name,
     windows = windows.map { window ->
@@ -198,8 +164,6 @@ private fun QuotaInfo.toDto() = QuotaInfoDto(
     accountId = accountId,
     accountLabel = accountLabel
 )
-
-
 private fun AppError.toDto(): AppErrorDto = when (this) {
     is AppError.NetworkError -> AppErrorDto.Network(message)
     is AppError.AuthError -> AppErrorDto.Auth(service.name, isTerminal, message)
@@ -210,8 +174,6 @@ private fun AppError.toDto(): AppErrorDto = when (this) {
     is AppError.ServiceUnavailable -> AppErrorDto.ServiceUnavailable
     is AppError.ClientUnsupported -> AppErrorDto.ClientUnsupported(service.name)
 }
-
-
 private fun CachedQuotaResultDto.toDomain(): CachedQuotaResult? {
     val service = aiService(service) ?: return null
     return CachedQuotaResult(
@@ -223,8 +185,6 @@ private fun CachedQuotaResultDto.toDomain(): CachedQuotaResult? {
         error = error?.toDomain()
     )
 }
-
-
 private fun QuotaInfoDto.toDomain(service: AiService) = QuotaInfo(
     service = service,
     windows = windows.map { window ->
@@ -270,8 +230,6 @@ private fun QuotaInfoDto.toDomain(service: AiService) = QuotaInfo(
     accountId = accountId,
     accountLabel = accountLabel
 )
-
-
 private fun AppErrorDto.toDomain(): AppError = when (this) {
     is AppErrorDto.Network -> AppError.NetworkError(message)
     is AppErrorDto.Auth -> AppError.AuthError(aiService(service) ?: AiService.entries.first(), isTerminal, message)
@@ -282,15 +240,9 @@ private fun AppErrorDto.toDomain(): AppError = when (this) {
     is AppErrorDto.ServiceUnavailable -> AppError.ServiceUnavailable
     is AppErrorDto.ClientUnsupported -> AppError.ClientUnsupported(aiService(service) ?: AiService.entries.first())
 }
-
-
 private fun aiService(name: String): AiService? =
     AiService.entries.firstOrNull { it.name == name }
-
-
 private inline fun <reified T : Enum<T>> enumValue(name: String, default: T): T =
     enumOrNull<T>(name) ?: default
-
-
 private inline fun <reified T : Enum<T>> enumOrNull(name: String): T? =
     enumValues<T>().firstOrNull { it.name == name }

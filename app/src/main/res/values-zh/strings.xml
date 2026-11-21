@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">TokenUsage</string>
     <string name="tile_label">TokenUsage</string>
     <string name="tile_tap_to_setup">点按即可设置</string>
@@ -12,7 +11,6 @@
     <string name="widget_compact_description">单项服务，大号配额表盘</string>
     <string name="widget_reset_description">配额窗口重置倒计时</string>
     <string name="widget_balances_description">账户预付余额一览</string>
-
     <string name="settings">设置</string>
     <string name="action_cancel">取消</string>
     <string name="action_close">关闭</string>
@@ -23,7 +21,6 @@
     <string name="action_add_account">添加账号</string>
     <string name="action_rename">重命名</string>
     <string name="rename_account_title">重命名账户</string>
-
     <string name="cd_back">返回</string>
     <string name="cd_close">关闭</string>
     <string name="cd_settings">设置</string>
@@ -37,30 +34,25 @@
     <string name="cd_expand">展开</string>
     <string name="cd_collapse">折叠</string>
     <string name="cd_qr_code">加密的配置二维码</string>
-
     <string name="dashboard_empty_title">未配置任何服务</string>
     <string name="dashboard_empty_subtitle">请前往设置添加 API 凭据</string>
     <string name="dashboard_load_failed">配额数据加载失败</string>
     <string name="dashboard_last_updated">上次更新：%1$s</string>
     <string name="error_failed_services">加载失败：%1$s</string>
-
     <string name="gauge_percent_left">剩余 %1$d%%</string>
     <string name="resets_in">%1$s 后重置</string>
     <string name="duration_days_hours">%1$d 天 %2$d 小时</string>
     <string name="duration_hours_minutes">%1$d 小时 %2$d 分钟</string>
     <string name="duration_minutes">%1$d 分钟</string>
-
     <string name="window_5h">5 小时</string>
     <string name="window_7d">7 天</string>
     <string name="window_weekly_scoped">按周统计</string>
-
     <string name="card_usage_this_week">本周使用量</string>
     <string name="card_credits">额度：%1$.2f / %2$.2f %3$s</string>
     <string name="card_credits_converted">额度：≈ %1$.2f / %2$.2f %3$s</string>
     <string name="card_balance">剩余额度</string>
     <string name="card_insufficient_balance">余额不足，无法调用 API</string>
     <string name="card_granted">赠送：%1$.2f %2$s</string>
-
     <string name="screen_history_title">消费记录</string>
     <string name="history_no_account">未配置 DeepSeek 账号</string>
     <string name="history_no_account_hint">请在设置中添加账号，刷新后再回来查看</string>
@@ -77,7 +69,6 @@
     <string name="chart_cd">消费图表：%1$d %2$s，最大值 %3$.2f</string>
     <string name="chart_unit_days">天</string>
     <string name="chart_unit_months">个月</string>
-
     <string name="status_in_use">使用中</string>
     <string name="status_not_in_use">未使用</string>
     <plurals name="accounts_in_use">
@@ -85,7 +76,6 @@
     </plurals>
     <string name="notifications_title">通知</string>
     <string name="notifications_subtitle">配额状态与重置提醒</string>
-
     <string name="security_title">安全</string>
     <string name="app_lock_title">应用锁</string>
     <string name="app_lock_subtitle">每次打开 TokenUsage 时要求生物识别或设备屏幕锁</string>
@@ -112,7 +102,6 @@
     <string name="delete_dialog_text">这将永久删除所有已保存的 API 凭据。输入 DELETE 以确认。</string>
     <string name="field_type_delete">输入 DELETE</string>
     <string name="toast_backup_write_failed">备份文件写入失败</string>
-
     <string name="status_valid">有效</string>
     <string name="status_invalid">无效</string>
     <string name="field_access_token">访问令牌</string>
@@ -127,21 +116,18 @@
     <string name="field_api_key">API 密钥</string>
     <string name="field_api_key_format">格式 sk-...</string>
     <string name="field_api_key_zai_hint">来自 z.ai/manage-apikey/apikey-list</string>
-
     <string name="claude_sign_in">使用 Claude 登录</string>
     <string name="claude_sign_in_hint">使用账号凭据登录。推荐使用它而非 OAuth：不会被登出。</string>
     <string name="field_session_key">会话密钥（手动粘贴）</string>
     <string name="field_session_key_hint">或手动粘贴 cookie：claude.ai 的 sessionKey（sk-ant-sid01-… 或 sk-ant-sid02-…）。</string>
     <string name="claude_login_title">登录 Claude</string>
     <string name="claude_login_subtitle">只需登录一次 — 会话密钥会自动捕获。</string>
-
     <string name="deepseek_hint">每个账号的剩余额度（platform.deepseek.com → API Keys）</string>
     <string name="deepseek_empty">尚未配置账号。添加 DeepSeek API 密钥即可跟踪其剩余额度。</string>
     <string name="zai_hint">每个账号的剩余配额：Session（5h）、Monthly Tools、Quota（z.ai → API Keys）</string>
     <string name="zai_hint_no_tools">每个账号的剩余配额：Session（5h）、Quota（z.ai → API Keys）</string>
     <string name="zai_hide_monthly_tools">隐藏“Monthly Tools”（工具调用配额）</string>
     <string name="zai_empty">尚未配置账号。添加 Z.ai API 密钥即可跟踪其剩余配额。</string>
-
     <string name="backup_title">备份与导出</string>
     <string name="backup_description">使用密码加密 — 没有密码备份将无法恢复。ZIP：全部内容，包括 DeepSeek 消费历史。二维码：仅访问令牌、会话密钥和 API 密钥。</string>
     <string name="field_pin">密码（至少 %1$d 个字符）</string>
@@ -167,7 +153,6 @@
     <string name="qr_dialog_warning">任何截取此图片并知道密码的人都能读取你的凭据。</string>
     <string name="action_next_qr">下一个二维码</string>
     <string name="action_previous_qr">上一个</string>
-
     <string name="import_title">导入</string>
     <string name="import_description">恢复加密备份：ZIP 文件（含历史记录）或其他设备上的二维码。备份中的凭据将替换本设备的凭据。</string>
     <string name="action_import_qr">扫描二维码</string>
@@ -194,7 +179,6 @@
     <plurals name="import_success">
         <item quantity="other">已导入配置：%1$d 个凭据</item>
     </plurals>
-
     <string name="demo_claude_personal">Claude 个人</string>
     <string name="demo_claude_work">Claude 工作</string>
     <string name="demo_account_main">个人</string>
@@ -203,7 +187,6 @@
     <string name="demo_account_old">旧账号</string>
     <string name="demo_zai_personal">Z.ai 个人</string>
     <string name="demo_zai_work">Z.ai 工作</string>
-
     <string name="widget_config_title">配置小组件</string>
     <string name="widget_config_instruction">选择要在此小组件中显示的服务：</string>
     <string name="widget_config_no_services">尚未配置任何服务。请先在应用设置中添加凭据。</string>
@@ -217,7 +200,6 @@
     <string name="widget_preview_left_42" formatted="false">剩余 42%</string>
     <string name="widget_preview_left_93" formatted="false">剩余 93%</string>
     <string name="widget_preview_left_100" formatted="false">剩余 100%</string>
-
     <string name="notif_permission_required">需要通知权限才能在后台更新配额</string>
     <string name="battery_dialog_title">后台刷新</string>
     <string name="battery_dialog_text">将其排除在电池优化之外可确保刷新稳定可靠。\n\n否则 Android 可能会延迟刷新：通知、小组件和图块可能显示过时的配额。</string>
@@ -239,7 +221,6 @@
     <string name="lock_screen_hint_hidden">TokenUsage 的通知不会显示在锁定屏幕上，设备锁定时快捷设置图块会隐藏详细信息。</string>
     <string name="notif_public_quota">配额监控运行中</string>
     <string name="notif_public_reset">有配额已重置</string>
-
     <string name="notif_channel_monitor">AI 配额监控</string>
     <string name="notif_channel_monitor_desc">显示 AI 服务配额的当前使用情况</string>
     <string name="notif_channel_reset">配额重置提醒</string>
@@ -255,7 +236,6 @@
     <plurals name="time_hours_ago">
         <item quantity="other">%1$d 小时前</item>
     </plurals>
-
     <string name="error_network">网络错误</string>
     <string name="error_network_reason">网络错误：%1$s</string>
     <string name="error_reauth_required">需要重新登录</string>
@@ -269,7 +249,6 @@
     <string name="error_client_unsupported">提供方已不再支持通过本应用使用此类账户。</string>
     <string name="error_token_revoked">提供方已撤销访问权限：请在设置中更新此账户的令牌（重新登录或粘贴新密钥），或删除该账户。</string>
     <string name="error_invalid_api_key">API 密钥无效</string>
-
     <string name="integrity_title">不受信任的设备</string>
     <string name="integrity_message">TokenUsage 检测到可能暴露你凭据的环境：Root 应用或注入工具可能读取这些凭据。如果你掌控此设备，仍可使用。</string>
     <string name="integrity_threats_header">检测到：</string>
@@ -281,7 +260,6 @@
     <string name="integrity_accept_risk">仍然继续</string>
     <string name="integrity_accept_risk_note">你的选择会保存在此设备上：这些检查将不再阻止 TokenUsage。</string>
     <string name="integrity_open_app">请打开 TokenUsage 以选择是否在此设备上继续。</string>
-
     <string name="fx_title">显示币种</string>
     <string name="fx_subtitle">以同一币种显示所有金额：预付余额（DeepSeek、OpenRouter）、支出（OpenAI、OpenRouter）和 Claude 额外额度。换算值为近似值。</string>
     <string name="fx_currency_original">原币种</string>
@@ -323,7 +301,6 @@
     <string name="dashboard_open_history">完整历史</string>
     <string name="chart_max_label">最大 %1$.2f %2$s</string>
     <string name="chart_average_label">平均 %1$.2f %2$s</string>
-
     <string name="window_copilot_premium">高级请求</string>
     <string name="window_copilot_completions">补全</string>
     <string name="window_openrouter_key_limit">API 密钥上限</string>
@@ -352,12 +329,10 @@
     <string name="copilot_login_expired">代码已过期，请重试</string>
     <string name="clip_github_code">GitHub 代码</string>
     <string name="action_retry">重试</string>
-
     <string name="claude_accounts_hint">为每个 Claude 订阅添加一个账号（个人、工作…）：每个账号在仪表盘上都有独立的卡片，并分别登录。</string>
     <string name="claude_empty">尚未添加 Claude 账号。</string>
     <string name="claude_label_placeholder">例如：个人、工作</string>
     <string name="claude_oauth_toggle">OAuth 令牌（备选方案）</string>
-
     <string name="display_title">显示</string>
     <string name="display_theme">主题</string>
     <string name="theme_system">跟随系统</string>

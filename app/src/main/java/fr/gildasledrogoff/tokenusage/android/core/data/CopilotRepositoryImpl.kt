@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
@@ -22,27 +21,22 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class CopilotRepositoryImpl @Inject constructor(
     private val apiService: CopilotApiService,
     prefsManager: EncryptedPrefsManager
 ) : BaseQuotaProvider(AiService.COPILOT, prefsManager) {
-
     override val form = apiKeyForm(
         labelRes = R.string.field_github_token,
         fieldHintRes = R.string.field_github_token_hint,
         hintRes = R.string.copilot_hint,
         login = LoginAction(LoginMethod.DEVICE_FLOW, R.string.copilot_sign_in, KEY_API_KEY)
     ) { Credential.ApiKeyCredential(accessToken = it) }
-
     override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
         val token = account.credential.accessToken.takeIf { it.isNotBlank() }
             ?: return Result.Failure(AppError.CredentialNotFound(AiService.COPILOT))
         return fetchWithToken(token)
     }
-
     private suspend fun fetchWithToken(token: String): Result<QuotaInfo, AppError> {
         val response = apiService.getUser(authorization = "token $token")
         if (!response.isSuccessful) {
@@ -60,13 +54,10 @@ class CopilotRepositoryImpl @Inject constructor(
             ?: return Result.Failure(AppError.ParseError("Empty Copilot usage response"))
         return toQuotaInfo(user)
     }
-
     companion object {
         const val LABEL_PREMIUM = "Premium requests"
         const val LABEL_CHAT = "Chat"
         const val LABEL_COMPLETIONS = "Completions"
-
-        
         fun toQuotaInfo(user: CopilotDto.UserResponse, now: Instant = Instant.now()): Result<QuotaInfo, AppError> {
             if (user.accessTypeSku == CopilotDto.SKU_SUBSCRIPTION_ENDED) {
                 return Result.Failure(AppError.ParseError("Copilot subscription ended"))
@@ -92,8 +83,6 @@ class CopilotRepositoryImpl @Inject constructor(
                 )
             )
         }
-
-        
         private fun selectSnapshots(
             user: CopilotDto.UserResponse
         ): Triple<CopilotDto.QuotaSnapshot?, CopilotDto.QuotaSnapshot?, CopilotDto.QuotaSnapshot?> {
@@ -101,7 +90,6 @@ class CopilotRepositoryImpl @Inject constructor(
             var premium = snapshots[CopilotDto.KEY_PREMIUM]
             var chat = snapshots[CopilotDto.KEY_CHAT]
             val completions = snapshots[CopilotDto.KEY_COMPLETIONS]
-
             if (premium == null || chat == null) {
                 val others = snapshots - setOf(CopilotDto.KEY_PREMIUM, CopilotDto.KEY_CHAT, CopilotDto.KEY_COMPLETIONS)
                 val chatLike = others.entries.firstOrNull { "chat" in it.key.lowercase() }
@@ -121,8 +109,6 @@ class CopilotRepositoryImpl @Inject constructor(
                 preferred(completions, user.monthlySnapshot(CopilotDto.KEY_COMPLETIONS))
             )
         }
-
-        
         private fun preferred(
             direct: CopilotDto.QuotaSnapshot?,
             fallback: CopilotDto.QuotaSnapshot?
@@ -131,14 +117,10 @@ class CopilotRepositoryImpl @Inject constructor(
             fallback?.utilization != null -> fallback
             else -> direct
         }
-
-        
         fun planName(plan: String): String? = plan.trim().takeIf { it.isNotEmpty() }
             ?.split('_', ' ')
             ?.filter { it.isNotEmpty() }
             ?.joinToString(" ") { part -> part.replaceFirstChar { it.uppercase() } }
-
-        
         fun parseResetDate(raw: String?): Instant? {
             val value = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
             return runCatching { Instant.parse(value) }.getOrNull()

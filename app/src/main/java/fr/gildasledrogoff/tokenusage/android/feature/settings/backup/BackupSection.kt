@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.backup
-
 import fr.gildasledrogoff.tokenusage.feature.settings.SettingsFields
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,7 +35,6 @@ import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.backup.BackupCrypto
 import fr.gildasledrogoff.tokenusage.core.backup.PasswordStrength
 import fr.gildasledrogoff.tokenusage.core.backup.PasswordStrengthEstimator
-
 @Composable
 internal fun BackupSection(
     export: ExportUiState,
@@ -53,7 +51,6 @@ internal fun BackupSection(
     val pinValid = BackupCrypto.isValidPassword(export.pin)
     val confirmMatches = export.confirmPin.isEmpty() || export.pin == export.confirmPin
     val canExport = pinValid && confirmMatches && !export.isBusy
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -70,9 +67,7 @@ internal fun BackupSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
             SettingsFields(
                 { modifier ->
                     OutlinedTextField(
@@ -113,9 +108,7 @@ internal fun BackupSection(
                     )
                 }
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onExportZip,
@@ -130,7 +123,6 @@ internal fun BackupSection(
                     }
                     Text(stringResource(R.string.action_export_zip))
                 }
-
                 OutlinedButton(
                     onClick = onShowQr,
                     enabled = canExport
@@ -145,7 +137,6 @@ internal fun BackupSection(
                     Text(stringResource(R.string.action_export_qr))
                 }
             }
-
             export.error?.let { error ->
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -154,11 +145,9 @@ internal fun BackupSection(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(12.dp))
-
             Text(
                 text = stringResource(R.string.import_title),
                 style = MaterialTheme.typography.titleSmall
@@ -170,7 +159,6 @@ internal fun BackupSection(
                 modifier = Modifier.padding(top = 4.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
-
             if (scanSession != null) {
                 MultiQrScanProgress(
                     session = scanSession,
@@ -191,7 +179,6 @@ internal fun BackupSection(
                     }
                 }
             }
-
             importError?.let { error ->
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -203,7 +190,6 @@ internal fun BackupSection(
         }
     }
 }
-
 @Composable
 private fun MultiQrScanProgress(
     session: QrScanProgress,
@@ -241,7 +227,6 @@ private fun MultiQrScanProgress(
         }
     }
 }
-
 @Composable
 private fun PasswordStrengthIndicator(password: String) {
     val strength = PasswordStrengthEstimator.strength(password)

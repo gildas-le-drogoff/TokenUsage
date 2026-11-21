@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.dashboard
-
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -19,8 +18,6 @@ import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.domain.model.ConsumptionGranularity
 import fr.gildasledrogoff.tokenusage.feature.history.ConsumptionBarChart
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
-
-
 @Composable
 fun ConsumptionPanel(
     state: ConsumptionChartUiState,
@@ -28,18 +25,15 @@ fun ConsumptionPanel(
     onOpenHistory: () -> Unit
 ) {
     val dimens = MaterialTheme.dimens
-
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     Text(
         text = stringResource(R.string.history_daily_title),
         style = MaterialTheme.typography.titleSmall
     )
-
     when (state) {
         ConsumptionChartUiState.Idle, ConsumptionChartUiState.Loading -> {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
-
         is ConsumptionChartUiState.Ready -> {
             if (state.accounts.size > 1) {
                 Row(
@@ -59,7 +53,6 @@ fun ConsumptionPanel(
                     }
                 }
             }
-
             val selected = state.selected
             if (selected == null || selected.points.isEmpty()) {
                 Text(
@@ -87,7 +80,6 @@ fun ConsumptionPanel(
             }
         }
     }
-
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onOpenHistory, modifier = Modifier.align(Alignment.CenterVertically)) {
             Text(stringResource(R.string.dashboard_open_history))

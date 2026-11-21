@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.tile
-
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
@@ -14,21 +13,16 @@ import fr.gildasledrogoff.tokenusage.core.domain.repository.DisplayPreferencesRe
 import fr.gildasledrogoff.tokenusage.core.security.EncryptedPrefsManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-
 @AndroidEntryPoint
 class QuotaTileService : TileService() {
-
     @Inject
     lateinit var prefsManager: EncryptedPrefsManager
-
     @Inject
     lateinit var displayPreferences: DisplayPreferencesRepository
-
     override fun onStartListening() {
         super.onStartListening()
         updateTile()
     }
-
     override fun onClick() {
         super.onClick()
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("tokenusage://dashboard")).apply {
@@ -47,19 +41,14 @@ class QuotaTileService : TileService() {
             startActivityAndCollapseLegacy(intent)
         }
     }
-
-    
     @SuppressLint("StartActivityAndCollapseDeprecated")
     @Suppress("DEPRECATION")
     private fun startActivityAndCollapseLegacy(intent: Intent) {
         startActivityAndCollapse(intent)
     }
-
     private fun updateTile() {
         val tile = qsTile ?: return
-
         val hasAnyCredential = AiService.entries.any { prefsManager.hasCredential(it) }
-
         if (!hasAnyCredential) {
             tile.state = Tile.STATE_UNAVAILABLE
             tile.label = getString(R.string.tile_label)
@@ -69,7 +58,6 @@ class QuotaTileService : TileService() {
             tile.updateTile()
             return
         }
-
         tile.state = Tile.STATE_ACTIVE
         tile.label = getString(R.string.tile_label)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -77,12 +65,9 @@ class QuotaTileService : TileService() {
         }
         tile.updateTile()
     }
-
-    
     private fun detailsHiddenOnLockScreen(): Boolean =
         isLocked &&
             displayPreferences.lockScreenVisibility.value != LockScreenVisibility.SHOW_ALL
-
     private fun buildSummarySubtitle(): String {
         val services = AiService.entries.filter { prefsManager.hasCredential(it) }
         return services.joinToString(" | ") { it.displayName }

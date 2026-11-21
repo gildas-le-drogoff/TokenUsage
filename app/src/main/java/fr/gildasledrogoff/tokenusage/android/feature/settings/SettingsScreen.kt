@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings
-
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -25,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.feature.settings.common.SettingsSubScreen
 
-/** Sub-screens reachable from the settings menu. [route] is the navigation route. */
 enum class SettingsDestination(
     val route: String,
     @StringRes val title: Int,
@@ -41,10 +39,6 @@ enum class SettingsDestination(
     DIAGNOSTICS("diagnostics", R.string.settings_menu_diagnostics, R.string.settings_menu_diagnostics_summary, R.drawable.ic_check_circle_rounded)
 }
 
-/**
- * Settings menu: one entry per domain, each opening its own sub-screen.
- * The diagnostics entry only shows when [onOpenDiagnostics] is given.
- */
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
@@ -69,7 +63,6 @@ fun SettingsScreen(
                     )
                 }
             }
-
         SettingsMenuEntry(
             title = stringResource(R.string.settings_credits_title),
             summary = stringResource(R.string.settings_credits_subtitle),
@@ -83,7 +76,6 @@ fun SettingsScreen(
         }
     }
 }
-
 @Composable
 private fun SettingsMenuEntry(
     title: String,

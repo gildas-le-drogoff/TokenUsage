@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.ui.security
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,8 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.security.IntegrityThreat
-
-
 @Composable
 fun CompromisedDeviceScreen(
     threats: Set<IntegrityThreat>,
@@ -37,7 +34,6 @@ fun CompromisedDeviceScreen(
     val isExpanded = LocalConfiguration.current.screenWidthDp >= EXPANDED_WIDTH_DP
     val spacing = if (isExpanded) 24.dp else 16.dp
     val contentFraction = if (isExpanded) 0.6f else 1f
-
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(
             modifier = Modifier
@@ -106,7 +102,6 @@ fun CompromisedDeviceScreen(
         }
     }
 }
-
 @Composable
 private fun threatLabel(threat: IntegrityThreat): String = stringResource(
     when (threat) {
@@ -116,5 +111,4 @@ private fun threatLabel(threat: IntegrityThreat): String = stringResource(
         IntegrityThreat.TAMPERED_BUILD -> R.string.integrity_threat_tampered
     }
 )
-
 private const val EXPANDED_WIDTH_DP = 600

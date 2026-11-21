@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,13 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import fr.gildasledrogoff.tokenusage.ui.theme.WidthClass
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
-
-
 private val FieldGap = 6.dp
-
 private val FieldGapColumns = 12.dp
-
-
 @Composable
 internal fun SettingsFields(vararg fields: @Composable (Modifier) -> Unit) {
     val paired = MaterialTheme.dimens.widthClass != WidthClass.COMPACT

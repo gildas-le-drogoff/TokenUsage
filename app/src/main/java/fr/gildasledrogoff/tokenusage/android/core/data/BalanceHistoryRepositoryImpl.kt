@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.database.BalanceSnapshotDao
 import fr.gildasledrogoff.tokenusage.core.database.BalanceSnapshotEntity
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
@@ -11,14 +10,11 @@ import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class BalanceHistoryRepositoryImpl @Inject constructor(
     private val dao: BalanceSnapshotDao,
     private val clock: Clock
 ) : BalanceHistoryRepository {
-
     override suspend fun record(
         service: AiService,
         accountId: String,
@@ -39,11 +35,9 @@ class BalanceHistoryRepositoryImpl @Inject constructor(
         )
         dao.deleteOlderThan(now - RETENTION_DAYS * 24L * 60 * 60 * 1000)
     }
-
     override suspend fun latestSample(service: AiService, accountId: String): BalanceSample? {
         return dao.latest(service.name, accountId)?.toSample()
     }
-
     override suspend fun consumption(
         service: AiService,
         accountId: String,
@@ -61,7 +55,6 @@ class BalanceHistoryRepositoryImpl @Inject constructor(
                 BalanceConsumptionAggregator.monthly(aggregatorSamples)
         }
     }
-
     private fun BalanceSnapshotEntity.toSample() = BalanceSample(
         accountId = accountId,
         accountLabel = accountLabel,
@@ -69,9 +62,7 @@ class BalanceHistoryRepositoryImpl @Inject constructor(
         totalBalance = totalBalance,
         timestamp = Instant.ofEpochMilli(timestamp)
     )
-
     companion object {
-        
         const val RETENTION_DAYS = 400
     }
 }

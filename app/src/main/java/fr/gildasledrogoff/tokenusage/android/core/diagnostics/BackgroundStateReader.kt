@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.diagnostics
-
 import android.app.ActivityManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
@@ -16,13 +15,11 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Lit l'état réel du système (WorkManager, batterie, App Standby, Doze). Aucun accès réseau. */
 @Singleton
 class BackgroundStateReader @Inject constructor(
     @ApplicationContext private val context: Context,
     private val store: DiagnosticsStore
 ) : BackgroundStateSource {
-
     override suspend fun read(): BackgroundSnapshot = withContext(Dispatchers.IO) {
         val power = context.getSystemService<PowerManager>()
         val runs = store.workerRuns().associateBy { it.workName }
@@ -41,7 +38,6 @@ class BackgroundStateReader @Inject constructor(
             sdkInt = Build.VERSION.SDK_INT
         )
     }
-
     private fun workSnapshot(name: String, lastRun: WorkerRun?): WorkSnapshot {
         val infos = runCatching {
             WorkManager.getInstance(context).getWorkInfosForUniqueWork(name).get()

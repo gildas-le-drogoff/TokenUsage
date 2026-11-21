@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.di
-
 import fr.gildasledrogoff.tokenusage.core.data.BalanceHistoryRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.DisplayPreferencesRepositoryImpl
 import fr.gildasledrogoff.tokenusage.core.data.ExchangeRateRepositoryImpl
@@ -16,29 +15,24 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
-
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
-
     @Provides
     @Singleton
     fun provideDisplayPreferencesRepository(
         impl: DisplayPreferencesRepositoryImpl
     ): DisplayPreferencesRepository = impl
-
     @Provides
     @Singleton
     fun provideBalanceHistoryRepository(
         balanceHistoryRepository: BalanceHistoryRepositoryImpl
     ): BalanceHistoryRepository = balanceHistoryRepository
-
     @Provides
     @Singleton
     fun provideLastFetchRepository(
         lastFetchRepository: LastFetchRepositoryImpl
     ): LastFetchRepository = lastFetchRepository
-
     @Provides
     @Singleton
     fun provideExchangeRateRepository(

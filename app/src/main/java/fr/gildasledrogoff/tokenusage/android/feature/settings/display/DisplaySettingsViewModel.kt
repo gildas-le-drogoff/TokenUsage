@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.display
-
 import android.content.ComponentName
 import android.content.Context
 import android.service.quicksettings.TileService
@@ -29,7 +28,6 @@ import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
 
-/** Theme, quota display mode, lock-screen visibility and currency conversion. */
 @HiltViewModel
 class DisplaySettingsViewModel @Inject constructor(
     private val prefsManager: EncryptedPrefsManager,
@@ -39,7 +37,6 @@ class DisplaySettingsViewModel @Inject constructor(
     private val notificationService: QuotaNotificationService,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(
         DisplaySettingsUiState(
             themeMode = displayPreferences.themeMode.value,
@@ -48,11 +45,9 @@ class DisplaySettingsViewModel @Inject constructor(
         )
     )
     val uiState: StateFlow<DisplaySettingsUiState> = _uiState.asStateFlow()
-
     init {
         _uiState.update { it.copy(currencyConversion = loadCurrencyConversion()) }
     }
-
     private fun loadCurrencyConversion(): CurrencyConversionUi {
         val displayCurrency = prefsManager.getDisplayCurrency()
         val source = prefsManager.getFxRateSource()
@@ -65,16 +60,13 @@ class DisplaySettingsViewModel @Inject constructor(
             remoteRates = cachedRemoteRates(source, displayCurrency)
         )
     }
-
     private fun previewCurrencies(displayCurrency: DisplayCurrency): List<String> =
         if (displayCurrency.code == null) emptyList() else Currencies.PROVIDER.filter { it != displayCurrency.code }
-
     private fun cachedRemoteRates(source: FxRateSource, displayCurrency: DisplayCurrency): List<FxRate> {
         val target = displayCurrency.code ?: return emptyList()
         if (!source.isRemote) return emptyList()
         return previewCurrencies(displayCurrency).mapNotNull { exchangeRates.cachedRate(source, it, target) }
     }
-
     fun setDisplayCurrency(displayCurrency: DisplayCurrency) {
         prefsManager.setDisplayCurrency(displayCurrency)
         _uiState.update {
@@ -87,7 +79,6 @@ class DisplaySettingsViewModel @Inject constructor(
             )
         }
     }
-
     fun setFxRateSource(source: FxRateSource) {
         prefsManager.setFxRateSource(source)
         _uiState.update {
@@ -100,7 +91,6 @@ class DisplaySettingsViewModel @Inject constructor(
             )
         }
     }
-
     fun setFxApiFetchAllowed(allowed: Boolean) {
         prefsManager.setFxApiFetchAllowed(allowed)
         _uiState.update {
@@ -108,7 +98,6 @@ class DisplaySettingsViewModel @Inject constructor(
         }
         if (allowed) refreshFxRates()
     }
-
     fun updateManualUsdEurRate(text: String) {
         val (parsed, invalid) = parseManualRate(text)
         if (!invalid) prefsManager.setManualUsdEurRate(parsed)
@@ -118,7 +107,6 @@ class DisplaySettingsViewModel @Inject constructor(
             )
         }
     }
-
     fun updateManualUsdCnyRate(text: String) {
         val (parsed, invalid) = parseManualRate(text)
         if (!invalid) prefsManager.setManualUsdCnyRate(parsed)
@@ -128,13 +116,11 @@ class DisplaySettingsViewModel @Inject constructor(
             )
         }
     }
-
     private fun parseManualRate(text: String): Pair<Double?, Boolean> {
         val trimmed = text.trim()
         val parsed = parseRate(trimmed)
         return parsed to (trimmed.isNotEmpty() && parsed == null)
     }
-
     fun refreshFxRates() {
         val requested = _uiState.value.currencyConversion
         val target = requested.displayCurrency.code ?: return
@@ -164,28 +150,22 @@ class DisplaySettingsViewModel @Inject constructor(
                     }
                 )
             }
-            
             if (stale) refreshFxRates()
         }
     }
-
     private fun parseRate(text: String): Double? =
         text.replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() && it > 0.0 && it < MAX_MANUAL_RATE }
-
     private fun formatRate(rate: Double): String =
         BigDecimal(rate.toString()).stripTrailingZeros().toPlainString()
-
     fun setThemeMode(mode: ThemeMode) {
         displayPreferences.setThemeMode(mode)
         _uiState.update { it.copy(themeMode = mode) }
     }
-
     fun setQuotaDisplayMode(mode: QuotaDisplayMode) {
         displayPreferences.setQuotaDisplayMode(mode)
         _uiState.update { it.copy(quotaDisplayMode = mode) }
         viewModelScope.launch { runCatching { widgetQuotaPublisher.refreshWidgets() } }
     }
-
     fun setLockScreenVisibility(visibility: LockScreenVisibility) {
         displayPreferences.setLockScreenVisibility(visibility)
         _uiState.update { it.copy(lockScreenVisibility = visibility) }
@@ -194,9 +174,7 @@ class DisplaySettingsViewModel @Inject constructor(
             TileService.requestListeningState(appContext, ComponentName(appContext, QuotaTileService::class.java))
         }
     }
-
     private companion object {
-
         const val MAX_MANUAL_RATE = 1000.0
     }
 }

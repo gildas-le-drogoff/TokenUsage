@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.accounts
-
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,6 @@ import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.util.ServiceIcon
 import fr.gildasledrogoff.tokenusage.core.util.iconRes
 import fr.gildasledrogoff.tokenusage.ui.i18n.appErrorMessage
-
 @Composable
 internal fun ValidationResultLabel(result: ValidationResult?, modifier: Modifier = Modifier) {
     val valid = Color(0xFF4CAF50)
@@ -60,13 +58,11 @@ internal fun ValidationResultLabel(result: ValidationResult?, modifier: Modifier
         }
     }
 }
-
 @Composable
 internal fun accountStatus(count: Int): String = when (count) {
     0 -> stringResource(R.string.status_not_in_use)
     else -> pluralStringResource(R.plurals.accounts_in_use, count, count)
 }
-
 @Composable
 internal fun ExpandableSectionHeader(
     iconRes: Int,
@@ -81,7 +77,6 @@ internal fun ExpandableSectionHeader(
         targetValue = if (expanded) 180f else 0f,
         label = "expandChevron"
     )
-
     Row(
         modifier = Modifier
             .fillMaxWidth()

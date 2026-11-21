@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.ui.theme
-
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -26,25 +25,18 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import fr.gildasledrogoff.tokenusage.core.domain.model.QuotaDisplayMode
 import fr.gildasledrogoff.tokenusage.core.domain.model.ThemeMode
-
 private val SeedColor = Color(0xFF6650A4)
-
 private val LightColorScheme = lightColorScheme(
     primary = SeedColor,
     secondary = Color(0xFF625B71),
     tertiary = Color(0xFF7D5260)
 )
-
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFFD0BCFF),
     secondary = Color(0xFFCCC2DC),
     tertiary = Color(0xFFEFB8C8)
 )
-
-
 val LocalQuotaDisplayMode = compositionLocalOf { QuotaDisplayMode.REMAINING }
-
-
 @Composable
 fun TokenUsageTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -65,7 +57,6 @@ fun TokenUsageTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-
     val activity = remember(context) { context.findActivity() as? ComponentActivity }
     LaunchedEffect(activity, darkTheme) {
         activity?.enableEdgeToEdge(
@@ -73,10 +64,8 @@ fun TokenUsageTheme(
             navigationBarStyle = SystemBarStyle.auto(LIGHT_NAV_SCRIM, DARK_NAV_SCRIM) { darkTheme }
         )
     }
-
     val widthDp = LocalConfiguration.current.screenWidthDp
     val dimens = remember(widthDp) { Dimens.forWidth(widthClassOf(widthDp)) }
-
     CompositionLocalProvider(
         LocalStatusColors provides if (darkTheme) DarkStatusColors else LightStatusColors,
         LocalDimens provides dimens,
@@ -88,18 +77,13 @@ fun TokenUsageTheme(
         )
     }
 }
-
-
 private val LIGHT_NAV_SCRIM = argb(0xe6, 0xFF, 0xFF, 0xFF)
 private val DARK_NAV_SCRIM = argb(0x80, 0x1b, 0x1b, 0x1b)
-
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
-
-
 val MaterialTheme.dimens: Dimens
     @Composable
     @ReadOnlyComposable

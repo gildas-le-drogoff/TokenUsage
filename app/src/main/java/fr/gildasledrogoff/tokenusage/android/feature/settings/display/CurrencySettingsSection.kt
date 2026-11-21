@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.settings.display
-
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +39,6 @@ import fr.gildasledrogoff.tokenusage.ui.i18n.appErrorMessage
 import fr.gildasledrogoff.tokenusage.ui.i18n.fxRateNote
 import fr.gildasledrogoff.tokenusage.ui.i18n.fxRateSourceLabelRes
 import fr.gildasledrogoff.tokenusage.ui.theme.dimens
-
-
 @Composable
 internal fun CurrencySettingsSection(
     state: CurrencyConversionUi,
@@ -71,7 +68,6 @@ internal fun CurrencySettingsSection(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
             ChoiceChipRow(
                 options = DisplayCurrency.entries,
                 selected = state.displayCurrency,
@@ -79,7 +75,6 @@ internal fun CurrencySettingsSection(
                 onSelect = onDisplayCurrencyChange,
                 modifier = Modifier.fillMaxWidth()
             )
-
             AnimatedVisibility(visible = state.displayCurrency == DisplayCurrency.ORIGINAL) {
                 Text(
                     text = stringResource(R.string.fx_currency_original_desc),
@@ -87,7 +82,6 @@ internal fun CurrencySettingsSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
             AnimatedVisibility(visible = state.displayCurrency != DisplayCurrency.ORIGINAL) {
                 Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceS)) {
                     Text(
@@ -107,7 +101,6 @@ internal fun CurrencySettingsSection(
         }
     }
 }
-
 @Composable
 private fun RateSourceChoices(selected: FxRateSource, onSelect: (FxRateSource) -> Unit) {
     val dimens = MaterialTheme.dimens
@@ -141,8 +134,6 @@ private fun RateSourceChoices(selected: FxRateSource, onSelect: (FxRateSource) -
         }
     }
 }
-
-
 @Composable
 private fun ManualRateFields(
     state: CurrencyConversionUi,
@@ -172,7 +163,6 @@ private fun ManualRateFields(
         }
     )
 }
-
 @Composable
 private fun ManualRateField(
     value: String,
@@ -195,8 +185,6 @@ private fun ManualRateField(
         singleLine = true
     )
 }
-
-
 @Composable
 private fun ApiFetchConsent(allowed: Boolean, onAllowedChange: (Boolean) -> Unit) {
     val dimens = MaterialTheme.dimens
@@ -226,8 +214,6 @@ private fun ApiFetchConsent(allowed: Boolean, onAllowedChange: (Boolean) -> Unit
         Switch(checked = allowed, onCheckedChange = null)
     }
 }
-
-
 @Composable
 private fun RemoteRatePreview(state: CurrencyConversionUi, onRefreshRates: () -> Unit) {
     val dimens = MaterialTheme.dimens
@@ -263,7 +249,6 @@ private fun RemoteRatePreview(state: CurrencyConversionUi, onRefreshRates: () ->
         }
     }
 }
-
 @StringRes
 private fun fxRateSourceDescriptionRes(source: FxRateSource): Int = when (source) {
     FxRateSource.MANUAL -> R.string.fx_source_manual_desc

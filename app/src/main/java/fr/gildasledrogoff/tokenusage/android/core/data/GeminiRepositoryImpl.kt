@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.data
-
 import fr.gildasledrogoff.tokenusage.core.domain.model.AiService
 import fr.gildasledrogoff.tokenusage.core.domain.model.AppError
 import fr.gildasledrogoff.tokenusage.core.domain.model.Credential
@@ -25,7 +24,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
-
 @Singleton
 class GeminiRepositoryImpl @Inject constructor(
     private val apiService: GeminiApiService,
@@ -33,7 +31,6 @@ class GeminiRepositoryImpl @Inject constructor(
     private val tokenRefreshService: GeminiTokenRefreshService,
     prefsManager: EncryptedPrefsManager
 ) : BaseQuotaProvider(AiService.GEMINI, prefsManager) {
-
     override val form = CredentialForm(
         fields = listOf(
             CredentialField(KEY_ACCESS_TOKEN, R.string.field_access_token, hintRes = R.string.field_secret_replace_hint),
@@ -72,14 +69,11 @@ class GeminiRepositoryImpl @Inject constructor(
             )
         }
     )
-
     override suspend fun fetch(account: ServiceAccount): Result<QuotaInfo, AppError> {
         val credential = account.credential as? Credential.GeminiCredential
             ?: return Result.Failure(AppError.CredentialNotFound(AiService.GEMINI))
-
         val workingCredential = ensureValidToken(account, credential)
             ?: return Result.Failure(AppError.AuthError(AiService.GEMINI, isTerminal = true))
-
         return run {
             val result = fetchQuotaWithToken(workingCredential)
             val error = (result as? Result.Failure)?.error
@@ -98,8 +92,6 @@ class GeminiRepositoryImpl @Inject constructor(
             }
         }
     }
-
-    
     private suspend fun recheckWithHostedDomain(
         account: ServiceAccount,
         credential: Credential.GeminiCredential
@@ -112,28 +104,22 @@ class GeminiRepositoryImpl @Inject constructor(
         if (refreshed.hostedDomain.isEmpty()) return null
         return fetchQuotaWithToken(refreshed)
     }
-
     private suspend fun fetchQuotaWithToken(
         credential: Credential.GeminiCredential
     ): Result<QuotaInfo, AppError> {
         val authorization = "Bearer ${credential.accessToken}"
         val hostedDomain = credential.hostedDomain?.takeIf { it.isNotEmpty() }
-
         val status = when (val loaded = loadCodeAssistStatus(authorization, hostedDomain)) {
             is Result.Success -> loaded.value
             is Result.Failure -> return Result.Failure(loaded.error)
         }
-
         val projectId = status.projectId ?: discoverProjectId(authorization)
-
         val quotaResponse = apiService.retrieveUserQuota(
             authorization = authorization,
             body = GeminiDto.RetrieveUserQuotaRequest(project = projectId)
         )
-
         if (!quotaResponse.isSuccessful) {
             val errorBody = quotaResponse.errorBody()?.string().orEmpty()
-            
             val shutdown = GeminiDto.isConsumerTierDeprecationSignal(errorBody) ||
                 (quotaResponse.code() == 403 && status.consumerClientUnsupported && status.tierId != TIER_STANDARD)
             return if (shutdown) {
@@ -142,17 +128,13 @@ class GeminiRepositoryImpl @Inject constructor(
                 handleErrorResponse(quotaResponse.code())
             }
         }
-
         val quotaBody = quotaResponse.body()
             ?: return Result.Failure(AppError.ParseError("Empty quota response"))
         if (quotaBody.buckets.isEmpty()) {
             return Result.Failure(AppError.ParseError("No quota buckets in response"))
         }
-
         return Result.Success(mapToQuotaInfo(quotaBody, resolvePlan(status, hostedDomain)))
     }
-
-    
     private data class CodeAssistStatus(
         val tierId: String?,
         val projectId: String?,
@@ -163,8 +145,6 @@ class GeminiRepositoryImpl @Inject constructor(
             val EMPTY = CodeAssistStatus(null, null, null, false)
         }
     }
-
-    
     private suspend fun loadCodeAssistStatus(
         authorization: String,
         hostedDomain: String?
@@ -174,7 +154,6 @@ class GeminiRepositoryImpl @Inject constructor(
         } catch (_: IOException) {
             return Result.Success(CodeAssistStatus.EMPTY)
         }
-
         if (!response.isSuccessful) {
             val errorBody = response.errorBody()?.string().orEmpty()
             return when {
@@ -185,7 +164,6 @@ class GeminiRepositoryImpl @Inject constructor(
             }
         }
         val body = response.body() ?: return Result.Success(CodeAssistStatus.EMPTY)
-
         val tierId = body.currentTier?.id
         val paidTierName = body.paidTier?.name?.trim()?.takeIf { it.isNotEmpty() }
         val consumerClientUnsupported = paidTierName == null && hostedDomain == null &&
@@ -204,7 +182,6 @@ class GeminiRepositoryImpl @Inject constructor(
             )
         )
     }
-
     private fun extractProjectId(response: GeminiDto.LoadCodeAssistResponse): String? {
         val raw = when (val element = response.cloudaicompanionProject) {
             is JsonPrimitive -> element.takeIf { it.isString }?.content
@@ -215,8 +192,6 @@ class GeminiRepositoryImpl @Inject constructor(
         }
         return raw?.trim()?.takeIf { it.isNotEmpty() }
     }
-
-    
     private suspend fun discoverProjectId(authorization: String): String? {
         val projects = try {
             projectsService.listProjects(authorization).takeIf { it.isSuccessful }?.body()?.projects
@@ -229,8 +204,6 @@ class GeminiRepositoryImpl @Inject constructor(
             }
         }
     }
-
-    
     private fun resolvePlan(status: CodeAssistStatus, hostedDomain: String?): String? {
         status.paidTierName?.let { return it }
         return when (status.tierId) {
@@ -240,7 +213,6 @@ class GeminiRepositoryImpl @Inject constructor(
             else -> status.tierId
         }
     }
-
     private fun mapToQuotaInfo(response: GeminiDto.QuotaResponse, tier: String?): QuotaInfo {
         fun familyOf(modelId: String): String? {
             val id = modelId.lowercase()
@@ -251,13 +223,11 @@ class GeminiRepositoryImpl @Inject constructor(
                 else -> null
             }
         }
-
         val usable = response.buckets.mapNotNull { bucket ->
             val family = bucket.modelId?.let(::familyOf) ?: return@mapNotNull null
             val remaining = bucket.remainingFraction ?: return@mapNotNull null
             Triple(family, remaining, bucket.resetTime)
         }
-
         val windows = listOf(FAMILY_PRO, FAMILY_FLASH, FAMILY_FLASH_LITE).mapNotNull { family ->
             val (_, remaining, resetTime) = usable
                 .filter { it.first == family }
@@ -269,7 +239,6 @@ class GeminiRepositoryImpl @Inject constructor(
                 resetsAt = resetTime?.let { ts -> parseInstant(ts) }
             )
         }
-
         return QuotaInfo(
             service = AiService.GEMINI,
             windows = windows,
@@ -278,7 +247,6 @@ class GeminiRepositoryImpl @Inject constructor(
             fetchedAt = Instant.now()
         )
     }
-
     private suspend fun ensureValidToken(
         account: ServiceAccount,
         credential: Credential.GeminiCredential
@@ -288,13 +256,11 @@ class GeminiRepositoryImpl @Inject constructor(
         }
         return refreshToken(account, credential)
     }
-
     private suspend fun refreshToken(
         account: ServiceAccount,
         credential: Credential.GeminiCredential
     ): Credential.GeminiCredential? =
         refreshSerialized(account.id, credential) { exchangeRefreshToken(credential, account) }
-
     private suspend fun exchangeRefreshToken(
         credential: Credential.GeminiCredential,
         account: ServiceAccount
@@ -325,10 +291,8 @@ class GeminiRepositoryImpl @Inject constructor(
             null
         }
     }
-
     private fun <T> handleErrorResponse(code: Int): Result<T, AppError> =
         Result.Failure(httpError(AiService.GEMINI, code, authIsTerminal = false))
-
     private fun formatExpiry(expiresAtMs: Long): String = try {
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
             .withZone(ZoneId.systemDefault())
@@ -336,7 +300,6 @@ class GeminiRepositoryImpl @Inject constructor(
     } catch (_: Exception) {
         "—"
     }
-
     private fun parseInstant(isoString: String): Instant? {
         return try {
             Instant.parse(isoString)
@@ -344,22 +307,18 @@ class GeminiRepositoryImpl @Inject constructor(
             null
         }
     }
-
     companion object {
         const val KEY_ACCESS_TOKEN = "accessToken"
         const val KEY_REFRESH_TOKEN = "refreshToken"
         const val KEY_CLIENT_ID = "oauthClientId"
         const val KEY_CLIENT_SECRET = "oauthClientSecret"
         const val KEY_EXPIRES_AT = "expiresAt"
-
         private const val FAMILY_PRO = "Pro"
         private const val FAMILY_FLASH = "Flash"
         private const val FAMILY_FLASH_LITE = "Flash Lite"
-
         private const val TIER_FREE = "free-tier"
         private const val TIER_STANDARD = "standard-tier"
         private const val TIER_LEGACY = "legacy-tier"
-
         private const val GEMINI_PROJECT_PREFIX = "gen-lang-client"
         private const val GEMINI_PROJECT_LABEL = "generative-language"
     }

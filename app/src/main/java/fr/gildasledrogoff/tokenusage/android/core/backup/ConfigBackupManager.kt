@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.backup
-
 import android.util.Base64
 import fr.gildasledrogoff.tokenusage.core.database.BalanceSnapshotDao
 import fr.gildasledrogoff.tokenusage.core.database.BalanceSnapshotEntity
@@ -18,8 +17,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 @Singleton
 class ConfigBackupManager @Inject constructor(
     private val prefs: EncryptedPrefsManager,
@@ -27,8 +24,6 @@ class ConfigBackupManager @Inject constructor(
     private val displayPreferences: DisplayPreferencesRepository
 ) {
     private val json = Json { ignoreUnknownKeys = true }
-
-
     private suspend fun buildPayload(includeHistory: Boolean): BackupPayload {
         val accounts = AiService.entries
             .associate { service ->
@@ -43,13 +38,11 @@ class ConfigBackupManager @Inject constructor(
                 }
             }
             .filterValues { it.isNotEmpty() }
-
         val history = if (includeHistory) {
             balanceSnapshotDao.allSnapshots().map { it.toBackup() }
         } else {
             emptyList()
         }
-
         return BackupPayload(
             exportedAtEpochMs = System.currentTimeMillis(),
             accounts = accounts,
@@ -65,8 +58,6 @@ class ConfigBackupManager @Inject constructor(
             balanceHistory = history
         )
     }
-
-
     suspend fun createZipBytes(pin: String): ByteArray {
         val container = encryptedContainer(buildPayload(includeHistory = true), pin)
         return ByteArrayOutputStream(container.size).use { out ->
@@ -78,40 +69,24 @@ class ConfigBackupManager @Inject constructor(
             out.toByteArray()
         }
     }
-
-
     suspend fun createQrPayload(pin: String): String {
         val container = encryptedContainer(buildPayload(includeHistory = false), pin)
         return Base64.encodeToString(container, Base64.NO_WRAP)
     }
-
     suspend fun createQrCodes(pin: String): List<String> =
         QrChunkCodec.encode(createQrPayload(pin))
-
     private fun encryptedContainer(payload: BackupPayload, pin: String): ByteArray =
         BackupCrypto.encrypt(BackupCrypto.deflate(json.encodeToString(payload).toByteArray()), pin)
-
-
-
     fun parseQrPayload(text: String): ByteArray = BackupCodec.parseQrPayload(text)
-
-
     fun parseZip(zipBytes: ByteArray): ByteArray = BackupCodec.parseZip(zipBytes)
-
-
     fun readBackupFile(input: java.io.InputStream): ByteArray? = BackupCodec.readBounded(input)
-
-
     fun decryptContainer(container: ByteArray, pin: String): BackupPayload =
         BackupCodec.decodePayload(
             BackupCrypto.inflate(BackupCrypto.decrypt(container, pin)),
             json
         )
-
-
     suspend fun restore(payload: BackupPayload): ImportSummary {
         val restored = restoreAccounts(payload)
-
         payload.refreshIntervalMinutes?.let { prefs.setRefreshInterval(it) }
         payload.notificationsEnabled?.let { prefs.setNotificationsEnabled(it) }
         payload.eurRateSource?.let { legacySource ->
@@ -127,7 +102,6 @@ class ConfigBackupManager @Inject constructor(
         payload.zaiHideMonthlyTools?.let { prefs.setZaiMonthlyToolsHidden(it) }
         payload.themeMode?.let { displayPreferences.setThemeMode(ThemeMode.fromName(it)) }
         payload.quotaDisplayMode?.let { displayPreferences.setQuotaDisplayMode(QuotaDisplayMode.fromName(it)) }
-
         var historyAdded = 0
         if (payload.balanceHistory.isNotEmpty()) {
             val known = balanceSnapshotDao.allSnapshots()
@@ -147,12 +121,9 @@ class ConfigBackupManager @Inject constructor(
                 historyAdded++
             }
         }
-
         return ImportSummary(accounts = restored, historyEntries = historyAdded)
     }
-
-
-    /** Merges every account found in [payload] into the stored ones; returns how many per service. */
+    
     private fun restoreAccounts(payload: BackupPayload): Map<AiService, Int> {
         val restored = LinkedHashMap<AiService, Int>()
         for ((service, imported) in BackupCodec.importedAccounts(payload)) {
@@ -172,7 +143,6 @@ class ConfigBackupManager @Inject constructor(
         }
         return restored
     }
-
     private fun BalanceSnapshotEntity.toBackup() =
         BalanceSnapshotBackup(
             service = service,
@@ -182,33 +152,21 @@ class ConfigBackupManager @Inject constructor(
             totalBalance = totalBalance,
             timestampEpochMs = timestamp
         )
-
     companion object {
-
         const val CONTAINED_ENTRY_NAME = "tokenusage-backup.cbx"
-
-
         private const val LEGACY_FX_SOURCE_OFF = "OFF"
-
-
         internal const val AUTH_MODE_OAUTH = "oauth"
         internal const val AUTH_MODE_WEB_SESSION = "web_session"
-
     }
 }
-
-
 data class ImportSummary(
-    /** Accounts imported, per service. */
+    
     val accounts: Map<AiService, Int>,
     val historyEntries: Int
 ) {
     val services: List<AiService> get() = accounts.keys.toList()
-
     val credentialCount: Int get() = accounts.values.sum()
 }
-
-
 class QrPayloadTooLargeException : Exception(
     "Configuration too large for a QR code — use the encrypted ZIP export instead."
 )

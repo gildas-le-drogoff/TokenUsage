@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.core.workmanager
-
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -22,7 +21,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.time.Instant
-
 @HiltWorker
 class TokenRefreshWorker @AssistedInject constructor(
     @Assisted context: Context,
@@ -35,26 +33,17 @@ class TokenRefreshWorker @AssistedInject constructor(
     private val widgetQuotaPublisher: WidgetQuotaPublisher,
     private val diagnosticsStore: DiagnosticsStore
 ) : CoroutineWorker(context, workerParams) {
-
-    // Enveloppe (A3) : un seul rafraîchissement de token à la fois dans toute l'app
-    // (TokenRefreshLock) pour ne jamais échanger deux fois un refresh token à usage unique.
     override suspend fun doWork(): Result = TokenRefreshLock.withLock {
         val results = coroutineScope {
-            // Every account of every service is refreshed on its own.
             AiService.entries
                 .flatMap { service -> prefsManager.getAccounts(service).map { service to it } }
                 .map { (service, account) -> async { refreshIfNeeded(service, account) } }
                 .awaitAll()
         }
-
-        // Politique de retry bornée : un refresh token définitivement refusé ne doit pas
-        // relancer le travail indéfiniment (backoff exponentiel jusqu'à 5 h).
         val decision = WorkRetryPolicy.decide(allSucceeded = results.all { it }, runAttemptCount = runAttemptCount)
         diagnosticsStore.recordWorkerRun(WorkManagerInitializer.TOKEN_WORK_NAME, decision.label, runAttemptCount)
         if (decision == WorkRetryPolicy.Decision.RETRY) Result.retry() else Result.success()
     }
-
-    
     private suspend fun refreshIfNeeded(service: AiService, account: ServiceAccount): Boolean =
         when (val credential = account.credential) {
             is Credential.ClaudeCredential -> refreshClaude(service, account.id, credential)
@@ -65,7 +54,6 @@ class TokenRefreshWorker @AssistedInject constructor(
             is Credential.ZaiCredential,
             is Credential.ApiKeyCredential -> true
         }
-
     private suspend fun refreshClaude(
         service: AiService,
         accountId: String,
@@ -73,7 +61,6 @@ class TokenRefreshWorker @AssistedInject constructor(
     ): Boolean {
         val expiresAt = credential.expiresAt ?: return true
         if (Instant.now().isBefore(expiresAt.minusSeconds(REFRESH_BUFFER_SECONDS))) return true
-
         val refreshToken = credential.refreshToken ?: return false
         return try {
             val response = claudeTokenRefreshService.refreshToken(refreshToken = refreshToken)
@@ -98,7 +85,6 @@ class TokenRefreshWorker @AssistedInject constructor(
             false
         }
     }
-
     private suspend fun refreshCodex(
         service: AiService,
         accountId: String,
@@ -134,14 +120,12 @@ class TokenRefreshWorker @AssistedInject constructor(
             false
         }
     }
-
     private suspend fun refreshGemini(
         service: AiService,
         accountId: String,
         credential: Credential.GeminiCredential
     ): Boolean {
         if (System.currentTimeMillis() < credential.expiresAtMs - REFRESH_BUFFER_SECONDS * 1000) return true
-
         return try {
             val response = geminiTokenRefreshService.refreshToken(
                 refreshToken = credential.refreshToken,
@@ -171,9 +155,7 @@ class TokenRefreshWorker @AssistedInject constructor(
             false
         }
     }
-
     companion object {
-        
         const val REFRESH_BUFFER_SECONDS = 600L
     }
 }

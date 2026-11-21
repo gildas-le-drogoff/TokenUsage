@@ -1,5 +1,4 @@
 package fr.gildasledrogoff.tokenusage.feature.diagnostics
-
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.gildasledrogoff.tokenusage.BuildConfig
 import fr.gildasledrogoff.tokenusage.R
 import fr.gildasledrogoff.tokenusage.core.diagnostics.AccountDiagnostic
 import fr.gildasledrogoff.tokenusage.core.diagnostics.BackgroundSnapshot
@@ -48,7 +48,6 @@ import fr.gildasledrogoff.tokenusage.core.diagnostics.WorkSnapshot
 import fr.gildasledrogoff.tokenusage.core.workmanager.WorkManagerInitializer
 import java.time.Instant
 
-/** Écran de diagnostic local. Route de navigation : `"diagnostics"`. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiagnosticsScreen(
@@ -58,7 +57,6 @@ fun DiagnosticsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val copiedMessage = stringResource(R.string.diag_report_copied)
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -83,13 +81,11 @@ fun DiagnosticsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-
             Text(
                 text = stringResource(R.string.diag_local_only),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = viewModel::refresh) {
                     Icon(painterResource(R.drawable.ic_refresh), contentDescription = null)
@@ -103,10 +99,8 @@ fun DiagnosticsScreen(
                     Text(stringResource(R.string.diag_action_copy), modifier = Modifier.padding(start = 8.dp))
                 }
             }
-
             SectionTitle(stringResource(R.string.diag_accounts_title))
             state.accounts.forEach { AccountCard(it, state.generatedAt) }
-
             state.background?.let { background ->
                 SectionTitle(stringResource(R.string.diag_background_title))
                 BackgroundCard(background, state.generatedAt)
@@ -114,12 +108,10 @@ fun DiagnosticsScreen(
         }
     }
 }
-
 @Composable
 private fun SectionTitle(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 }
-
 @Composable
 private fun AccountCard(account: AccountDiagnostic, now: Instant) {
     Card(
@@ -173,7 +165,6 @@ private fun AccountCard(account: AccountDiagnostic, now: Instant) {
         }
     }
 }
-
 @Composable
 private fun BackgroundCard(background: BackgroundSnapshot, now: Instant) {
     Card(
@@ -197,12 +188,10 @@ private fun BackgroundCard(background: BackgroundSnapshot, now: Instant) {
             KeyValue(stringResource(R.string.diag_background_restricted), yesNo(background.backgroundRestricted))
             KeyValue(stringResource(R.string.diag_doze), yesNo(background.deviceIdle))
             KeyValue(stringResource(R.string.diag_battery_saver), yesNo(background.powerSaveMode))
-
             background.works.forEach { work ->
                 HorizontalDivider()
                 WorkBlock(work, now)
             }
-
             background.manufacturerGroup?.let { group ->
                 HorizontalDivider()
                 VendorBlock(background.manufacturer, group)
@@ -210,7 +199,6 @@ private fun BackgroundCard(background: BackgroundSnapshot, now: Instant) {
         }
     }
 }
-
 @Composable
 private fun WorkBlock(work: WorkSnapshot, now: Instant) {
     val title = when (work.name) {
@@ -241,7 +229,6 @@ private fun WorkBlock(work: WorkSnapshot, now: Instant) {
         style = MaterialTheme.typography.bodySmall
     )
 }
-
 @Composable
 private fun VendorBlock(manufacturer: String, group: ManufacturerGroup) {
     Text(
@@ -259,14 +246,12 @@ private fun VendorBlock(manufacturer: String, group: ManufacturerGroup) {
         ManufacturerGroup.OTHER -> R.string.diag_vendor_other
     }
     Text(stringResource(instructions), style = MaterialTheme.typography.bodySmall)
-    // Texte seul : l'application n'ouvre jamais ce lien et n'effectue aucun appel réseau.
     Text(
         stringResource(R.string.diag_vendor_link, group.instructionsUrl),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
-
 @Composable
 private fun KeyValue(label: String, value: String) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -274,14 +259,12 @@ private fun KeyValue(label: String, value: String) {
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
     }
 }
-
 @Composable
 private fun yesNo(value: Boolean?): String = when (value) {
     true -> stringResource(R.string.diag_yes)
     false -> stringResource(R.string.diag_no)
     null -> stringResource(R.string.diag_unknown)
 }
-
 @Composable
 private fun statusLabel(status: DiagnosticStatus): String = stringResource(
     when (status) {
@@ -291,14 +274,12 @@ private fun statusLabel(status: DiagnosticStatus): String = stringResource(
         DiagnosticStatus.NEVER_REFRESHED -> R.string.diag_status_never
     }
 )
-
 @Composable
 private fun statusColor(status: DiagnosticStatus) = when (status) {
     DiagnosticStatus.OK -> MaterialTheme.colorScheme.primary
     DiagnosticStatus.ERROR -> MaterialTheme.colorScheme.error
     DiagnosticStatus.NOT_CONFIGURED, DiagnosticStatus.NEVER_REFRESHED -> MaterialTheme.colorScheme.onSurfaceVariant
 }
-
 @Composable
 private fun originLabel(origin: RefreshOrigin): String = stringResource(
     when (origin) {
@@ -308,11 +289,9 @@ private fun originLabel(origin: RefreshOrigin): String = stringResource(
         RefreshOrigin.TILE -> R.string.diag_origin_tile
     }
 )
-
 private fun fr.gildasledrogoff.tokenusage.core.diagnostics.DiagnosticError.display(): String =
     if (message.isBlank()) type else "$type — $message"
 
-/** « il y a 12 minutes » / « dans 5 minutes », localisé par le système. */
 private fun relativeAge(at: Instant, now: Instant): String =
     DateUtils.getRelativeTimeSpanString(
         at.toEpochMilli(),
@@ -320,15 +299,15 @@ private fun relativeAge(at: Instant, now: Instant): String =
         DateUtils.MINUTE_IN_MILLIS,
         DateUtils.FORMAT_ABBREV_RELATIVE
     ).toString()
-
 private fun appInfo(context: Context): DiagnosticsReport.AppInfo {
     val info = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
     return DiagnosticsReport.AppInfo(
         versionName = info?.versionName ?: "?",
-        versionCode = info?.longVersionCode ?: 0L
+        versionCode = info?.longVersionCode ?: 0L,
+        gitHash = BuildConfig.GIT_HASH,
+        gitDate = BuildConfig.GIT_DATE
     )
 }
-
 private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("TokenUsage diagnostics", text))
