@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-  <b>Tous vos quotas IA et soldes d'API, en un coup d'œil.</b><br/>
+  <b>Quotas IA et soldes d'API au même endroit.</b><br/>
   DeepSeek · OpenRouter · Z.ai · OpenAI · Claude · Codex · Gemini · GitHub Copilot
 </p>
 
 <p align="center">
-  <a href="https://github.com/gildas-le-drogoff/TokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/gildas-le-drogoff/TokenUsage?label=télécharger&style=for-the-badge" alt="Télécharger" /></a>
-  <img src="https://img.shields.io/badge/Android-10%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 10+" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0" /></a>
+  <a href="https://github.com/gildas-le-drogoff/TokenUsage/releases/latest"><img src="https://img.shields.io/github/v/release/gildas-le-drogoff/TokenUsage?label=télécharger" alt="Télécharger" /></a>
+  <img src="https://img.shields.io/badge/Android-10%2B-3DDC84&logo=android&logoColor=white" alt="Android 10+" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-GPL--3.0-blue" alt="GPL-3.0" /></a>
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 
 ---
 
-## ⚡ Collez votre clé d'API. C'est tout.
+## Prise en main
 
 | Service | Ce qu'il faut | Configuration |
 |---|---|---|
@@ -38,23 +38,23 @@
 
 Ouvrez les **Paramètres**, renseignez les services que vous utilisez, et votre tableau de bord est prêt. Pas de compte, pas de serveur, pas d'inscription.
 
-## ✨ Pourquoi vous allez l'adorer
+## Fonctionnalités
 
-- 🎯 **Tout sur un seul tableau de bord** : quotas, soldes prépayés et dépenses de 8 fournisseurs
-- 🚦 **Lecture immédiate** : vert, orange, rouge, avec l'heure de réinitialisation de chaque fenêtre de quota
-- 👥 **Plusieurs comptes** pour Claude, Z.ai et DeepSeek
-- 📈 **Historique de consommation** pour DeepSeek, jour par jour et mois par mois
-- 💱 **Votre devise** : gardez celle de chaque fournisseur ou convertissez tout en USD, EUR ou CNY
-- 📱 **Widgets d'écran d'accueil** et **tuile de Réglages rapides**
-- 🔔 **Notifications** à la réinitialisation d'un quota
-- 🔒 **Verrouillage de l'app** (biométrie), **stockage chiffré**, **sauvegarde chiffrée** (ZIP ou QR code)
-- 🌗 Material 3, thèmes clair et sombre, téléphones et tablettes — en anglais, français et chinois
+- **Un seul tableau de bord** : quotas, soldes prépayés et dépenses de 8 fournisseurs
+- **Lecture immédiate** : vert, orange, rouge, avec l'heure de réinitialisation de chaque fenêtre de quota
+- **Plusieurs comptes** pour chaque service
+- **Historique de consommation** pour DeepSeek, jour par jour et mois par mois
+- **Votre devise** : gardez celle de chaque fournisseur ou convertissez tout en USD, EUR ou CNY
+- **Widgets d'écran d'accueil** et **tuile de Réglages rapides**
+- **Notifications** à la réinitialisation d'un quota et **alertes configurables** (seuil de quota, solde bas, prévision d'épuisement)
+- **Verrouillage de l'app** (biométrie), **stockage chiffré**, **sauvegarde chiffrée** (ZIP ou QR code)
+- Material 3, thèmes clair et sombre, téléphones et tablettes — en anglais, français et chinois
 
-## 🛡️ Confidentiel par conception
+## Confidentialité
 
 Pas de serveur. Pas d'analytics. Pas de pistage. Vos clés sont chiffrées sur l'appareil (Android Keystore) et ne sont envoyées qu'au fournisseur auquel elles appartiennent. La seule autre requête concerne les taux de change (Frankfurter ou BCE), et uniquement si vous la choisissez.
 
-## 📥 Installation
+## Installation
 
 Téléchargez l'APK depuis la [dernière version](https://github.com/gildas-le-drogoff/TokenUsage/releases/latest). Android 10 ou ultérieur requis.
 
