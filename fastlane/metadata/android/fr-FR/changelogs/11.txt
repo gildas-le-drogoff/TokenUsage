@@ -1,1 +1,0 @@
-- Build reproductible : les bibliothèques natives sont empaquetées telles quelles, l'APK ne dépend plus de la machine de build

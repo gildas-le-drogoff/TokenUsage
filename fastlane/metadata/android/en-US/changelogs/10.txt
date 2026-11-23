@@ -1,6 +1,0 @@
-First release prepared for F-Droid.
-
-- Quotas and balances for Claude, Codex, Gemini, GitHub Copilot, Z.ai, DeepSeek, OpenRouter and OpenAI
-- Home screen widgets and Quick Settings tile
-- App lock and encrypted backup
-- Single universal APK (arm64-v8a and armeabi-v7a) with a reproducible build

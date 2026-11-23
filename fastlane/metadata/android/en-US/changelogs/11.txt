@@ -1,1 +1,0 @@
-- Reproducible build: native libraries are packaged unmodified, so the APK no longer depends on the build machine

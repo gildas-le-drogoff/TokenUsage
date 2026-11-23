@@ -1,3 +1,0 @@
-- Nouvel écran de crédits et d'attributions
-- Réglages et tableau de bord : sélecteurs remplacés par des puces, mises en page qui s'adaptent aux écrans étroits
-- Textes français et anglais raccourcis

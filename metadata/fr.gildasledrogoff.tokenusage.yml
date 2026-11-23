@@ -13,27 +13,13 @@ AutoName: TokenUsage
 
 RepoType: git
 Repo: https://github.com/gildas-le-drogoff/TokenUsage.git
-Binaries:
+Binaries: 
   https://github.com/gildas-le-drogoff/TokenUsage/releases/download/v%v/TokenUsage-%v.apk
 
 Builds:
-  - versionName: 0.1.1
-    versionCode: 11
-    commit: 5a24bb88d22dab944ca65f17e81e3ea55b35bf59
-    subdir: app
-    sudo:
-      - apt-get update
-      - apt-get install -y openjdk-25-jdk-headless
-      - update-java-alternatives -a
-    gradle:
-      - yes
-    antifeatures:
-      NonFreeNet:
-        en-US: Only queries the proprietary APIs of the AI providers whose quotas
-          it displays.
-  - versionName: 0.1.2
-    versionCode: 12
-    commit: 5a24bb88d22dab944ca65f17e81e3ea55b35bf59
+  - versionName: 0.2.0
+    versionCode: 13
+    commit: f55c01247899fa57ff2244ccd08d39eeb2ad9cd0
     subdir: app
     sudo:
       - apt-get update
@@ -50,5 +36,5 @@ AllowedAPKSigningKeys: c7c81274ce25b84528a61864cdf1e8aedf56b2e2916f0b27448a999b7
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
-CurrentVersion: 0.1.2
-CurrentVersionCode: 11
+CurrentVersion: 0.2.0
+CurrentVersionCode: 13

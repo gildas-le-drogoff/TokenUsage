@@ -1,6 +1,0 @@
-首个为 F-Droid 准备的版本。
-
-- 支持 Claude、Codex、Gemini、GitHub Copilot、Z.ai、DeepSeek、OpenRouter 和 OpenAI 的配额与余额
-- 主屏幕小组件和快捷设置磁贴
-- 应用锁和加密备份
-- 单一通用 APK（arm64-v8a 和 armeabi-v7a），可重现构建
